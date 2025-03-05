@@ -1,0 +1,159 @@
+openapi: 3.0.1
+info:
+  contact: { }
+  description: Методы для работы с API вебхуков
+  title: auth-id API
+  version: "1.0"
+servers:
+  - url: /
+tags:
+  - name: web
+    description: Используются для фронтенда
+
+  - name: webhook
+    description: Используется для взаимодействия с сервисами
+paths:
+  /v1/users:
+    get:
+      tags:
+        - web
+      description: Получение списка пользователей
+      operationId: GetUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUsersResponse200'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUsersResponse500'
+          description: Internal Server Error
+      security:
+        - bearer: []
+    post:
+      tags:
+        - web
+      description: Создание пользователя
+      operationId: CreateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse200'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse500'
+          description: Internal Server Error
+      security:
+        - bearer: []
+components:
+  schemas:
+    ResponseStatusOk:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ok
+        description:
+          type: string
+      required:
+        - code
+        - description
+    ResponseStatusError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - error
+        description:
+          type: string
+      required:
+        - code
+        - description
+    GetUsersResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+              $ref: "#/components/schemas/User"
+      required:
+        - status
+        - data
+    GetUsersResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        login:
+          type: string
+      required:
+        - id
+        - name
+        - login
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Полное имя пользователя
+        login:
+          type: string
+          description: login пользователя
+      required:
+        - name
+        - login
+    CreateUserResponse200:
+      type: object    
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/User"
+      required:
+        - status
+        - data
+    CreateUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
