@@ -93,6 +93,30 @@ func (s *Stub) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) 
 	return usr, nil
 }
 
+func (s *Stub) DeleteUser(ctx context.Context, login string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, err := s.getUser(login)
+	if err != nil {
+		return err
+	}
+
+	ul := make([]*User, 0, len(s.users)-1)
+
+	for _, k := range s.users {
+		if strings.EqualFold(k.Login, login) {
+			continue
+		}
+
+		ul = append(ul, k)
+	}
+
+	s.users = ul
+
+	return nil
+}
+
 func (s *Stub) getUser(login string) (*User, error) {
 	for _, k := range s.users {
 		if strings.EqualFold(k.Login, login) {

@@ -96,6 +96,33 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+    delete:
+      tags:
+        - web
+      description: Удаление пользователя
+      operationId: DeleteUser
+      parameters:
+        - name: login
+          description: Логин удаляемого пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
 components:
   schemas:
     ResponseStatusOk:
@@ -219,6 +246,22 @@ components:
         - status
         - data
     UpdateUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    DeleteUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    DeleteUserResponse500:
       type: object
       properties:
         status:

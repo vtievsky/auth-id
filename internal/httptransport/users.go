@@ -95,3 +95,21 @@ func (t *Transport) UpdateUser(ctx context.Context, request serverhttp.UpdateUse
 		},
 	}, nil
 }
+
+func (t *Transport) DeleteUser(ctx context.Context, request serverhttp.DeleteUserRequestObject) (serverhttp.DeleteUserResponseObject, error) {
+	if err := t.services.UserSvc.DeleteUser(ctx, request.Login); err != nil {
+		return serverhttp.DeleteUser500JSONResponse{
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.DeleteUser200JSONResponse{
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}

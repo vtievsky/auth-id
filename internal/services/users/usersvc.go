@@ -31,6 +31,7 @@ type Storage interface {
 	GetUsers(ctx context.Context) ([]*dbusers.User, error)
 	CreateUser(ctx context.Context, user dbusers.UserCreated) (*dbusers.User, error)
 	UpdateUser(ctx context.Context, user dbusers.UserUpdated) (*dbusers.User, error)
+	DeleteUser(ctx context.Context, login string) error
 }
 
 type UserSvcOpts struct {
@@ -136,7 +137,16 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 }
 
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
-	// TODO Изменение пользователя
+	const op = "UserSvc.UpdateUser"
+
+	if err := s.storage.DeleteUser(ctx, login); err != nil {
+		s.logger.Error("failed to delete user",
+			zap.String("username", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to delete user | %s:%w", op, err)
+	}
 
 	return nil
 }

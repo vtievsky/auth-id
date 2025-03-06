@@ -11,6 +11,7 @@ type Client interface {
 	GetUsers(ctx context.Context) ([]*dbclient.User, error)
 	CreateUser(ctx context.Context, user dbclient.UserCreated) (*dbclient.User, error)
 	UpdateUser(ctx context.Context, user dbclient.UserUpdated) (*dbclient.User, error)
+	DeleteUser(ctx context.Context, login string) error
 }
 
 type UsersOpts struct {
@@ -87,4 +88,14 @@ func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error)
 		FullName: u.FullName,
 		Blocked:  u.Blocked,
 	}, nil
+}
+
+func (s *Users) DeleteUser(ctx context.Context, login string) error {
+	const op = "DBUsers.DeleteUser"
+
+	if err := s.client.DeleteUser(ctx, login); err != nil {
+		return fmt.Errorf("failed to delete user | %s:%w", op, err)
+	}
+
+	return nil
 }
