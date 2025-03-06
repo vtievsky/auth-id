@@ -10,12 +10,12 @@ import (
 func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
 	users, err := t.services.UserSvc.GetUsers(ctx)
 	if err != nil {
-		return serverhttp.GetUsers500JSONResponse{
+		return serverhttp.GetUsers500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, err //nolint:wrapcheck
+		}, nil
 	}
 
 	resp := make([]serverhttp.User, 0, len(users))
@@ -48,12 +48,12 @@ func (t *Transport) CreateUser(
 		Blocked:  request.Body.Blocked,
 	})
 	if err != nil {
-		return serverhttp.CreateUser500JSONResponse{
+		return serverhttp.CreateUser500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, err //nolint:wrapcheck
+		}, nil
 	}
 
 	return serverhttp.CreateUser200JSONResponse{
@@ -80,12 +80,12 @@ func (t *Transport) UpdateUser(
 		Blocked:  request.Body.Blocked,
 	})
 	if err != nil {
-		return serverhttp.UpdateUser500JSONResponse{
+		return serverhttp.UpdateUser500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, err //nolint:wrapcheck
+		}, nil
 	}
 
 	return serverhttp.UpdateUser200JSONResponse{
@@ -107,12 +107,12 @@ func (t *Transport) DeleteUser(
 	request serverhttp.DeleteUserRequestObject,
 ) (serverhttp.DeleteUserResponseObject, error) {
 	if err := t.services.UserSvc.DeleteUser(ctx, request.Login); err != nil {
-		return serverhttp.DeleteUser500JSONResponse{
+		return serverhttp.DeleteUser500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, err //nolint:wrapcheck
+		}, nil
 	}
 
 	return serverhttp.DeleteUser200JSONResponse{

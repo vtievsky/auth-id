@@ -1,4 +1,4 @@
-package dbclient
+package stubusers
 
 import "errors"
 

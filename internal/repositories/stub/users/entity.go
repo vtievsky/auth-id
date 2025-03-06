@@ -1,4 +1,4 @@
-package dbclient
+package stubusers
 
 type User struct {
 	ID       int

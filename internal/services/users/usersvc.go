@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	dbusers "github.com/vtievsky/auth-id/internal/repositories/database/users"
+	dbusers "github.com/vtievsky/auth-id/internal/repositories/stub/users"
 	"go.uber.org/zap"
 )
 

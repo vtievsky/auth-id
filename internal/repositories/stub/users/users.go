@@ -1,4 +1,4 @@
-package dbclient
+package stubusers
 
 import (
 	"context"
@@ -11,12 +11,12 @@ const (
 	num = 25
 )
 
-type Stub struct {
+type Users struct {
 	mu    sync.Mutex
 	users []*User
 }
 
-func NewStub() *Stub {
+func New() *Users {
 	users := append(make([]*User, 0, num),
 		&User{
 			ID:       1,
@@ -43,20 +43,20 @@ func NewStub() *Stub {
 		)
 	}
 
-	return &Stub{
+	return &Users{
 		mu:    sync.Mutex{},
 		users: users,
 	}
 }
 
-func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
+func (s *Users) GetUsers(ctx context.Context) ([]*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	return s.users, nil
 }
 
-func (s *Stub) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
+func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -78,7 +78,7 @@ func (s *Stub) CreateUser(ctx context.Context, user UserCreated) (*User, error) 
 	return nil, ErrUserAlreadyExists
 }
 
-func (s *Stub) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
+func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -93,7 +93,7 @@ func (s *Stub) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) 
 	return usr, nil
 }
 
-func (s *Stub) DeleteUser(ctx context.Context, login string) error {
+func (s *Users) DeleteUser(ctx context.Context, login string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -117,7 +117,7 @@ func (s *Stub) DeleteUser(ctx context.Context, login string) error {
 	return nil
 }
 
-func (s *Stub) getUser(login string) (*User, error) {
+func (s *Users) getUser(login string) (*User, error) {
 	for _, k := range s.users {
 		if strings.EqualFold(k.Login, login) {
 			return k, nil
