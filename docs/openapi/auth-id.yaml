@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  contact: { }
+  contact: {}
   description: Методы для работы с API вебхуков
   title: auth-id API
   version: "1.0"
@@ -24,13 +24,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetUsersResponse200'
+                $ref: "#/components/schemas/GetUsersResponse200"
           description: OK
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetUsersResponse500'
+                $ref: "#/components/schemas/GetUsersResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -43,7 +43,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserRequest'
+              $ref: "#/components/schemas/CreateUserRequest"
         description: Параметры запроса
         required: true
       responses:
@@ -51,13 +51,48 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateUserResponse200'
+                $ref: "#/components/schemas/CreateUserResponse200"
           description: OK
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateUserResponse500'
+                $ref: "#/components/schemas/CreateUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/users/{login}:
+    put:
+      tags:
+        - web
+      description: Изменение пользователя
+      operationId: UpdateUser
+      parameters:
+        - name: login
+          description: Логин изменяемого пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -96,7 +131,7 @@ components:
         data:
           type: array
           items:
-              $ref: "#/components/schemas/User"
+            $ref: "#/components/schemas/User"
       required:
         - status
         - data
@@ -141,7 +176,7 @@ components:
         - login
         - blocked
     CreateUserResponse200:
-      type: object    
+      type: object
       properties:
         status:
           type: object
@@ -153,6 +188,37 @@ components:
         - status
         - data
     CreateUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Полное имя пользователя
+        blocked:
+          type: boolean
+      required:
+        - name
+        - blocked
+    UpdateUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/User"
+      required:
+        - status
+        - data
+    UpdateUserResponse500:
       type: object
       properties:
         status:

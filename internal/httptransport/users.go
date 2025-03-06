@@ -66,3 +66,32 @@ func (t *Transport) CreateUser(ctx context.Context, request serverhttp.CreateUse
 		},
 	}, nil
 }
+
+func (t *Transport) UpdateUser(ctx context.Context, request serverhttp.UpdateUserRequestObject) (serverhttp.UpdateUserResponseObject, error) {
+	user, err := t.services.UserSvc.UpdateUser(ctx, usersvc.UserUpdated{
+		Login:    request.Login,
+		FullName: request.Body.Name,
+		Blocked:  request.Body.Blocked,
+	})
+	if err != nil {
+		return serverhttp.UpdateUser500JSONResponse{
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.UpdateUser200JSONResponse{
+		Data: serverhttp.User{
+			Id:      user.ID,
+			Login:   user.Login,
+			Name:    user.FullName,
+			Blocked: user.Blocked,
+		},
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}

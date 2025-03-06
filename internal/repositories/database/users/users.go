@@ -10,6 +10,7 @@ import (
 type Client interface {
 	GetUsers(ctx context.Context) ([]*dbclient.User, error)
 	CreateUser(ctx context.Context, user dbclient.UserCreated) (*dbclient.User, error)
+	UpdateUser(ctx context.Context, user dbclient.UserUpdated) (*dbclient.User, error)
 }
 
 type UsersOpts struct {
@@ -58,6 +59,26 @@ func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+	}
+
+	return &User{
+		ID:       u.ID,
+		Login:    u.Login,
+		FullName: u.FullName,
+		Blocked:  u.Blocked,
+	}, nil
+}
+
+func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
+	const op = "DBUsers.UpdateUser"
+
+	u, err := s.client.UpdateUser(ctx, dbclient.UserUpdated{
+		Login:    user.Login,
+		FullName: user.FullName,
+		Blocked:  user.Blocked,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
 	return &User{

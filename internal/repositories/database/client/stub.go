@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -70,4 +71,20 @@ func (s *Stub) CreateUser(ctx context.Context, user UserCreated) (*User, error) 
 	s.users = append(s.users, &usr)
 
 	return &usr, nil
+}
+
+func (s *Stub) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, k := range s.users {
+		if strings.EqualFold(k.Login, user.Login) {
+			k.FullName = user.FullName
+			k.Blocked = user.Blocked
+
+			return k, nil
+		}
+	}
+
+	return nil, ErrUserNotFound
 }
