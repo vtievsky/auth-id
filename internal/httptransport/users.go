@@ -4,6 +4,7 @@ import (
 	"context"
 
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
+	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 )
 
 func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
@@ -38,8 +39,27 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 }
 
 func (t *Transport) CreateUser(ctx context.Context, request serverhttp.CreateUserRequestObject) (serverhttp.CreateUserResponseObject, error) {
+	user, err := t.services.UserSvc.CreateUser(ctx, usersvc.UserCreated{
+		Login:    request.Body.Login,
+		FullName: request.Body.Name,
+		Blocked:  request.Body.Blocked,
+	})
+	if err != nil {
+		return serverhttp.CreateUser500JSONResponse{
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
 	return serverhttp.CreateUser200JSONResponse{
-		Data: serverhttp.User{},
+		Data: serverhttp.User{
+			Id:      user.ID,
+			Login:   user.Login,
+			Name:    user.FullName,
+			Blocked: user.Blocked,
+		},
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",

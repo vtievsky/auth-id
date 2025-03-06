@@ -29,6 +29,7 @@ type UserUpdated struct {
 
 type Storage interface {
 	GetUsers(ctx context.Context) ([]*dbusers.User, error)
+	CreateUser(ctx context.Context, user dbusers.UserCreated) (*dbusers.User, error)
 }
 
 type UserSvcOpts struct {
@@ -80,14 +81,23 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 }
 
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
-	// TODO Создание пользователя
+	const op = "UserSvc.CreateUser"
 
-	u, err := s.User(ctx, user.Login)
+	u, err := s.storage.CreateUser(ctx, dbusers.UserCreated{
+		Login:    user.Login,
+		FullName: user.FullName,
+		Blocked:  user.Blocked,
+	})
 	if err != nil {
-
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 	}
 
-	return u, nil
+	return &User{
+		ID:       u.ID,
+		Login:    u.Login,
+		FullName: u.FullName,
+		Blocked:  u.Blocked,
+	}, nil
 }
 
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {

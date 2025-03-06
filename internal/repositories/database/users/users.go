@@ -9,6 +9,7 @@ import (
 
 type Client interface {
 	GetUsers(ctx context.Context) ([]*dbclient.User, error)
+	CreateUser(ctx context.Context, user dbclient.UserCreated) (*dbclient.User, error)
 }
 
 type UsersOpts struct {
@@ -45,4 +46,24 @@ func (s *Users) GetUsers(ctx context.Context) ([]*User, error) {
 	}
 
 	return users, nil
+}
+
+func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
+	const op = "DBUsers.CreateUser"
+
+	u, err := s.client.CreateUser(ctx, dbclient.UserCreated{
+		Login:    user.Login,
+		FullName: user.FullName,
+		Blocked:  user.Blocked,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+	}
+
+	return &User{
+		ID:       u.ID,
+		Login:    u.Login,
+		FullName: u.FullName,
+		Blocked:  u.Blocked,
+	}, nil
 }

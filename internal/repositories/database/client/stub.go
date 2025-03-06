@@ -16,17 +16,7 @@ type Stub struct {
 }
 
 func NewStub() *Stub {
-	return &Stub{
-		mu:    sync.Mutex{},
-		users: make([]*User, 0, num),
-	}
-}
-
-func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.users = append(s.users,
+	users := append(make([]*User, 0, num),
 		&User{
 			ID:       1,
 			Login:    "pupkin_vi",
@@ -41,8 +31,8 @@ func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
 		},
 	)
 
-	for k := len(s.users); k < num; k++ {
-		s.users = append(s.users,
+	for k := len(users); k < num; k++ {
+		users = append(users,
 			&User{
 				ID:       k,
 				Login:    fmt.Sprintf("user%d", k),
@@ -52,5 +42,32 @@ func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
 		)
 	}
 
+	return &Stub{
+		mu:    sync.Mutex{},
+		users: users,
+	}
+}
+
+func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.users, nil
+}
+
+func (s *Stub) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	id := len(s.users)
+	usr := User{
+		ID:       id,
+		Login:    user.Login,
+		FullName: user.FullName,
+		Blocked:  user.Blocked,
+	}
+
+	s.users = append(s.users, &usr)
+
+	return &usr, nil
 }
