@@ -7,8 +7,29 @@ import (
 )
 
 func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
+	users, err := t.services.UserSvc.GetUsers(ctx)
+	if err != nil {
+		return serverhttp.GetUsers500JSONResponse{
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	resp := make([]serverhttp.User, 0, len(users))
+
+	for _, user := range users {
+		resp = append(resp, serverhttp.User{
+			Id:      user.ID,
+			Login:   user.Login,
+			Name:    user.FullName,
+			Blocked: user.Blocked,
+		})
+	}
+
 	return serverhttp.GetUsers200JSONResponse{
-		Data: []serverhttp.User{},
+		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",

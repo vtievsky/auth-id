@@ -11,6 +11,8 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
+	dbclient "github.com/vtievsky/auth-id/internal/repositories/database/client"
+	dbusers "github.com/vtievsky/auth-id/internal/repositories/database/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
@@ -22,8 +24,17 @@ func main() {
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
 
+	dbclient := dbclient.NewStub()
+
+	// repos
+	userRepo := dbusers.New(&dbusers.UsersOpts{
+		Client: dbclient,
+	})
+
+	// services
 	userService := usersvc.New(&usersvc.UserSvcOpts{
-		Logger: logger,
+		Logger:  logger,
+		Storage: userRepo,
 	})
 
 	ctx := context.Background()
