@@ -117,10 +117,13 @@ components:
           type: string
         login:
           type: string
+        blocked:
+          type: boolean
       required:
         - id
         - name
         - login
+        - blocked
     CreateUserRequest:
       type: object
       properties:
@@ -130,9 +133,13 @@ components:
         login:
           type: string
           description: login пользователя
+        blocked:
+          type: boolean
+          default: true
       required:
         - name
         - login
+        - blocked
     CreateUserResponse200:
       type: object    
       properties:
