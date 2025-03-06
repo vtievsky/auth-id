@@ -15,7 +15,7 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		}, err //nolint:wrapcheck
 	}
 
 	resp := make([]serverhttp.User, 0, len(users))
@@ -38,7 +38,10 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 	}, nil
 }
 
-func (t *Transport) CreateUser(ctx context.Context, request serverhttp.CreateUserRequestObject) (serverhttp.CreateUserResponseObject, error) {
+func (t *Transport) CreateUser(
+	ctx context.Context,
+	request serverhttp.CreateUserRequestObject,
+) (serverhttp.CreateUserResponseObject, error) {
 	user, err := t.services.UserSvc.CreateUser(ctx, usersvc.UserCreated{
 		Login:    request.Body.Login,
 		FullName: request.Body.Name,
@@ -50,7 +53,7 @@ func (t *Transport) CreateUser(ctx context.Context, request serverhttp.CreateUse
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		}, err //nolint:wrapcheck
 	}
 
 	return serverhttp.CreateUser200JSONResponse{
@@ -67,7 +70,10 @@ func (t *Transport) CreateUser(ctx context.Context, request serverhttp.CreateUse
 	}, nil
 }
 
-func (t *Transport) UpdateUser(ctx context.Context, request serverhttp.UpdateUserRequestObject) (serverhttp.UpdateUserResponseObject, error) {
+func (t *Transport) UpdateUser(
+	ctx context.Context,
+	request serverhttp.UpdateUserRequestObject,
+) (serverhttp.UpdateUserResponseObject, error) {
 	user, err := t.services.UserSvc.UpdateUser(ctx, usersvc.UserUpdated{
 		Login:    request.Login,
 		FullName: request.Body.Name,
@@ -79,7 +85,7 @@ func (t *Transport) UpdateUser(ctx context.Context, request serverhttp.UpdateUse
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		}, err //nolint:wrapcheck
 	}
 
 	return serverhttp.UpdateUser200JSONResponse{
@@ -96,14 +102,17 @@ func (t *Transport) UpdateUser(ctx context.Context, request serverhttp.UpdateUse
 	}, nil
 }
 
-func (t *Transport) DeleteUser(ctx context.Context, request serverhttp.DeleteUserRequestObject) (serverhttp.DeleteUserResponseObject, error) {
+func (t *Transport) DeleteUser(
+	ctx context.Context,
+	request serverhttp.DeleteUserRequestObject,
+) (serverhttp.DeleteUserResponseObject, error) {
 	if err := t.services.UserSvc.DeleteUser(ctx, request.Login); err != nil {
 		return serverhttp.DeleteUser500JSONResponse{
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		}, err //nolint:wrapcheck
 	}
 
 	return serverhttp.DeleteUser200JSONResponse{

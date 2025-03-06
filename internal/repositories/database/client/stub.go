@@ -25,7 +25,7 @@ func NewStub() *Stub {
 			Blocked:  false,
 		},
 		&User{
-			ID:       2,
+			ID:       2, //nolint:mnd
 			Login:    "papiroskina_mn",
 			FullName: "Папироскина Мария Николаевна",
 			Blocked:  false,
