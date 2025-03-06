@@ -64,6 +64,10 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 
 	ul, err := s.storage.GetUsers(ctx)
 	if err != nil {
+		s.logger.Error("failed to get users",
+			zap.Error(err),
+		)
+
 		return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
 	}
 
@@ -90,6 +94,11 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 		Blocked:  user.Blocked,
 	})
 	if err != nil {
+		s.logger.Error("failed to create user",
+			zap.String("username", user.Login),
+			zap.Error(err),
+		)
+
 		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 	}
 
@@ -110,6 +119,11 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 		Blocked:  user.Blocked,
 	})
 	if err != nil {
+		s.logger.Error("failed to update user",
+			zap.String("username", user.Login),
+			zap.Error(err),
+		)
+
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 

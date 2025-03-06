@@ -60,28 +60,42 @@ func (s *Stub) CreateUser(ctx context.Context, user UserCreated) (*User, error) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := len(s.users)
-	usr := User{
-		ID:       id,
-		Login:    user.Login,
-		FullName: user.FullName,
-		Blocked:  user.Blocked,
+	_, err := s.getUser(user.Login)
+	if err != nil {
+		id := len(s.users)
+		usr := User{
+			ID:       id,
+			Login:    user.Login,
+			FullName: user.FullName,
+			Blocked:  user.Blocked,
+		}
+
+		s.users = append(s.users, &usr)
+
+		return &usr, nil
 	}
 
-	s.users = append(s.users, &usr)
-
-	return &usr, nil
+	return nil, ErrUserAlreadyExists
 }
 
 func (s *Stub) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, k := range s.users {
-		if strings.EqualFold(k.Login, user.Login) {
-			k.FullName = user.FullName
-			k.Blocked = user.Blocked
+	usr, err := s.getUser(user.Login)
+	if err != nil {
+		return nil, err
+	}
 
+	usr.FullName = user.FullName
+	usr.Blocked = user.Blocked
+
+	return usr, nil
+}
+
+func (s *Stub) getUser(login string) (*User, error) {
+	for _, k := range s.users {
+		if strings.EqualFold(k.Login, login) {
 			return k, nil
 		}
 	}
