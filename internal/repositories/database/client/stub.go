@@ -3,20 +3,30 @@ package dbclient
 import (
 	"context"
 	"fmt"
+	"sync"
+)
+
+const (
+	num = 25
 )
 
 type Stub struct {
+	mu    sync.Mutex
+	users []*User
 }
 
 func NewStub() *Stub {
-	return &Stub{}
+	return &Stub{
+		mu:    sync.Mutex{},
+		users: make([]*User, 0, num),
+	}
 }
 
 func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
-	num := 25
-	users := make([]*User, 0, num)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	users = append(users,
+	s.users = append(s.users,
 		&User{
 			ID:       1,
 			Login:    "pupkin_vi",
@@ -31,8 +41,8 @@ func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
 		},
 	)
 
-	for k := len(users); k < num; k++ {
-		users = append(users,
+	for k := len(s.users); k < num; k++ {
+		s.users = append(s.users,
 			&User{
 				ID:       k,
 				Login:    fmt.Sprintf("user%d", k),
@@ -42,5 +52,5 @@ func (s *Stub) GetUsers(ctx context.Context) ([]*User, error) {
 		)
 	}
 
-	return users, nil
+	return s.users, nil
 }
