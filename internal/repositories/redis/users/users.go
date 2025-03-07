@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
+)
+
+const (
+	space = "usr"
 )
 
 type UsersOpts struct {
@@ -28,7 +33,7 @@ func New(opts *UsersOpts) *Users {
 func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error) {
 	const op = "DbUsers.GetUser"
 
-	cmd := s.client.HGetAll(ctx, login)
+	cmd := s.client.HGetAll(ctx, s.keyUser(login))
 
 	switch {
 	case cmd.Err() != nil:
@@ -53,7 +58,29 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 }
 
 func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
+	const op = "DbUsers.GetUsers"
+
+	ul, err := s.client.Keys(ctx, s.space()).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users | %s:%w", op, dberrors.ErrUserScan)
+	}
+
 	users := make([]*models.User, 0)
+
+	for _, key := range ul {
+		u, err := s.GetUser(ctx, s.loginUser(key))
+		if err != nil {
+			// return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
+			continue
+		}
+
+		users = append(users, &models.User{
+			ID:       u.ID,
+			Login:    u.Login,
+			FullName: u.FullName,
+			Blocked:  u.Blocked,
+		})
+	}
 
 	return users, nil
 }
@@ -66,7 +93,7 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 		}
 
-		if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserCreated{
+		if _, err := s.client.HMSet(ctx, s.keyUser(user.Login), redisclient.UserCreated{
 			ID:       int(time.Now().Unix()),
 			Login:    user.Login,
 			FullName: user.FullName,
@@ -89,7 +116,7 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
-	if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserUpdated{
+	if _, err := s.client.HMSet(ctx, s.keyUser(user.Login), redisclient.UserUpdated{
 		Login:    user.Login,
 		FullName: user.FullName,
 		Blocked:  user.Blocked,
@@ -107,9 +134,23 @@ func (s *Users) DeleteUser(ctx context.Context, login string) error {
 		return fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
-	if _, err := s.client.Del(ctx, login).Result(); err != nil {
+	if _, err := s.client.Del(ctx, s.keyUser(login)).Result(); err != nil {
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
 	}
 
 	return nil
+}
+
+func (s *Users) space() string {
+	return fmt.Sprintf("%s:*", space)
+}
+
+func (s *Users) keyUser(login string) string {
+	return fmt.Sprintf("%s:%s", space, login)
+}
+
+func (s *Users) loginUser(keyUser string) string {
+	p := fmt.Sprintf("%s:", space)
+
+	return strings.ReplaceAll(keyUser, p, "")
 }
