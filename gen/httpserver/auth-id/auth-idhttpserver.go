@@ -164,8 +164,8 @@ type ResponseStatusOkCode string
 // Role defines model for Role.
 type Role struct {
 	Blocked     bool   `json:"blocked"`
+	Code        string `json:"code"`
 	Description string `json:"description"`
-	Id          int    `json:"id"`
 	Name        string `json:"name"`
 }
 
@@ -213,7 +213,6 @@ type UpdateUserResponse500 struct {
 // User defines model for User.
 type User struct {
 	Blocked bool   `json:"blocked"`
-	Id      int    `json:"id"`
 	Login   string `json:"login"`
 	Name    string `json:"name"`
 }
@@ -239,14 +238,14 @@ type ServerInterface interface {
 	// (POST /v1/roles)
 	CreateRole(ctx echo.Context) error
 
-	// (DELETE /v1/roles/{id})
-	DeleteRole(ctx echo.Context, id int) error
+	// (DELETE /v1/roles/{code})
+	DeleteRole(ctx echo.Context, code string) error
 
-	// (GET /v1/roles/{id})
-	GetRole(ctx echo.Context, id int) error
+	// (GET /v1/roles/{code})
+	GetRole(ctx echo.Context, code string) error
 
-	// (PUT /v1/roles/{id})
-	UpdateRole(ctx echo.Context, id int) error
+	// (PUT /v1/roles/{code})
+	UpdateRole(ctx echo.Context, code string) error
 
 	// (GET /v1/users)
 	GetUsers(ctx echo.Context) error
@@ -294,54 +293,54 @@ func (w *ServerInterfaceWrapper) CreateRole(ctx echo.Context) error {
 // DeleteRole converts echo context to params.
 func (w *ServerInterfaceWrapper) DeleteRole(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "id" -------------
-	var id int
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	ctx.Set(BearerScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeleteRole(ctx, id)
+	err = w.Handler.DeleteRole(ctx, code)
 	return err
 }
 
 // GetRole converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRole(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "id" -------------
-	var id int
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	ctx.Set(BearerScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRole(ctx, id)
+	err = w.Handler.GetRole(ctx, code)
 	return err
 }
 
 // UpdateRole converts echo context to params.
 func (w *ServerInterfaceWrapper) UpdateRole(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "id" -------------
-	var id int
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	ctx.Set(BearerScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateRole(ctx, id)
+	err = w.Handler.UpdateRole(ctx, code)
 	return err
 }
 
@@ -451,9 +450,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/v1/roles", wrapper.GetRoles)
 	router.POST(baseURL+"/v1/roles", wrapper.CreateRole)
-	router.DELETE(baseURL+"/v1/roles/:id", wrapper.DeleteRole)
-	router.GET(baseURL+"/v1/roles/:id", wrapper.GetRole)
-	router.PUT(baseURL+"/v1/roles/:id", wrapper.UpdateRole)
+	router.DELETE(baseURL+"/v1/roles/:code", wrapper.DeleteRole)
+	router.GET(baseURL+"/v1/roles/:code", wrapper.GetRole)
+	router.PUT(baseURL+"/v1/roles/:code", wrapper.UpdateRole)
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
@@ -514,7 +513,7 @@ func (response CreateRole500JSONResponse) VisitCreateRoleResponse(w http.Respons
 }
 
 type DeleteRoleRequestObject struct {
-	Id int `json:"id"`
+	Code string `json:"code"`
 }
 
 type DeleteRoleResponseObject interface {
@@ -540,7 +539,7 @@ func (response DeleteRole500JSONResponse) VisitDeleteRoleResponse(w http.Respons
 }
 
 type GetRoleRequestObject struct {
-	Id int `json:"id"`
+	Code string `json:"code"`
 }
 
 type GetRoleResponseObject interface {
@@ -566,7 +565,7 @@ func (response GetRole500JSONResponse) VisitGetRoleResponse(w http.ResponseWrite
 }
 
 type UpdateRoleRequestObject struct {
-	Id   int `json:"id"`
+	Code string `json:"code"`
 	Body *UpdateRoleJSONRequestBody
 }
 
@@ -731,13 +730,13 @@ type StrictServerInterface interface {
 	// (POST /v1/roles)
 	CreateRole(ctx context.Context, request CreateRoleRequestObject) (CreateRoleResponseObject, error)
 
-	// (DELETE /v1/roles/{id})
+	// (DELETE /v1/roles/{code})
 	DeleteRole(ctx context.Context, request DeleteRoleRequestObject) (DeleteRoleResponseObject, error)
 
-	// (GET /v1/roles/{id})
+	// (GET /v1/roles/{code})
 	GetRole(ctx context.Context, request GetRoleRequestObject) (GetRoleResponseObject, error)
 
-	// (PUT /v1/roles/{id})
+	// (PUT /v1/roles/{code})
 	UpdateRole(ctx context.Context, request UpdateRoleRequestObject) (UpdateRoleResponseObject, error)
 
 	// (GET /v1/users)
@@ -821,10 +820,10 @@ func (sh *strictHandler) CreateRole(ctx echo.Context) error {
 }
 
 // DeleteRole operation middleware
-func (sh *strictHandler) DeleteRole(ctx echo.Context, id int) error {
+func (sh *strictHandler) DeleteRole(ctx echo.Context, code string) error {
 	var request DeleteRoleRequestObject
 
-	request.Id = id
+	request.Code = code
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteRole(ctx.Request().Context(), request.(DeleteRoleRequestObject))
@@ -846,10 +845,10 @@ func (sh *strictHandler) DeleteRole(ctx echo.Context, id int) error {
 }
 
 // GetRole operation middleware
-func (sh *strictHandler) GetRole(ctx echo.Context, id int) error {
+func (sh *strictHandler) GetRole(ctx echo.Context, code string) error {
 	var request GetRoleRequestObject
 
-	request.Id = id
+	request.Code = code
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetRole(ctx.Request().Context(), request.(GetRoleRequestObject))
@@ -871,10 +870,10 @@ func (sh *strictHandler) GetRole(ctx echo.Context, id int) error {
 }
 
 // UpdateRole operation middleware
-func (sh *strictHandler) UpdateRole(ctx echo.Context, id int) error {
+func (sh *strictHandler) UpdateRole(ctx echo.Context, code string) error {
 	var request UpdateRoleRequestObject
 
-	request.Id = id
+	request.Code = code
 
 	var body UpdateRoleJSONRequestBody
 	if err := ctx.Bind(&body); err != nil {
@@ -1037,28 +1036,28 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9yZzW7bRhDHX0XY9shadgtfdOsXCqMHFzFyMnygxbHNmCKZ5dKFYQiI7QY9uKivAfoR",
-	"FH0BJbFgJbbkV5h9o2KWlEiJK5NKTdLKyZbAnZ0d/nbmP6MT1vY6vueCKwLWOmFB+wA6pvr3Ww6mgCee",
-	"A0/geQiBoC997vnAhQ3qkV3Hax+CRf9asGeGjmAtwUMwmDj2gbXYruc5YLqsazALgja3fWF7bvR86iPD",
-	"v/EOB/IUezjEAfYb8gWO8AYHbGIqENx298mSa3ZAY+Iv7OE1vi1gomswDs9Dm5Pr25G9aQeNydF2Jqu9",
-	"3WfQFuRAOjKB77kBfLm6mo2OZQqT/n7OYY+12GfNJNTNOM5NMkImA2GKMMh9Ot5uSz29eZg5SmzGiPYu",
-	"5vu6zveP8ed7zj0+z6X5vjwNgD8IYY63b2vYUl838I5okL/hNY4IEnmGfbyRlwsA9lrxNMQR9hs4wFt5",
-	"uYBVPXORy0Voi6L0P2kjIzXQlva9Ptq+AwcK3NqHjU0xR+oOSi5cVQXlcZDyA4jlTO4zjtcewaBQCG0B",
-	"naBoLOOtTM7N4zpiGzyK4C5nNZhxvPYIPiCe41jWiefUkeoLrm55xpO2ZymJBW7YIXugHtvRiLGZvuF+",
-	"WaXMTq/Jd3HzMN8/77A65yjT3SeEc3urjJt2ep3tCtiPaB0L3fv9ti1mLN4kPfWtBdrHT7pfTIdi2SRF",
-	"1vf6MkvkS9F+MYtUdX1dPg3LWcGzvtdIAx1+MQDm5cHJ5GBu7iieIfNbenph0A65LY63KBSx42Dy6EAq",
-	"Psrz6KuJgQMhfNal9ba750VlyhVmm+7BbMZk+Cf25RmO8EpeNPCK6KUU18M3OJJn8qIhTxtf/7TRwLfY",
-	"xzfypTzHDwQ7bWcLR6mYUBx8YVv0GDPYEfAgMr22skqx8XxwTd9mLfbVyurKGjOYb4oDdZjm0VqTk1qm",
-	"D/sg5t06eS5/xf44AZ/GSf0D9sbZuI/vmdqJm7Rww2KtiRJn9BIihNQ+8TWimICrtjR937HbamXzWRAV",
-	"koi+PDZ1DYyK/PQpNn+kQKyXuPG6fuMNVwB3TaexBfwIeCO5PWO0WGs7gWp7p0scmvsB4foz7LKdrsF8",
-	"L9C9mX9whNd4pSuM0y8imSWy6D5AIL7xrOMHC0Z2BK0JBb7GngL7loCXLwj3a+zhHflNEoGlL6vgIXRL",
-	"BEc/G64EHf1otxx4ukZyx5snttWNOHJA6Crsv4qmm+SmzyMqGY2pbMLNDgjggXJnxuYrvFppyPPIsrzE",
-	"Pt7iCN+nbVNOVzlpnJ1bUaaepsFIhXe2NNDBS0NFP5CsBBX9CLKsPFO0AMQ5Zygv5Mv5jMQZsiAgS0OD",
-	"ZuhYZcGppN6EOg5e4TWlbhzmp4ekGSn29nEwtl1ugnj4ypftnh995dN3uZUwrG9SS618YaDA+0h1q+8v",
-	"56ldNdgrWe1m5qFVJZ/M1LJmtXtP669Tv6oLLVP9pscdS6J+Z2cbFarf2dFE+TmgeaI6/sUEcGHIkp9F",
-	"cyveHzjCdzjAYVYVv8PRfVtqyuB4ipFbCScTkfKVci1Y6X+XflRKuTBMcbZdgKRlhkbzM2mVNe0xCerC",
-	"hCTz3UUgyarsyhJOWcp7qaqu/heFCpV3RVVXPUyrIyBD7rAWa7LUk9m7oGR3zKE8l7/LM3kqLycD8V9U",
-	"NzhUbA4pqyZE0qbdne5/AQAA///BQgTaIisAAA==",
+	"H4sIAAAAAAAC/9yZz04jxxPHX8Xq3+/oYEjExbf8U4RyIFq0J+TDYBcwy3hmtruHCKGRFsgqB6JwjfJv",
+	"FeUFvLtYeBdsXqH6jaLqGXtsTxuPCTNj5wS2eqqry5+u+lbNKWt6bd9zwZWC1U+ZaB5C29L/fsnBkvDM",
+	"c+AZvAxASPrS554PXNqgl+w5XvMIWvRvC/atwJGsLnkAVSZPfGB1tud5DlguC6usBaLJbV/anhutH/vI",
+	"8E+8x546ww72sYfdinqFA7zFHhuZEpLb7gFZcq02GEz8gR28wXcZTIRVxuFlYHNyfTeyN+lgdXS0xuhp",
+	"b+8FNCU5MB4Z4XuugE/X19PRaVnSor//57DP6ux/tSTUtTjONTJCJoW0ZCDmro6329Grt49SR4nNVKO9",
+	"s/m+afL9Mf58zbnHZ7k025fnAviTEOZ4B7aBLf11Be+JBvUT3uCAIFHn2MVbdbUAYG80T30cYLeCPbxT",
+	"VwtYNTMXuZyFtihK/5I2MlICbeO+l0fbV+BAhlv7tLHJ5kjZQZkLV1FBWQ5SvgG5msl9yvHSIygyhdCW",
+	"0BZZYxlvZXFunZQRW7EUwV3NajDleOkRfEI8h7EsE8+JI5UXXNPjKU+aXktLLHCDNtkDvaxhEGNTfcPD",
+	"skqbnXxmvovbR/P9846Kc44y3UNCOK18h94u6F+idDM5vnCf9NxvLdBB/qdbxvFQrJqqSPteXnKJfMna",
+	"MqaRKq61m0/DahbxtO8l0kCHXwyA0ZDgkbkwc+NOvwk0A27Lkx06bewbWDzyWYdAOxd9NTJwKKXPQnre",
+	"dve9qBi50moS6tNJkeHv2FXnOMBrdVnBawKUslgH3+JAnavLijqrfP7dVgXfYRffqtfqAj8Sz7SdLR2t",
+	"VQJ5+IndomWsyo6Bi8j0xto6hcXzwbV8m9XZZ2vraxusynxLHurD1I43apw0MX04ADnrYqkL9SN2hzn2",
+	"LM7bH7EzTLhd/MD0TtyiB7darD7S24ziH1Gi94lvCsUEXL2l5fuO3dRP1l6IqFZEgM3Dz9Sm6MhPnmL7",
+	"WwrEZo4bb5o33nIlcNdyKjvAj4FXkgsyRIvVdxOodhshcWgdCCL1e9hjjbDKfE+Yfpm/cIA3eG2qfZM/",
+	"RDIxZNFVACG/8FonTxaM9KDZEAp8gx0N9h0Br14R7jfYwXvym1QAG7+nkgcQ5giOeQJcCDrmAW4+8ITV",
+	"5I7XTkkGhhFJDkhTGf1b83Sb3PVZTCUjMJ1PuNUGCVxoh6Zs/krJraIuItPqCrt4hwP8MG6cMrpOS0OV",
+	"Wh9q1kkkqmMxnk7zjRxxMY8eC8HFPGzMK9dkLQJx3umrS/V6NiVxlsyKyOrwYBgwFll2Cqk6gYmEX/CG",
+	"Ejj256eIpOvI+Ptjb2g85yTx9BUw3SgvfQU0N7SFUGzuR3OtgIHQ6D1S5ZpbyVmqV4/xcla9qelnUekn",
+	"NaMsWfU+0OWbVLBuOPNUweOTjRVRwdNjjAJV8PQUIv8cUDvVnf9iMjgzZMlL0Lk17zcc4HvsYT8tjd/j",
+	"4KEtDXVwOM1YJrVcClbmt9BLpZYzwxRn2wVIWmVoDC9Fi6xpyySpMxOSjHIXgSQtswtLOHkp75WquuaX",
+	"BwUq74Kqrl5MT0dABtxhdVZjYyvTd0HL7phDdaF+VufqTF2NBuM/6Hawr9nsU1ZNiKRNw0b4TwAAAP//",
+	"TvuNLhArAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

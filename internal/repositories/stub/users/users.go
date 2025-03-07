@@ -22,17 +22,17 @@ func New() *Users {
 	users := make(map[string]*models.User, num)
 
 	users["pupkin_vi"] = &models.User{
-		ID:       0,
-		Login:    "pupkin_vi",
-		FullName: "Пупкин Василий Иванович",
-		Blocked:  false,
+		ID:      0,
+		Login:   "pupkin_vi",
+		Name:    "Пупкин Василий Иванович",
+		Blocked: false,
 	}
 
 	users["papiroskina_mn"] = &models.User{
-		ID:       1,
-		Login:    "papiroskina_mn",
-		FullName: "Папироскина Мария Николаевна",
-		Blocked:  false,
+		ID:      1,
+		Login:   "papiroskina_mn",
+		Name:    "Папироскина Мария Николаевна",
+		Blocked: false,
 	}
 
 	var login string
@@ -41,10 +41,10 @@ func New() *Users {
 		login = fmt.Sprintf("user%d", k)
 
 		users[login] = &models.User{
-			ID:       k,
-			Login:    login,
-			FullName: fmt.Sprintf("Пользователь%d", k),
-			Blocked:  (k%7 == 0),
+			ID:      k,
+			Login:   login,
+			Name:    fmt.Sprintf("Пользователь%d", k),
+			Blocked: (k%7 == 0),
 		}
 	}
 
@@ -87,10 +87,10 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 		defer s.mu.Unlock()
 
 		usr := models.User{
-			ID:       len(s.users),
-			Login:    user.Login,
-			FullName: user.FullName,
-			Blocked:  user.Blocked,
+			ID:      len(s.users),
+			Login:   user.Login,
+			Name:    user.Name,
+			Blocked: user.Blocked,
 		}
 
 		s.users[user.Login] = &usr
@@ -112,7 +112,7 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	usr.FullName = user.FullName
+	usr.Name = user.Name
 	usr.Blocked = user.Blocked
 
 	return usr, nil

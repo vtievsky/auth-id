@@ -12,6 +12,7 @@ import (
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
 	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
+	redisroles "github.com/vtievsky/auth-id/internal/repositories/redis/roles"
 	redisusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
@@ -33,7 +34,9 @@ func main() {
 	userRepo := redisusers.New(&redisusers.UsersOpts{
 		Client: redisClient,
 	})
-	roleRepo := userRepo // TODO
+	roleRepo := redisroles.New(&redisroles.RolesOpts{
+		Client: redisClient,
+	})
 
 	// services
 	userService := usersvc.New(&usersvc.UserSvcOpts{

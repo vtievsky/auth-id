@@ -195,18 +195,18 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
-  /v1/roles/{id}:
+  /v1/roles/{code}:
     get:
       tags:
         - web
       description: Получение данных роли
       operationId: GetRole
       parameters:
-        - name: id
-          description: Ид. роли
+        - name: code
+          description: Код роли
           in: path
           schema:
-            type: integer
+            type: string
           required: true
       responses:
         "200":
@@ -229,11 +229,11 @@ paths:
       description: Изменение роли
       operationId: UpdateRole
       parameters:
-        - name: id
-          description: Ид. изменяемой роли
+        - name: code
+          description: Код изменяемой роли
           in: path
           schema:
-            type: integer
+            type: string
           required: true
       requestBody:
         content:
@@ -263,11 +263,11 @@ paths:
       description: Удаление роли
       operationId: DeleteRole
       parameters:
-        - name: id
-          description: Ид. удаляемой роли
+        - name: code
+          description: Код удаляемой роли
           in: path
           schema:
-            type: integer
+            type: string
           required: true
       responses:
         "200":
@@ -334,8 +334,6 @@ components:
     User:
       type: object
       properties:
-        id:
-          type: integer
         name:
           type: string
         login:
@@ -343,7 +341,6 @@ components:
         blocked:
           type: boolean
       required:
-        - id
         - name
         - login
         - blocked
@@ -474,8 +471,8 @@ components:
     Role:
       type: object
       properties:
-        id:
-          type: integer
+        code:
+          type: string
         name:
           type: string
         description:
@@ -483,7 +480,7 @@ components:
         blocked:
           type: boolean
       required:
-        - id
+        - code
         - name
         - description
         - blocked

@@ -1,20 +1,21 @@
+// Модели для обмена данными между слоями
 package models
 
 type User struct {
-	ID       int
-	Login    string
-	FullName string
-	Blocked  bool
+	ID      int
+	Name    string
+	Login   string
+	Blocked bool
 }
 
 type UserCreated struct {
-	Login    string
-	FullName string
-	Blocked  bool
+	Name    string
+	Login   string
+	Blocked bool
 }
 
 type UserUpdated struct {
-	Login    string
-	FullName string
-	Blocked  bool
+	Name    string
+	Login   string
+	Blocked bool
 }

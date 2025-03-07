@@ -68,7 +68,7 @@ func (s *UserSvc) GetUser(ctx context.Context, login string) (*User, error) {
 	return &User{
 		ID:       resp.ID,
 		Login:    resp.Login,
-		FullName: resp.FullName,
+		FullName: resp.Name,
 		Blocked:  resp.Blocked,
 	}, nil
 }
@@ -91,7 +91,7 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 		users = append(users, &User{
 			ID:       user.ID,
 			Login:    user.Login,
-			FullName: user.FullName,
+			FullName: user.Name,
 			Blocked:  user.Blocked,
 		})
 	}
@@ -103,9 +103,9 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 	const op = "UserSvc.CreateUser"
 
 	u, err := s.storage.CreateUser(ctx, models.UserCreated{
-		Login:    user.Login,
-		FullName: user.FullName,
-		Blocked:  user.Blocked,
+		Login:   user.Login,
+		Name:    user.FullName,
+		Blocked: user.Blocked,
 	})
 	if err != nil {
 		s.logger.Error("failed to create user",
@@ -119,7 +119,7 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 	return &User{
 		ID:       u.ID,
 		Login:    u.Login,
-		FullName: u.FullName,
+		FullName: u.Name,
 		Blocked:  u.Blocked,
 	}, nil
 }
@@ -128,9 +128,9 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 	const op = "UserSvc.UpdateUser"
 
 	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
-		Login:    user.Login,
-		FullName: user.FullName,
-		Blocked:  user.Blocked,
+		Login:   user.Login,
+		Name:    user.FullName,
+		Blocked: user.Blocked,
 	})
 	if err != nil {
 		s.logger.Error("failed to update user",
@@ -144,7 +144,7 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 	return &User{
 		ID:       u.ID,
 		Login:    u.Login,
-		FullName: u.FullName,
+		FullName: u.Name,
 		Blocked:  u.Blocked,
 	}, nil
 }

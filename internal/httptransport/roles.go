@@ -11,7 +11,7 @@ func (t *Transport) GetRole(
 	ctx context.Context,
 	request serverhttp.GetRoleRequestObject,
 ) (serverhttp.GetRoleResponseObject, error) {
-	role, err := t.services.RoleSvc.GetRole(ctx, request.Id)
+	role, err := t.services.RoleSvc.GetRole(ctx, request.Code)
 	if err != nil {
 		return serverhttp.GetRole500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -23,7 +23,7 @@ func (t *Transport) GetRole(
 
 	return serverhttp.GetRole200JSONResponse{
 		Data: serverhttp.Role{
-			Id:          role.ID,
+			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
 			Blocked:     role.Blocked,
@@ -50,7 +50,7 @@ func (t *Transport) GetRoles(ctx context.Context, request serverhttp.GetRolesReq
 
 	for _, role := range roles {
 		resp = append(resp, serverhttp.Role{
-			Id:          role.ID,
+			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
 			Blocked:     role.Blocked,
@@ -86,7 +86,7 @@ func (t *Transport) CreateRole(
 
 	return serverhttp.CreateRole200JSONResponse{
 		Data: serverhttp.Role{
-			Id:          role.ID,
+			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
 			Blocked:     role.Blocked,
@@ -103,7 +103,7 @@ func (t *Transport) UpdateRole(
 	request serverhttp.UpdateRoleRequestObject,
 ) (serverhttp.UpdateRoleResponseObject, error) {
 	role, err := t.services.RoleSvc.UpdateRole(ctx, rolesvc.RoleUpdated{
-		ID:          request.Id,
+		Code:        request.Code,
 		Name:        request.Body.Name,
 		Description: request.Body.Description,
 		Blocked:     request.Body.Blocked,
@@ -119,7 +119,7 @@ func (t *Transport) UpdateRole(
 
 	return serverhttp.UpdateRole200JSONResponse{
 		Data: serverhttp.Role{
-			Id:          role.ID,
+			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
 			Blocked:     role.Blocked,
@@ -135,7 +135,7 @@ func (t *Transport) DeleteRole(
 	ctx context.Context,
 	request serverhttp.DeleteRoleRequestObject,
 ) (serverhttp.DeleteRoleResponseObject, error) {
-	if err := t.services.RoleSvc.DeleteRole(ctx, request.Id); err != nil {
+	if err := t.services.RoleSvc.DeleteRole(ctx, request.Code); err != nil {
 		return serverhttp.DeleteRole500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,

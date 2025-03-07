@@ -23,7 +23,6 @@ func (t *Transport) GetUser(
 
 	return serverhttp.GetUser200JSONResponse{
 		Data: serverhttp.User{
-			Id:      user.ID,
 			Login:   user.Login,
 			Name:    user.FullName,
 			Blocked: user.Blocked,
@@ -50,7 +49,6 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 
 	for _, user := range users {
 		resp = append(resp, serverhttp.User{
-			Id:      user.ID,
 			Login:   user.Login,
 			Name:    user.FullName,
 			Blocked: user.Blocked,
@@ -86,7 +84,6 @@ func (t *Transport) CreateUser(
 
 	return serverhttp.CreateUser200JSONResponse{
 		Data: serverhttp.User{
-			Id:      user.ID,
 			Login:   user.Login,
 			Name:    user.FullName,
 			Blocked: user.Blocked,
@@ -118,7 +115,6 @@ func (t *Transport) UpdateUser(
 
 	return serverhttp.UpdateUser200JSONResponse{
 		Data: serverhttp.User{
-			Id:      user.ID,
 			Login:   user.Login,
 			Name:    user.FullName,
 			Blocked: user.Blocked,
