@@ -70,7 +70,6 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 	for _, key := range ul {
 		u, err := s.GetUser(ctx, s.loginUser(key))
 		if err != nil {
-			// return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
 			continue
 		}
 
