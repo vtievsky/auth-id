@@ -35,6 +35,28 @@ const (
 	Ok ResponseStatusOkCode = "ok"
 )
 
+// CreateRoleRequest defines model for CreateRoleRequest.
+type CreateRoleRequest struct {
+	Blocked bool `json:"blocked"`
+
+	// Description Описание роли
+	Description string `json:"description"`
+
+	// Name Название роли
+	Name string `json:"name"`
+}
+
+// CreateRoleResponse200 defines model for CreateRoleResponse200.
+type CreateRoleResponse200 struct {
+	Data   Role             `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// CreateRoleResponse500 defines model for CreateRoleResponse500.
+type CreateRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // CreateUserRequest defines model for CreateUserRequest.
 type CreateUserRequest struct {
 	Blocked bool `json:"blocked"`
@@ -57,6 +79,16 @@ type CreateUserResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
+// DeleteRoleResponse200 defines model for DeleteRoleResponse200.
+type DeleteRoleResponse200 struct {
+	Status ResponseStatusOk `json:"status"`
+}
+
+// DeleteRoleResponse500 defines model for DeleteRoleResponse500.
+type DeleteRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // DeleteUserResponse200 defines model for DeleteUserResponse200.
 type DeleteUserResponse200 struct {
 	Status ResponseStatusOk `json:"status"`
@@ -64,6 +96,28 @@ type DeleteUserResponse200 struct {
 
 // DeleteUserResponse500 defines model for DeleteUserResponse500.
 type DeleteUserResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
+// GetRoleResponse200 defines model for GetRoleResponse200.
+type GetRoleResponse200 struct {
+	Data   Role             `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// GetRoleResponse500 defines model for GetRoleResponse500.
+type GetRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
+// GetRolesResponse200 defines model for GetRolesResponse200.
+type GetRolesResponse200 struct {
+	Data   []Role           `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// GetRolesResponse500 defines model for GetRolesResponse500.
+type GetRolesResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
@@ -107,6 +161,36 @@ type ResponseStatusOk struct {
 // ResponseStatusOkCode defines model for ResponseStatusOk.Code.
 type ResponseStatusOkCode string
 
+// Role defines model for Role.
+type Role struct {
+	Blocked     bool   `json:"blocked"`
+	Description string `json:"description"`
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+}
+
+// UpdateRoleRequest defines model for UpdateRoleRequest.
+type UpdateRoleRequest struct {
+	Blocked bool `json:"blocked"`
+
+	// Description Описание роли
+	Description string `json:"description"`
+
+	// Name Название роли
+	Name string `json:"name"`
+}
+
+// UpdateRoleResponse200 defines model for UpdateRoleResponse200.
+type UpdateRoleResponse200 struct {
+	Data   Role             `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// UpdateRoleResponse500 defines model for UpdateRoleResponse500.
+type UpdateRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
 	Blocked bool `json:"blocked"`
@@ -134,6 +218,12 @@ type User struct {
 	Name    string `json:"name"`
 }
 
+// CreateRoleJSONRequestBody defines body for CreateRole for application/json ContentType.
+type CreateRoleJSONRequestBody = CreateRoleRequest
+
+// UpdateRoleJSONRequestBody defines body for UpdateRole for application/json ContentType.
+type UpdateRoleJSONRequestBody = UpdateRoleRequest
+
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = CreateUserRequest
 
@@ -142,6 +232,21 @@ type UpdateUserJSONRequestBody = UpdateUserRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (GET /v1/roles)
+	GetRoles(ctx echo.Context) error
+
+	// (POST /v1/roles)
+	CreateRole(ctx echo.Context) error
+
+	// (DELETE /v1/roles/{id})
+	DeleteRole(ctx echo.Context, id int) error
+
+	// (GET /v1/roles/{id})
+	GetRole(ctx echo.Context, id int) error
+
+	// (PUT /v1/roles/{id})
+	UpdateRole(ctx echo.Context, id int) error
 
 	// (GET /v1/users)
 	GetUsers(ctx echo.Context) error
@@ -162,6 +267,82 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetRoles converts echo context to params.
+func (w *ServerInterfaceWrapper) GetRoles(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetRoles(ctx)
+	return err
+}
+
+// CreateRole converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateRole(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateRole(ctx)
+	return err
+}
+
+// DeleteRole converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteRole(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteRole(ctx, id)
+	return err
+}
+
+// GetRole converts echo context to params.
+func (w *ServerInterfaceWrapper) GetRole(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetRole(ctx, id)
+	return err
+}
+
+// UpdateRole converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateRole(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateRole(ctx, id)
+	return err
 }
 
 // GetUsers converts echo context to params.
@@ -268,12 +449,147 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/v1/roles", wrapper.GetRoles)
+	router.POST(baseURL+"/v1/roles", wrapper.CreateRole)
+	router.DELETE(baseURL+"/v1/roles/:id", wrapper.DeleteRole)
+	router.GET(baseURL+"/v1/roles/:id", wrapper.GetRole)
+	router.PUT(baseURL+"/v1/roles/:id", wrapper.UpdateRole)
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
 	router.GET(baseURL+"/v1/users/:login", wrapper.GetUser)
 	router.PUT(baseURL+"/v1/users/:login", wrapper.UpdateUser)
 
+}
+
+type GetRolesRequestObject struct {
+}
+
+type GetRolesResponseObject interface {
+	VisitGetRolesResponse(w http.ResponseWriter) error
+}
+
+type GetRoles200JSONResponse GetRolesResponse200
+
+func (response GetRoles200JSONResponse) VisitGetRolesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRoles500JSONResponse GetRolesResponse500
+
+func (response GetRoles500JSONResponse) VisitGetRolesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateRoleRequestObject struct {
+	Body *CreateRoleJSONRequestBody
+}
+
+type CreateRoleResponseObject interface {
+	VisitCreateRoleResponse(w http.ResponseWriter) error
+}
+
+type CreateRole200JSONResponse CreateRoleResponse200
+
+func (response CreateRole200JSONResponse) VisitCreateRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateRole500JSONResponse CreateRoleResponse500
+
+func (response CreateRole500JSONResponse) VisitCreateRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteRoleRequestObject struct {
+	Id int `json:"id"`
+}
+
+type DeleteRoleResponseObject interface {
+	VisitDeleteRoleResponse(w http.ResponseWriter) error
+}
+
+type DeleteRole200JSONResponse DeleteRoleResponse200
+
+func (response DeleteRole200JSONResponse) VisitDeleteRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteRole500JSONResponse DeleteRoleResponse500
+
+func (response DeleteRole500JSONResponse) VisitDeleteRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRoleRequestObject struct {
+	Id int `json:"id"`
+}
+
+type GetRoleResponseObject interface {
+	VisitGetRoleResponse(w http.ResponseWriter) error
+}
+
+type GetRole200JSONResponse GetRoleResponse200
+
+func (response GetRole200JSONResponse) VisitGetRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRole500JSONResponse GetRoleResponse500
+
+func (response GetRole500JSONResponse) VisitGetRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateRoleRequestObject struct {
+	Id   int `json:"id"`
+	Body *UpdateRoleJSONRequestBody
+}
+
+type UpdateRoleResponseObject interface {
+	VisitUpdateRoleResponse(w http.ResponseWriter) error
+}
+
+type UpdateRole200JSONResponse UpdateRoleResponse200
+
+func (response UpdateRole200JSONResponse) VisitUpdateRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateRole500JSONResponse UpdateRoleResponse500
+
+func (response UpdateRole500JSONResponse) VisitUpdateRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type GetUsersRequestObject struct {
@@ -409,6 +725,21 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(w http.Respons
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (GET /v1/roles)
+	GetRoles(ctx context.Context, request GetRolesRequestObject) (GetRolesResponseObject, error)
+
+	// (POST /v1/roles)
+	CreateRole(ctx context.Context, request CreateRoleRequestObject) (CreateRoleResponseObject, error)
+
+	// (DELETE /v1/roles/{id})
+	DeleteRole(ctx context.Context, request DeleteRoleRequestObject) (DeleteRoleResponseObject, error)
+
+	// (GET /v1/roles/{id})
+	GetRole(ctx context.Context, request GetRoleRequestObject) (GetRoleResponseObject, error)
+
+	// (PUT /v1/roles/{id})
+	UpdateRole(ctx context.Context, request UpdateRoleRequestObject) (UpdateRoleResponseObject, error)
+
 	// (GET /v1/users)
 	GetUsers(ctx context.Context, request GetUsersRequestObject) (GetUsersResponseObject, error)
 
@@ -435,6 +766,139 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// GetRoles operation middleware
+func (sh *strictHandler) GetRoles(ctx echo.Context) error {
+	var request GetRolesRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRoles(ctx.Request().Context(), request.(GetRolesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRoles")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetRolesResponseObject); ok {
+		return validResponse.VisitGetRolesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// CreateRole operation middleware
+func (sh *strictHandler) CreateRole(ctx echo.Context) error {
+	var request CreateRoleRequestObject
+
+	var body CreateRoleJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateRole(ctx.Request().Context(), request.(CreateRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRole")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(CreateRoleResponseObject); ok {
+		return validResponse.VisitCreateRoleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeleteRole operation middleware
+func (sh *strictHandler) DeleteRole(ctx echo.Context, id int) error {
+	var request DeleteRoleRequestObject
+
+	request.Id = id
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRole(ctx.Request().Context(), request.(DeleteRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRole")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeleteRoleResponseObject); ok {
+		return validResponse.VisitDeleteRoleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetRole operation middleware
+func (sh *strictHandler) GetRole(ctx echo.Context, id int) error {
+	var request GetRoleRequestObject
+
+	request.Id = id
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRole(ctx.Request().Context(), request.(GetRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRole")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetRoleResponseObject); ok {
+		return validResponse.VisitGetRoleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UpdateRole operation middleware
+func (sh *strictHandler) UpdateRole(ctx echo.Context, id int) error {
+	var request UpdateRoleRequestObject
+
+	request.Id = id
+
+	var body UpdateRoleJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateRole(ctx.Request().Context(), request.(UpdateRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRole")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UpdateRoleResponseObject); ok {
+		return validResponse.VisitUpdateRoleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // GetUsers operation middleware
@@ -573,24 +1037,28 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/9yZzW7bRhDHX0XY9shadgtfdOsXCqMHFzFyMnygxbHNmCKZ5dKFYQiI7QY9uKivAfoR",
+	"FH0BJbFgJbbkV5h9o2KWlEiJK5NKTdLKyZbAnZ0d/nbmP6MT1vY6vueCKwLWOmFB+wA6pvr3Ww6mgCee",
+	"A0/geQiBoC997vnAhQ3qkV3Hax+CRf9asGeGjmAtwUMwmDj2gbXYruc5YLqsazALgja3fWF7bvR86iPD",
+	"v/EOB/IUezjEAfYb8gWO8AYHbGIqENx298mSa3ZAY+Iv7OE1vi1gomswDs9Dm5Pr25G9aQeNydF2Jqu9",
+	"3WfQFuRAOjKB77kBfLm6mo2OZQqT/n7OYY+12GfNJNTNOM5NMkImA2GKMMh9Ot5uSz29eZg5SmzGiPYu",
+	"5vu6zveP8ed7zj0+z6X5vjwNgD8IYY63b2vYUl838I5okL/hNY4IEnmGfbyRlwsA9lrxNMQR9hs4wFt5",
+	"uYBVPXORy0Voi6L0P2kjIzXQlva9Ptq+AwcK3NqHjU0xR+oOSi5cVQXlcZDyA4jlTO4zjtcewaBQCG0B",
+	"naBoLOOtTM7N4zpiGzyK4C5nNZhxvPYIPiCe41jWiefUkeoLrm55xpO2ZymJBW7YIXugHtvRiLGZvuF+",
+	"WaXMTq/Jd3HzMN8/77A65yjT3SeEc3urjJt2ep3tCtiPaB0L3fv9ti1mLN4kPfWtBdrHT7pfTIdi2SRF",
+	"1vf6MkvkS9F+MYtUdX1dPg3LWcGzvtdIAx1+MQDm5cHJ5GBu7iieIfNbenph0A65LY63KBSx42Dy6EAq",
+	"Psrz6KuJgQMhfNal9ba750VlyhVmm+7BbMZk+Cf25RmO8EpeNPCK6KUU18M3OJJn8qIhTxtf/7TRwLfY",
+	"xzfypTzHDwQ7bWcLR6mYUBx8YVv0GDPYEfAgMr22skqx8XxwTd9mLfbVyurKGjOYb4oDdZjm0VqTk1qm",
+	"D/sg5t06eS5/xf44AZ/GSf0D9sbZuI/vmdqJm7Rww2KtiRJn9BIihNQ+8TWimICrtjR937HbamXzWRAV",
+	"koi+PDZ1DYyK/PQpNn+kQKyXuPG6fuMNVwB3TaexBfwIeCO5PWO0WGs7gWp7p0scmvsB4foz7LKdrsF8",
+	"L9C9mX9whNd4pSuM0y8imSWy6D5AIL7xrOMHC0Z2BK0JBb7GngL7loCXLwj3a+zhHflNEoGlL6vgIXRL",
+	"BEc/G64EHf1otxx4ukZyx5snttWNOHJA6Crsv4qmm+SmzyMqGY2pbMLNDgjggXJnxuYrvFppyPPIsrzE",
+	"Pt7iCN+nbVNOVzlpnJ1bUaaepsFIhXe2NNDBS0NFP5CsBBX9CLKsPFO0AMQ5Zygv5Mv5jMQZsiAgS0OD",
+	"ZuhYZcGppN6EOg5e4TWlbhzmp4ekGSn29nEwtl1ugnj4ypftnh995dN3uZUwrG9SS618YaDA+0h1q+8v",
+	"56ldNdgrWe1m5qFVJZ/M1LJmtXtP669Tv6oLLVP9pscdS6J+Z2cbFarf2dFE+TmgeaI6/sUEcGHIkp9F",
+	"cyveHzjCdzjAYVYVv8PRfVtqyuB4ipFbCScTkfKVci1Y6X+XflRKuTBMcbZdgKRlhkbzM2mVNe0xCerC",
+	"hCTz3UUgyarsyhJOWcp7qaqu/heFCpV3RVVXPUyrIyBD7rAWa7LUk9m7oGR3zKE8l7/LM3kqLycD8V9U",
+	"NzhUbA4pqyZE0qbdne5/AQAA///BQgTaIisAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

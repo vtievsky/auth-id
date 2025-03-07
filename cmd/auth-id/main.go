@@ -14,6 +14,7 @@ import (
 	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
 	redisusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
 	"github.com/vtievsky/auth-id/internal/services"
+	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
 	"go.uber.org/zap"
@@ -32,6 +33,7 @@ func main() {
 	userRepo := redisusers.New(&redisusers.UsersOpts{
 		Client: redisClient,
 	})
+	roleRepo := userRepo // TODO
 
 	// services
 	userService := usersvc.New(&usersvc.UserSvcOpts{
@@ -39,10 +41,16 @@ func main() {
 		Storage: userRepo,
 	})
 
+	roleService := rolesvc.New(&rolesvc.RoleSvcOpts{
+		Logger:  logger.Named("role"),
+		Storage: roleRepo,
+	})
+
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
 		UserSvc: userService,
+		RoleSvc: roleService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)

@@ -9,9 +9,6 @@ servers:
 tags:
   - name: web
     description: Используются для фронтенда
-
-  - name: webhook
-    description: Используется для взаимодействия с сервисами
 paths:
   /v1/users:
     get:
@@ -147,6 +144,143 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeleteUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/roles:
+    get:
+      tags:
+        - web
+      description: Получение списка ролей
+      operationId: GetRoles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRolesResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRolesResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    post:
+      tags:
+        - web
+      description: Создание роли
+      operationId: CreateRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRoleResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRoleResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/roles/{id}:
+    get:
+      tags:
+        - web
+      description: Получение данных роли
+      operationId: GetRole
+      parameters:
+        - name: id
+          description: Ид. роли
+          in: path
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoleResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoleResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    put:
+      tags:
+        - web
+      description: Изменение роли
+      operationId: UpdateRole
+      parameters:
+        - name: id
+          description: Ид. изменяемой роли
+          in: path
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRoleResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRoleResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    delete:
+      tags:
+        - web
+      description: Удаление роли
+      operationId: DeleteRole
+      parameters:
+        - name: id
+          description: Ид. удаляемой роли
+          in: path
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRoleResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRoleResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -309,6 +443,150 @@ components:
       required:
         - status
     DeleteUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    GetRolesResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+      required:
+        - status
+        - data
+    GetRolesResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        blocked:
+          type: boolean
+      required:
+        - id
+        - name
+        - description
+        - blocked
+    GetRoleResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/Role"
+      required:
+        - status
+        - data
+    GetRoleResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    CreateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название роли
+        description:
+          type: string
+          description: Описание роли
+        blocked:
+          type: boolean
+          default: true
+      required:
+        - name
+        - description
+        - blocked
+    CreateRoleResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/Role"
+      required:
+        - status
+        - data
+    CreateRoleResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    UpdateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название роли
+        description:
+          type: string
+          description: Описание роли
+        blocked:
+          type: boolean
+      required:
+        - name
+        - description
+        - blocked
+    UpdateRoleResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/Role"
+      required:
+        - status
+        - data
+    UpdateRoleResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    DeleteRoleResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    DeleteRoleResponse500:
       type: object
       properties:
         status:
