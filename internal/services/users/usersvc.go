@@ -28,6 +28,7 @@ type UserUpdated struct {
 }
 
 type Storage interface {
+	GetUser(ctx context.Context, login string) (*dbusers.User, error)
 	GetUsers(ctx context.Context) ([]*dbusers.User, error)
 	CreateUser(ctx context.Context, user dbusers.UserCreated) (*dbusers.User, error)
 	UpdateUser(ctx context.Context, user dbusers.UserUpdated) (*dbusers.User, error)
@@ -51,12 +52,24 @@ func New(opts *UserSvcOpts) *UserSvc {
 	}
 }
 
-func (s *UserSvc) User(ctx context.Context, login string) (*User, error) {
+func (s *UserSvc) GetUser(ctx context.Context, login string) (*User, error) {
+	const op = "UserSvc.GetUser"
+
+	resp, err := s.storage.GetUser(ctx, login)
+	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.String("username", login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
+	}
+
 	return &User{
-		ID:       0,
-		Login:    "",
-		FullName: "",
-		Blocked:  false,
+		ID:       resp.ID,
+		Login:    resp.Login,
+		FullName: resp.FullName,
+		Blocked:  resp.Blocked,
 	}, nil
 }
 

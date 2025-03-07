@@ -3,7 +3,6 @@ package stubusers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 )
 
@@ -13,34 +12,37 @@ const (
 
 type Users struct {
 	mu    sync.Mutex
-	users []*User
+	users map[string]*User
 }
 
 func New() *Users {
-	users := append(make([]*User, 0, num),
-		&User{
-			ID:       1,
-			Login:    "pupkin_vi",
-			FullName: "Пупкин Василий Иванович",
-			Blocked:  false,
-		},
-		&User{
-			ID:       2, //nolint:mnd
-			Login:    "papiroskina_mn",
-			FullName: "Папироскина Мария Николаевна",
-			Blocked:  false,
-		},
-	)
+	users := make(map[string]*User, num)
+
+	users["pupkin_vi"] = &User{
+		ID:       0,
+		Login:    "pupkin_vi",
+		FullName: "Пупкин Василий Иванович",
+		Blocked:  false,
+	}
+
+	users["papiroskina_mn"] = &User{
+		ID:       1,
+		Login:    "papiroskina_mn",
+		FullName: "Папироскина Мария Николаевна",
+		Blocked:  false,
+	}
+
+	var login string
 
 	for k := len(users); k < num; k++ {
-		users = append(users,
-			&User{
-				ID:       k,
-				Login:    fmt.Sprintf("user%d", k),
-				FullName: fmt.Sprintf("Пользователь%d", k),
-				Blocked:  (k%7 == 0),
-			},
-		)
+		login = fmt.Sprintf("user%d", k)
+
+		users[login] = &User{
+			ID:       k,
+			Login:    login,
+			FullName: fmt.Sprintf("Пользователь%d", k),
+			Blocked:  (k%7 == 0),
+		}
 	}
 
 	return &Users{
@@ -49,43 +51,63 @@ func New() *Users {
 	}
 }
 
+func (s *Users) GetUser(ctx context.Context, login string) (*User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if val, ok := s.users[login]; ok {
+		return val, nil
+	}
+
+	return nil, ErrUserNotFound
+}
+
 func (s *Users) GetUsers(ctx context.Context) ([]*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.users, nil
+	users := make([]*User, 0, len(s.users))
+
+	for _, val := range s.users {
+		users = append(users, val)
+	}
+
+	return users, nil
 }
 
 func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	const op = "StubUsers.CreateUser"
 
-	_, err := s.getUser(user.Login)
+	_, err := s.GetUser(ctx, user.Login)
 	if err != nil {
-		id := len(s.users)
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
 		usr := User{
-			ID:       id,
+			ID:       len(s.users),
 			Login:    user.Login,
 			FullName: user.FullName,
 			Blocked:  user.Blocked,
 		}
 
-		s.users = append(s.users, &usr)
+		s.users[user.Login] = &usr
 
 		return &usr, nil
 	}
 
-	return nil, ErrUserAlreadyExists
+	return nil, fmt.Errorf("failed to create user | %s:%w", op, ErrUserAlreadyExists)
 }
 
 func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
+	const op = "StubUsers.UpdateUser"
+
+	usr, err := s.GetUser(ctx, user.Login)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	usr, err := s.getUser(user.Login)
-	if err != nil {
-		return nil, err
-	}
 
 	usr.FullName = user.FullName
 	usr.Blocked = user.Blocked
@@ -94,35 +116,17 @@ func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error)
 }
 
 func (s *Users) DeleteUser(ctx context.Context, login string) error {
+	const op = "StubUsers.DeleteUser"
+
+	_, err := s.GetUser(ctx, login)
+	if err != nil {
+		return fmt.Errorf("failed to delete user | %s:%w", op, err)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, err := s.getUser(login)
-	if err != nil {
-		return err
-	}
-
-	ul := make([]*User, 0, len(s.users)-1)
-
-	for _, k := range s.users {
-		if strings.EqualFold(k.Login, login) {
-			continue
-		}
-
-		ul = append(ul, k)
-	}
-
-	s.users = ul
+	delete(s.users, login)
 
 	return nil
-}
-
-func (s *Users) getUser(login string) (*User, error) {
-	for _, k := range s.users {
-		if strings.EqualFold(k.Login, login) {
-			return k, nil
-		}
-	}
-
-	return nil, ErrUserNotFound
 }

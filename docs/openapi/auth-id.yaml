@@ -62,6 +62,33 @@ paths:
       security:
         - bearer: []
   /v1/users/{login}:
+    get:
+      tags:
+        - web
+      description: Получение данных пользователя
+      operationId: GetUser
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
     put:
       tags:
         - web
@@ -186,6 +213,26 @@ components:
         - name
         - login
         - blocked
+    GetUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: object
+          $ref: "#/components/schemas/User"
+      required:
+        - status
+        - data
+    GetUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
     CreateUserRequest:
       type: object
       properties:

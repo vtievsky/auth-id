@@ -28,7 +28,7 @@ func main() {
 
 	// services
 	userService := usersvc.New(&usersvc.UserSvcOpts{
-		Logger:  logger,
+		Logger:  logger.Named("user"),
 		Storage: userRepo,
 	})
 

@@ -7,6 +7,34 @@ import (
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 )
 
+func (t *Transport) GetUser(
+	ctx context.Context,
+	request serverhttp.GetUserRequestObject,
+) (serverhttp.GetUserResponseObject, error) {
+	user, err := t.services.UserSvc.GetUser(ctx, request.Login)
+	if err != nil {
+		return serverhttp.GetUser500JSONResponse{ //nolint:nilerr
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.GetUser200JSONResponse{
+		Data: serverhttp.User{
+			Id:      user.ID,
+			Login:   user.Login,
+			Name:    user.FullName,
+			Blocked: user.Blocked,
+		},
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}
+
 func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
 	users, err := t.services.UserSvc.GetUsers(ctx)
 	if err != nil {

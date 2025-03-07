@@ -67,6 +67,17 @@ type DeleteUserResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
+// GetUserResponse200 defines model for GetUserResponse200.
+type GetUserResponse200 struct {
+	Data   User             `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// GetUserResponse500 defines model for GetUserResponse500.
+type GetUserResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // GetUsersResponse200 defines model for GetUsersResponse200.
 type GetUsersResponse200 struct {
 	Data   []User           `json:"data"`
@@ -141,6 +152,9 @@ type ServerInterface interface {
 	// (DELETE /v1/users/{login})
 	DeleteUser(ctx echo.Context, login string) error
 
+	// (GET /v1/users/{login})
+	GetUser(ctx echo.Context, login string) error
+
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx echo.Context, login string) error
 }
@@ -187,6 +201,24 @@ func (w *ServerInterfaceWrapper) DeleteUser(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteUser(ctx, login)
+	return err
+}
+
+// GetUser converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetUser(ctx, login)
 	return err
 }
 
@@ -239,6 +271,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
+	router.GET(baseURL+"/v1/users/:login", wrapper.GetUser)
 	router.PUT(baseURL+"/v1/users/:login", wrapper.UpdateUser)
 
 }
@@ -320,6 +353,32 @@ func (response DeleteUser500JSONResponse) VisitDeleteUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserRequestObject struct {
+	Login string `json:"login"`
+}
+
+type GetUserResponseObject interface {
+	VisitGetUserResponse(w http.ResponseWriter) error
+}
+
+type GetUser200JSONResponse GetUserResponse200
+
+func (response GetUser200JSONResponse) VisitGetUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUser500JSONResponse GetUserResponse500
+
+func (response GetUser500JSONResponse) VisitGetUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type UpdateUserRequestObject struct {
 	Login string `json:"login"`
 	Body  *UpdateUserJSONRequestBody
@@ -358,6 +417,9 @@ type StrictServerInterface interface {
 
 	// (DELETE /v1/users/{login})
 	DeleteUser(ctx context.Context, request DeleteUserRequestObject) (DeleteUserResponseObject, error)
+
+	// (GET /v1/users/{login})
+	GetUser(ctx context.Context, request GetUserRequestObject) (GetUserResponseObject, error)
 
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
@@ -452,6 +514,31 @@ func (sh *strictHandler) DeleteUser(ctx echo.Context, login string) error {
 	return nil
 }
 
+// GetUser operation middleware
+func (sh *strictHandler) GetUser(ctx echo.Context, login string) error {
+	var request GetUserRequestObject
+
+	request.Login = login
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUser(ctx.Request().Context(), request.(GetUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUser")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetUserResponseObject); ok {
+		return validResponse.VisitGetUserResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // UpdateUser operation middleware
 func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 	var request UpdateUserRequestObject
@@ -486,24 +573,24 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RXzW7jNhB+FYHtUY2TFrno1j8UQQ8pGuwp8IGRJrbWsqilqBRBICB2WvSwRXMt0AKL",
-	"oi/gTSPETWLlFYZvVAzl30jxTxE73ZMtgpz5Zuabj8Mz5op2JEIIVcycMxa7TWhz8/dLCVzBqxjk9/Am",
-	"gVjRYiRFBFL5YLYcBcJtgUd/PTjmSaCYo2QCNlOnETCHHQkRAA9ZarNANPyw2Bm70o+UL0LmFMsWPmCO",
-	"d/oXvMEcr7Cnu5jhnb5kY0uxkn7YIEMhb0PZDr4jCzjAHDML+3ivL1ewmtpMwpvElxTMYeFiBNkeh1kf",
-	"nxNHr8FVhGY6S3Ekwhg+3d4uZ8rjitPvxxKOmcM+qk3SXhvmvEZGyGSsuEriRbtH7g7M7v1WKYihGbvw",
-	"vRz23Srs/wXP11IK+RSkKixfQQBL5PF5c7MckJdLyjegCEi8FLV8Be14WY4NXXEp+elGOfc4pJdLbtXx",
-	"EhJXeEZsIEzaZA/MtnqFLM3I0dkCgTFmZ88shrjfWoxPtDYG7lXkrXA/lC+Ezen4PP2ejuJD0+8y9pfr",
-	"JhP8agTwp9f9UEGjyN94Unjy6p9fdd9j9vJXOBUM3ET66vSAUjEEDlwWAZn8GOTF0thAU6mIpXTeD49F",
-	"0Yyh4i71weOWY/gHZrqLOV7rtxZeE3stfY49fI+57uq3lu5Yn3+3Z+EVZvhe/6Qv8JbITu58FRitTlTz",
-	"E9+jbcxmJyDjwvTO1jblRkQQ8shnDvtsa3trh9ks4qppgqmd7NQSEl36aIB6quv0hf4ZMxxgHzNLd/AB",
-	"+7qDt9h7ogMxw3+Y8Sw5GdrzmDMWeEZFKShl/A7binIEoYHAoyjwXXOy9joulKlg4yKuVt2LphKzUe1/",
-	"S4nZXaPj3WrHe6ECGfLAOgB5AtKadNOIasw5nJDssJ4SL3kjJvr+AEesntosEnFVpf7EHG/wGnvDOs0R",
-	"x9nCTKY9VvQLxOoL4Z0+W3LKD4aK1OA77Bni31ND6HNqhxvs4YM+x1x3sMemm5keE+kaiVQ9vW+EStXD",
-	"93rIlNoTDaidGU1MC2rRrFtBsr8Mwe7GYrA0ySbTsxEgydugjPAclnz8jjn+jX0cWPqicKcvMcN7s5zP",
-	"c0m3g1G3kc47Y52fpY49VYvHd0Z9jbSqfsxshFbVz5e1aVRSJVG/4Q21Nw5W589kpFmBP9gfOdw8g55f",
-	"Rstz9f9eRquH6I3wvXoGXpOMms10uiBkIgPmsBqb2lnuBTNHDXmoL/Svuqs79KYZzoA/UsFwYLg5IBmc",
-	"MJKcpvYii6b+UxbxyhChb9rgmkY03dFdvMI+uevQXJfpc/PdMfzpz3hsCtFiaT39NwAA//++l8gKGRQA",
-	"AA==",
+	"H4sIAAAAAAAC/9RXzU4jRxB+lVEnxwmGRFzmlj9FKAeioD0hHxq7wLO2p2e7e4gQGgmbrHIgCtdIibSK",
+	"8gJegoWz4OEVqt8oqp7xHzPgcYTt5WRPq7uq+quvvuo6ZTXRDkUAgVbMO2Wq1oA2t3+/lsA1vFIgf4Q3",
+	"EShNi6EUIUjtg91y0BK1JtTpbx0OedTSzNMyApfpkxCYxw6EaAEPWOyyljjyg3Snqkk/1L4ImJcuO3iP",
+	"Cd6aX/EGE7zCnuliH2/NJRtbUlr6wREZCngb8nbwHVnAISbYd3CAd+ZyAauxyyS8iXxJl9lPXYxCdsfX",
+	"rI7PiYPXUNMUzTRKKhSBgs83N/NI1bnm9PuphEPmsU8qE9grGeYVMkImleY6UvN2j9zt2d27zdwlMjNu",
+	"6rtc7NtFsf+feL6VUsjHQiqK5RtoQQkcnxebcoGsD5TvQL9MZj0IfO0IqlIQ+hraqiyWmSsuJT9ZB7Zq",
+	"/eAWHc9FUhN1K9cQRG2yB3ZbtUDYZwT9dI5EW7OzZ+aHuNucH59oriy4V2F9gQ6bb6mr64RPdcDpW7w0",
+	"ncrHvr5qspdfjAD+9LofaDhK8Ru/tR59PD2ddb/O3PKPIEoY1CLp65M9giILHLhML2TxsZGnS2MDDa1D",
+	"FtN5PzgUaTEGmteoDh6WHMM/sW+6mOC1uXDwmtjrmDPs4XtMTNdcOKbjfPnDjoNX2Mf35q05xw9EdnLn",
+	"65bV6kg3PvPrtI257BikSk1vbWwSNiKEgIc+89gXG5sbW8xlIdcNe5nK8VYlItGljyPQj1WdOTe/YB+H",
+	"OMC+Yzp4jwPTwQ/Ye6QCsY//MutZcjK0U2feWOAZJSWllPWblRVhBIENgYdhy6/Zk5XXKlWmlI3zuFrU",
+	"F20mZm+1+z0Bs71Ex9vFjncCDTLgLWcP5DFIZ1JNI6oxb39Csv1qTLzkR4ro+xMcsGrsslCookz9hQne",
+	"4DX2sjw9IY6ziZm8l1laL6D0V6J+8mzg5EeuAmjwHfYs8e+oIMwZlcMN9vDenGFiOthj08VM41i8RCIV",
+	"zz8roVLx+LIcMsXuRAMqp1YT45RaNC0UkOxvS7DbsRiUJtlk/rACJHkbtBWe/ZyPPzDBf3CAQ8ecp+7M",
+	"Jfbxzi4nT7mk7mDVbaTz3ljnZ6njTuXiYc+oLpFWxePgSmhVPAAuS6PKNpNMr4bmwrwtT6ZMbRdg0ksm",
+	"TcG4vMqetpKWFhXR5Xe8oW6Aw8XlZvICXoQkg5HD1QvO83fd/Bj20Xfd4plrJWQvHpmW1HXtZjqdEjKS",
+	"LeaxCpvama8F++zOeGjOzW+mazo0Amcjw8+UMBxabg5JVSeMJKexO8+izf+URbyyRBjYMrimF73pmC5e",
+	"4YDcdWgM6Jsz+92x/BnMeGwI0WRxNf4vAAD//6qbKtCKFwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
