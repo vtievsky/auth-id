@@ -1,4 +1,4 @@
-package stubusers
+package models
 
 type User struct {
 	ID       int

@@ -11,6 +11,7 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
+	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
 	redisusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -23,9 +24,13 @@ func main() {
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
 
+	redisClient := redisclient.New(&redisclient.ClientOpts{
+		URL: conf.DB.URL,
+	})
+
 	// repos
 	userRepo := redisusers.New(&redisusers.UsersOpts{
-		URL: conf.DB.URL,
+		Client: redisClient,
 	})
 
 	// services

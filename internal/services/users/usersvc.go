@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	dbusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
+	"github.com/vtievsky/auth-id/internal/repositories/models"
 	"go.uber.org/zap"
 )
 
@@ -28,10 +28,10 @@ type UserUpdated struct {
 }
 
 type Storage interface {
-	GetUser(ctx context.Context, login string) (*dbusers.User, error)
-	GetUsers(ctx context.Context) ([]*dbusers.User, error)
-	CreateUser(ctx context.Context, user dbusers.UserCreated) (*dbusers.User, error)
-	UpdateUser(ctx context.Context, user dbusers.UserUpdated) (*dbusers.User, error)
+	GetUser(ctx context.Context, login string) (*models.User, error)
+	GetUsers(ctx context.Context) ([]*models.User, error)
+	CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error)
+	UpdateUser(ctx context.Context, user models.UserUpdated) (*models.User, error)
 	DeleteUser(ctx context.Context, login string) error
 }
 
@@ -102,7 +102,7 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	const op = "UserSvc.CreateUser"
 
-	u, err := s.storage.CreateUser(ctx, dbusers.UserCreated{
+	u, err := s.storage.CreateUser(ctx, models.UserCreated{
 		Login:    user.Login,
 		FullName: user.FullName,
 		Blocked:  user.Blocked,
@@ -127,7 +127,7 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	const op = "UserSvc.UpdateUser"
 
-	u, err := s.storage.UpdateUser(ctx, dbusers.UserUpdated{
+	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
 		Login:    user.Login,
 		FullName: user.FullName,
 		Blocked:  user.Blocked,

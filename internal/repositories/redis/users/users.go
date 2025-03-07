@@ -2,50 +2,48 @@ package redisusers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	dberrors "github.com/vtievsky/auth-id/internal/repositories"
+	"github.com/vtievsky/auth-id/internal/repositories/models"
+	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
 )
 
 type UsersOpts struct {
-	URL string
+	Client *redisclient.Client
 }
 
 type Users struct {
-	client redis.UniversalClient
+	client *redisclient.Client
 }
 
 func New(opts *UsersOpts) *Users {
-	client := redis.NewUniversalClient(
-		&redis.UniversalOptions{
-			Addrs:      []string{opts.URL},
-			ClientName: "auth-id",
-			DB:         0,
-			PoolSize:   20,
-		},
-	)
-
 	return &Users{
-		client: client,
+		client: opts.Client,
 	}
 }
 
-func (s *Users) GetUser(ctx context.Context, login string) (*User, error) {
+func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error) {
 	const op = "DbUsers.GetUser"
 
-	var value User
+	cmd := s.client.HGetAll(ctx, login)
 
-	if err := s.client.HGetAll(ctx, login).Scan(&value); err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, fmt.Errorf("failed to get user | %s:%w", op, ErrUserNotFound)
-		}
-
-		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
+	switch {
+	case cmd.Err() != nil:
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, cmd.Err())
+	case len(cmd.Val()) < 1:
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, dberrors.ErrUserNotFound)
 	}
 
-	return &User{
+	var value redisclient.User
+
+	err := cmd.Scan(&value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, dberrors.ErrUserScan)
+	}
+
+	return &models.User{
 		ID:       value.ID,
 		Login:    value.Login,
 		FullName: value.FullName,
@@ -53,16 +51,16 @@ func (s *Users) GetUser(ctx context.Context, login string) (*User, error) {
 	}, nil
 }
 
-func (s *Users) GetUsers(ctx context.Context) ([]*User, error) {
-	users := make([]*User, 0)
+func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
+	users := make([]*models.User, 0)
 
 	return users, nil
 }
 
-func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
+func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error) {
 	const op = "DbUsers.CreateUser"
 
-	if _, err := s.client.HMSet(ctx, user.Login, UserCreated{
+	if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserCreated{
 		ID:       int(time.Now().Unix()),
 		Login:    user.Login,
 		FullName: user.FullName,
@@ -74,10 +72,10 @@ func (s *Users) CreateUser(ctx context.Context, user UserCreated) (*User, error)
 	return s.GetUser(ctx, user.Login)
 }
 
-func (s *Users) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
+func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*models.User, error) {
 	const op = "DbUsers.UpdateUser"
 
-	if _, err := s.client.HMSet(ctx, user.Login, UserUpdated{
+	if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserUpdated{
 		Login:    user.Login,
 		FullName: user.FullName,
 		Blocked:  user.Blocked,

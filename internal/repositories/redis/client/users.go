@@ -1,4 +1,4 @@
-package redisusers
+package redisclient
 
 type User struct {
 	ID       int    `redis:"id"`
