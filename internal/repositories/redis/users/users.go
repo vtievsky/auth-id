@@ -105,7 +105,6 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 	}
 
 	return nil, fmt.Errorf("failed to create user | %s:%w", op, dberrors.ErrUserAlreadyExists)
-
 }
 
 func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*models.User, error) {

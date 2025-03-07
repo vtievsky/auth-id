@@ -13,11 +13,11 @@ type Client struct {
 func New(opts *ClientOpts) *Client {
 	return &Client{
 		UniversalClient: redis.NewUniversalClient(
-			&redis.UniversalOptions{
+			&redis.UniversalOptions{ //nolint:exhaustruct
 				Addrs:      []string{opts.URL},
 				ClientName: "auth-id",
 				DB:         0,
-				PoolSize:   20,
+				PoolSize:   20, //nolint:mnd
 			},
 		),
 	}
