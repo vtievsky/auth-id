@@ -11,7 +11,7 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
-	dbusers "github.com/vtievsky/auth-id/internal/repositories/stub/users"
+	redisusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
@@ -24,7 +24,9 @@ func main() {
 	httpSrv := echo.New()
 
 	// repos
-	userRepo := dbusers.New()
+	userRepo := redisusers.New(&redisusers.UsersOpts{
+		URL: conf.DB.URL,
+	})
 
 	// services
 	userService := usersvc.New(&usersvc.UserSvcOpts{

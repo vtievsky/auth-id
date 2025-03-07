@@ -7,6 +7,10 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+type DBConfig struct {
+	URL string `envconfig:"AUTH_DB_URL" required:"true"`
+}
+
 type LogConfig struct {
 	EnableStacktrace bool `envconfig:"AUTH_LOG_ENABLE_STACKTRACE" default:"false"`
 }
@@ -16,6 +20,7 @@ type Config struct {
 
 	Port int `envconfig:"AUTH_PORT" default:"8080"`
 
+	DB  DBConfig
 	Log LogConfig
 }
 
