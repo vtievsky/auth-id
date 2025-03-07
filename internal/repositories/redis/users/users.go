@@ -2,6 +2,7 @@ package redisusers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -60,20 +61,33 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error) {
 	const op = "DbUsers.CreateUser"
 
-	if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserCreated{
-		ID:       int(time.Now().Unix()),
-		Login:    user.Login,
-		FullName: user.FullName,
-		Blocked:  user.Blocked,
-	}).Result(); err != nil {
-		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+	if _, err := s.GetUser(ctx, user.Login); err != nil {
+		if !errors.Is(err, dberrors.ErrUserNotFound) {
+			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+		}
+
+		if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserCreated{
+			ID:       int(time.Now().Unix()),
+			Login:    user.Login,
+			FullName: user.FullName,
+			Blocked:  user.Blocked,
+		}).Result(); err != nil {
+			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+		}
+
+		return s.GetUser(ctx, user.Login)
 	}
 
-	return s.GetUser(ctx, user.Login)
+	return nil, fmt.Errorf("failed to create user | %s:%w", op, dberrors.ErrUserAlreadyExists)
+
 }
 
 func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*models.User, error) {
 	const op = "DbUsers.UpdateUser"
+
+	if _, err := s.GetUser(ctx, user.Login); err != nil {
+		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
+	}
 
 	if _, err := s.client.HMSet(ctx, user.Login, redisclient.UserUpdated{
 		Login:    user.Login,
@@ -88,6 +102,10 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 
 func (s *Users) DeleteUser(ctx context.Context, login string) error {
 	const op = "DbUsers.DeleteUser"
+
+	if _, err := s.GetUser(ctx, login); err != nil {
+		return fmt.Errorf("failed to update user | %s:%w", op, err)
+	}
 
 	if _, err := s.client.Del(ctx, login).Result(); err != nil {
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
