@@ -2,8 +2,8 @@
 package models
 
 type Role struct {
-	ID          int
-	Code        string
+	ID          int    // Ключевое поле для БД
+	Code        string // Ключевое поле для интерфейса
 	Name        string
 	Description string
 	Blocked     bool
@@ -16,7 +16,7 @@ type RoleCreated struct {
 }
 
 type RoleUpdated struct {
-	Code        string
+	Code        string // Ключевое поле для интерфейса
 	Name        string
 	Description string
 	Blocked     bool

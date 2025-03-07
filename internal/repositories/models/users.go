@@ -2,9 +2,9 @@
 package models
 
 type User struct {
-	ID      int
+	ID      int // Ключевое поле для БД
 	Name    string
-	Login   string
+	Login   string // Ключевое поле для интерфейса
 	Blocked bool
 }
 
@@ -16,6 +16,6 @@ type UserCreated struct {
 
 type UserUpdated struct {
 	Name    string
-	Login   string
+	Login   string // Ключевое поле для интерфейса
 	Blocked bool
 }
