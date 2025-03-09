@@ -24,7 +24,7 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 
 	var rolePrivilege tarantoolclient.RolePrivilege
 
-	rolePrivileges := make([]*models.RolePrivilege, 0)
+	rolePrivileges := make([]*models.RolePrivilege, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
 		rolePrivilege = s.tupleToRolePrivilege(tuple)

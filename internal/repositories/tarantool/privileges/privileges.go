@@ -36,16 +36,18 @@ func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, er
 		return nil, fmt.Errorf("failed to get privileges | %s:%w", op, err)
 	}
 
-	privileges := make([]*models.Privilege, 0)
+	var value tarantoolclient.Privilege
 
-	for _, value := range resp.Tuples() {
-		u := s.tupleToPrivilege(value)
+	privileges := make([]*models.Privilege, 0, len(resp.Tuples()))
+
+	for _, tuple := range resp.Tuples() {
+		value = s.tupleToPrivilege(tuple)
 
 		privileges = append(privileges, &models.Privilege{
-			ID:          int(u.ID), //nolint:gosec
-			Code:        u.Code,
-			Name:        u.Name,
-			Description: u.Description,
+			ID:          int(value.ID), //nolint:gosec
+			Code:        value.Code,
+			Name:        value.Name,
+			Description: value.Description,
 		})
 	}
 

@@ -62,7 +62,7 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 
 	var user tarantoolclient.User
 
-	users := make([]*models.User, 0)
+	users := make([]*models.User, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
 		user = s.tupleToUser(tuple)

@@ -64,7 +64,7 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 
 	var role tarantoolclient.Role
 
-	roles := make([]*models.Role, 0)
+	roles := make([]*models.Role, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
 		role = s.tupleToRole(tuple)
