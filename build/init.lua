@@ -42,6 +42,7 @@ box.once('init', function()
             { name = 'id',   type = 'unsigned' },
             { name = 'code', type = 'string' },
             { name = 'name', type = 'string' },
+            { name = 'description', type = 'string' },
             { name = 'blocked', type = 'boolean' },
         })
         s:create_index('pk', { sequence = 'role_seq', type = 'tree', parts = { 'id' } })

@@ -12,9 +12,8 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
-	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
-	redisroles "github.com/vtievsky/auth-id/internal/repositories/redis/roles"
 	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
+	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/tarantool/roles"
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
@@ -27,10 +26,6 @@ func main() {
 	conf := conf.New()
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
-
-	redisClient := redisclient.New(&redisclient.ClientOpts{
-		URL: conf.DB.URL,
-	})
 
 	tarantoolClient, err := tarantoolclient.New(&tarantoolclient.ClientOpts{
 		URL:       conf.DB.URL,
@@ -47,8 +42,8 @@ func main() {
 	// userRepo := redisusers.New(&redisusers.UsersOpts{
 	// 	Client: redisClient,
 	// })
-	roleRepo := redisroles.New(&redisroles.RolesOpts{
-		Client: redisClient,
+	roleRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+		Client: tarantoolClient,
 	})
 
 	// services
