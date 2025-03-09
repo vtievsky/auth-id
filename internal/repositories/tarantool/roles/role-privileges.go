@@ -22,10 +22,12 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}
 
+	var rolePrivilege tarantoolclient.RolePrivilege
+
 	rolePrivileges := make([]*models.RolePrivilege, 0)
 
 	for _, tuple := range resp.Tuples() {
-		rolePrivilege := s.tupleToRolePrivilege(tuple)
+		rolePrivilege = s.tupleToRolePrivilege(tuple)
 
 		rolePrivileges = append(rolePrivileges, &models.RolePrivilege{
 			RoleID:      int(rolePrivilege.RoleID),      //nolint:gosec

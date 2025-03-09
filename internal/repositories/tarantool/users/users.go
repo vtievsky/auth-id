@@ -60,10 +60,12 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 		return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
 	}
 
+	var user tarantoolclient.User
+
 	users := make([]*models.User, 0)
 
 	for _, tuple := range resp.Tuples() {
-		user := s.tupleToUser(tuple)
+		user = s.tupleToUser(tuple)
 
 		users = append(users, &models.User{
 			ID:      int(user.ID), //nolint:gosec

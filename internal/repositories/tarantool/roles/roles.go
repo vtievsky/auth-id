@@ -62,10 +62,12 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 		return nil, fmt.Errorf("failed to get roles | %s:%w", op, err)
 	}
 
+	var role tarantoolclient.Role
+
 	roles := make([]*models.Role, 0)
 
 	for _, tuple := range resp.Tuples() {
-		role := s.tupleToRole(tuple)
+		role = s.tupleToRole(tuple)
 
 		roles = append(roles, &models.Role{
 			ID:          int(role.ID), //nolint:gosec
