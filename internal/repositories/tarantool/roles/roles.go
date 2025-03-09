@@ -82,23 +82,18 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 func (s *Roles) CreateRole(ctx context.Context, role models.RoleCreated) (*models.Role, error) {
 	const op = "DbRoles.CreateRole"
 
-	roleCode := fmt.Sprintf("r%d", time.Now().Unix())
+	roleCreated := tarantoolclient.RoleCreated{
+		Code:        fmt.Sprintf("r%d", time.Now().Unix()),
+		Name:        role.Name,
+		Description: role.Description,
+		Blocked:     role.Blocked,
+	}
 
-	if _, err := s.c.Connection.Insert(
-		spaceRole,
-		s.roleCreatedToTuple(
-			tarantoolclient.RoleCreated{
-				Code:        roleCode,
-				Name:        role.Name,
-				Description: role.Description,
-				Blocked:     role.Blocked,
-			},
-		),
-	); err != nil {
+	if _, err := s.c.Connection.Insert(spaceRole, roleCreated.ToTuple()); err != nil {
 		return nil, fmt.Errorf("failed to create role | %s:%w", op, err)
 	}
 
-	return s.GetRole(ctx, roleCode)
+	return s.GetRole(ctx, roleCreated.Code)
 }
 
 func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*models.Role, error) {
@@ -109,17 +104,14 @@ func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*model
 		return nil, fmt.Errorf("failed to update role | %s:%w", op, err)
 	}
 
-	if _, err := s.c.Connection.Replace(
-		spaceRole,
-		s.roleUpdatedToTuple(
-			tarantoolclient.RoleUpdated{
-				ID:          uint64(u.ID), //nolint:gosec
-				Name:        role.Name,
-				Description: u.Description,
-				Blocked:     role.Blocked,
-			},
-		),
-	); err != nil {
+	roleUpdated := tarantoolclient.RoleUpdated{
+		ID:          uint64(u.ID), //nolint:gosec
+		Name:        role.Name,
+		Description: u.Description,
+		Blocked:     role.Blocked,
+	}
+
+	if _, err := s.c.Connection.Replace(spaceRole, roleUpdated.ToTuple()); err != nil {
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
@@ -147,24 +139,5 @@ func (s *Roles) tupleToRole(tuple tarantoolclient.Tuple) tarantoolclient.Role {
 		Name:        tuple[2].(string), //nolint:forcetypeassert
 		Description: tuple[3].(string), //nolint:forcetypeassert
 		Blocked:     tuple[4].(bool),   //nolint:forcetypeassert
-	}
-}
-
-func (s *Roles) roleCreatedToTuple(user tarantoolclient.RoleCreated) tarantoolclient.Tuple {
-	return tarantoolclient.Tuple{
-		nil,
-		user.Code,
-		user.Name,
-		user.Description,
-		user.Blocked,
-	}
-}
-
-func (s *Roles) roleUpdatedToTuple(user tarantoolclient.RoleUpdated) tarantoolclient.Tuple {
-	return tarantoolclient.Tuple{
-		user.ID,
-		user.Name,
-		user.Description,
-		user.Blocked,
 	}
 }

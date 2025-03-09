@@ -84,16 +84,13 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 		}
 
-		if _, err := s.c.Connection.Insert(
-			space,
-			s.userCreatedToTuple(
-				tarantoolclient.UserCreated{
-					Name:    user.Name,
-					Login:   user.Login,
-					Blocked: user.Blocked,
-				},
-			),
-		); err != nil {
+		userCreated := tarantoolclient.UserCreated{
+			Name:    user.Name,
+			Login:   user.Login,
+			Blocked: user.Blocked,
+		}
+
+		if _, err := s.c.Connection.Insert(space, userCreated.ToTuple()); err != nil {
 			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 		}
 
@@ -111,17 +108,14 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
-	if _, err := s.c.Connection.Replace(
-		space,
-		s.userUpdatedToTuple(
-			tarantoolclient.UserUpdated{
-				ID:      uint64(u.ID), //nolint:gosec
-				Name:    user.Name,
-				Login:   u.Login,
-				Blocked: user.Blocked,
-			},
-		),
-	); err != nil {
+	userUpdated := tarantoolclient.UserUpdated{
+		ID:      uint64(u.ID), //nolint:gosec
+		Name:    user.Name,
+		Login:   u.Login,
+		Blocked: user.Blocked,
+	}
+
+	if _, err := s.c.Connection.Replace(space, userUpdated.ToTuple()); err != nil {
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
@@ -148,23 +142,5 @@ func (s *Users) tupleToUser(tuple tarantoolclient.Tuple) tarantoolclient.User {
 		Name:    tuple[1].(string), //nolint:forcetypeassert
 		Login:   tuple[2].(string), //nolint:forcetypeassert
 		Blocked: tuple[3].(bool),   //nolint:forcetypeassert
-	}
-}
-
-func (s *Users) userCreatedToTuple(user tarantoolclient.UserCreated) tarantoolclient.Tuple {
-	return tarantoolclient.Tuple{
-		nil,
-		user.Name,
-		user.Login,
-		user.Blocked,
-	}
-}
-
-func (s *Users) userUpdatedToTuple(user tarantoolclient.UserUpdated) tarantoolclient.Tuple {
-	return tarantoolclient.Tuple{
-		user.ID,
-		user.Name,
-		user.Login,
-		user.Blocked,
 	}
 }

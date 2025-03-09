@@ -16,11 +16,30 @@ type RoleCreated struct {
 	Blocked     bool   `json:"blocked"`
 }
 
+func (s RoleCreated) ToTuple() Tuple {
+	return Tuple{
+		nil,
+		s.Code,
+		s.Name,
+		s.Description,
+		s.Blocked,
+	}
+}
+
 type RoleUpdated struct {
 	ID          uint64 `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Blocked     bool   `json:"blocked"`
+}
+
+func (s RoleUpdated) ToTuple() Tuple {
+	return Tuple{
+		s.ID,
+		s.Name,
+		s.Description,
+		s.Blocked,
+	}
 }
 
 type RolePrivilege struct {
@@ -33,4 +52,12 @@ type RolePrivilegeCreated struct {
 	RoleID      uint64 `json:"role_id"`
 	PrivilegeID uint64 `json:"privilege_id"`
 	Allowed     bool   `json:"allowed"`
+}
+
+func (s RolePrivilegeCreated) ToTuple() Tuple {
+	return Tuple{
+		s.RoleID,
+		s.PrivilegeID,
+		s.Allowed,
+	}
 }
