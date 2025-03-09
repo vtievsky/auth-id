@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,7 +14,8 @@ import (
 	"github.com/vtievsky/auth-id/internal/httptransport"
 	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
 	redisroles "github.com/vtievsky/auth-id/internal/repositories/redis/roles"
-	redisusers "github.com/vtievsky/auth-id/internal/repositories/redis/users"
+	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
+	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -30,10 +32,21 @@ func main() {
 		URL: conf.DB.URL,
 	})
 
-	// repos
-	userRepo := redisusers.New(&redisusers.UsersOpts{
-		Client: redisClient,
+	tarantoolClient, err := tarantoolclient.New(&tarantoolclient.ClientOpts{
+		URL:       conf.DB.URL,
+		RateLimit: 25, //nolint:mnd
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// repos
+	userRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
+		Client: tarantoolClient,
+	})
+	// userRepo := redisusers.New(&redisusers.UsersOpts{
+	// 	Client: redisClient,
+	// })
 	roleRepo := redisroles.New(&redisroles.RolesOpts{
 		Client: redisClient,
 	})

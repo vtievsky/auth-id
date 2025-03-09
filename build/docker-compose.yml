@@ -3,16 +3,33 @@ services:
   auth-id-redis:
     image: "redis:alpine"
     container_name: "redis"
-    restart: "no"
+    restart: no
     ports:
-      - "6379:6379"
-    networks:
-      - "auth-id"
+      - ${REDIS_PORT}:6379
     volumes:
-      - auth-id-db:/data
+      - auth-id-redis:/data
+    networks:
+      - auth-id
+
+  auth-id-tarantool:
+    image: tarantool/tarantool
+    container_name: tarantool
+    restart: no
+    environment:
+      - TARANTOOL_USER_NAME=${DB_USER}
+      - TARANTOOL_USER_PASSWORD=${DB_PASSWORD}
+    command: tarantool ./init.lua
+    ports:
+      - ${TARANTOOL_PORT}:33011
+    volumes:
+      - auth-id-tarantool:/var/lib/tarantool
+      - ./init.lua:/opt/tarantool/init.lua:ro
+    networks:
+      - auth-id
 
 volumes:
-  auth-id-db:
+  auth-id-redis:
+  auth-id-tarantool:
 
 networks:
   auth-id:
