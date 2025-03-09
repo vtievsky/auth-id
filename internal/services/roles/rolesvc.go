@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +30,7 @@ type RoleUpdated struct {
 	Blocked     bool
 }
 
-type Storage interface {
+type Roles interface {
 	GetRole(ctx context.Context, code string) (*models.Role, error)
 	GetRoles(ctx context.Context) ([]*models.Role, error)
 	CreateRole(ctx context.Context, user models.RoleCreated) (*models.Role, error)
@@ -37,27 +38,43 @@ type Storage interface {
 	DeleteRole(ctx context.Context, code string) error
 }
 
+type RolePrivileges interface {
+	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
+	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
+}
+
+type PrivilegeSvc interface {
+	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
+	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
+}
+
 type RoleSvcOpts struct {
-	Logger  *zap.Logger
-	Storage Storage
+	Logger         *zap.Logger
+	Roles          Roles
+	RolePrivileges RolePrivileges
+	PrivilegeSvc   PrivilegeSvc
 }
 
 type RoleSvc struct {
-	logger  *zap.Logger
-	storage Storage
+	logger         *zap.Logger
+	roles          Roles
+	rolePrivileges RolePrivileges
+	privilegeSvc   PrivilegeSvc
 }
 
 func New(opts *RoleSvcOpts) *RoleSvc {
 	return &RoleSvc{
-		logger:  opts.Logger,
-		storage: opts.Storage,
+		logger:         opts.Logger,
+		roles:          opts.Roles,
+		rolePrivileges: opts.RolePrivileges,
+		privilegeSvc:   opts.PrivilegeSvc,
 	}
 }
 
 func (s *RoleSvc) GetRole(ctx context.Context, code string) (*Role, error) {
 	const op = "RoleSvc.GetUser"
 
-	resp, err := s.storage.GetRole(ctx, code)
+	resp, err := s.roles.GetRole(ctx, code)
 	if err != nil {
 		s.logger.Error("failed to get role",
 			zap.String("role_code", code),
@@ -79,7 +96,7 @@ func (s *RoleSvc) GetRole(ctx context.Context, code string) (*Role, error) {
 func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {
 	const op = "RoleSvc.GetRoles"
 
-	ul, err := s.storage.GetRoles(ctx)
+	ul, err := s.roles.GetRoles(ctx)
 	if err != nil {
 		s.logger.Error("failed to get roles",
 			zap.Error(err),
@@ -106,7 +123,7 @@ func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {
 func (s *RoleSvc) CreateRole(ctx context.Context, role RoleCreated) (*Role, error) {
 	const op = "RoleSvc.CreateRole"
 
-	u, err := s.storage.CreateRole(ctx, models.RoleCreated{
+	u, err := s.roles.CreateRole(ctx, models.RoleCreated{
 		Name:        role.Name,
 		Description: role.Description,
 		Blocked:     role.Blocked,
@@ -132,7 +149,7 @@ func (s *RoleSvc) CreateRole(ctx context.Context, role RoleCreated) (*Role, erro
 func (s *RoleSvc) UpdateRole(ctx context.Context, role RoleUpdated) (*Role, error) {
 	const op = "RoleSvc.UpdateRole"
 
-	u, err := s.storage.UpdateRole(ctx, models.RoleUpdated{
+	u, err := s.roles.UpdateRole(ctx, models.RoleUpdated{
 		Code:        role.Code,
 		Name:        role.Name,
 		Description: role.Description,
@@ -159,7 +176,7 @@ func (s *RoleSvc) UpdateRole(ctx context.Context, role RoleUpdated) (*Role, erro
 func (s *RoleSvc) DeleteRole(ctx context.Context, code string) error {
 	const op = "RoleSvc.RoleUser"
 
-	if err := s.storage.DeleteRole(ctx, code); err != nil {
+	if err := s.roles.DeleteRole(ctx, code); err != nil {
 		s.logger.Error("failed to delete role",
 			zap.String("role_code", code),
 			zap.Error(err),

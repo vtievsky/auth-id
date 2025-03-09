@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	space = "role"
-	limit = 25
+	spaceRole          = "role"
+	spaceRolePrivilege = "role_privilege"
+	limit              = 25
 )
 
 type RolesOpts struct {
@@ -30,10 +31,10 @@ func New(opts *RolesOpts) *Roles {
 	}
 }
 
-func (s *Roles) GetRole(ctx context.Context, login string) (*models.Role, error) {
+func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) {
 	const op = "DbRoles.GetRole"
 
-	resp, err := s.c.Connection.Select(space, "secondary", 0, 1, tarantool.IterEq, tarantoolclient.Tuple{login})
+	resp, err := s.c.Connection.Select(spaceRole, "secondary", 0, 1, tarantool.IterEq, tarantoolclient.Tuple{code})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role | %s:%w", op, err)
 	}
@@ -56,7 +57,7 @@ func (s *Roles) GetRole(ctx context.Context, login string) (*models.Role, error)
 func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 	const op = "DbRoles.GetRoles"
 
-	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, tarantoolclient.Tuple{})
+	resp, err := s.c.Connection.Select(spaceRole, "pk", 0, limit, tarantool.IterAll, tarantoolclient.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get roles | %s:%w", op, err)
 	}
@@ -84,7 +85,7 @@ func (s *Roles) CreateRole(ctx context.Context, role models.RoleCreated) (*model
 	roleCode := fmt.Sprintf("r%d", time.Now().Unix())
 
 	if _, err := s.c.Connection.Insert(
-		space,
+		spaceRole,
 		s.roleCreatedToTuple(
 			tarantoolclient.RoleCreated{
 				Code:        roleCode,
@@ -109,7 +110,7 @@ func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*model
 	}
 
 	if _, err := s.c.Connection.Replace(
-		space,
+		spaceRole,
 		s.roleUpdatedToTuple(
 			tarantoolclient.RoleUpdated{
 				ID:          uint64(u.ID), //nolint:gosec
@@ -132,7 +133,7 @@ func (s *Roles) DeleteRole(ctx context.Context, code string) error {
 		return fmt.Errorf("failed to delete role | %s:%w", op, err)
 	}
 
-	if _, err := s.c.Connection.Delete(space, "secondary", tarantoolclient.Tuple{code}); err != nil {
+	if _, err := s.c.Connection.Delete(spaceRole, "secondary", tarantoolclient.Tuple{code}); err != nil {
 		return fmt.Errorf("failed to delete role | %s:%w", op, err)
 	}
 

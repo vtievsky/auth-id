@@ -22,3 +22,15 @@ type RoleUpdated struct {
 	Description string `json:"description"`
 	Blocked     bool   `json:"blocked"`
 }
+
+type RolePrivilege struct {
+	RoleID      uint64 `json:"role_id"`
+	PrivilegeID uint64 `json:"privilege_id"`
+	Allowed     bool   `json:"allowed"`
+}
+
+type RolePrivilegeCreated struct {
+	RoleID      uint64 `json:"role_id"`
+	PrivilegeID uint64 `json:"privilege_id"`
+	Allowed     bool   `json:"allowed"`
+}

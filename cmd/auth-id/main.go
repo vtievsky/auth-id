@@ -13,9 +13,11 @@ import (
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
 	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
+	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/tarantool/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/tarantool/roles"
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
 	"github.com/vtievsky/auth-id/internal/services"
+	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
@@ -39,10 +41,16 @@ func main() {
 	userRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
 		Client: tarantoolClient,
 	})
-	// userRepo := redisusers.New(&redisusers.UsersOpts{
-	// 	Client: redisClient,
-	// })
+
 	roleRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+		Client: tarantoolClient,
+	})
+
+	rolePrivilegeRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+		Client: tarantoolClient,
+	})
+
+	privilegeRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
 		Client: tarantoolClient,
 	})
 
@@ -52,9 +60,16 @@ func main() {
 		Storage: userRepo,
 	})
 
+	privilegeService := privilegesvc.New(&privilegesvc.PrivilegeSvcOpts{
+		Logger:  logger.Named("privilege"),
+		Storage: privilegeRepo,
+	})
+
 	roleService := rolesvc.New(&rolesvc.RoleSvcOpts{
-		Logger:  logger.Named("role"),
-		Storage: roleRepo,
+		Logger:         logger.Named("role"),
+		Roles:          roleRepo,
+		RolePrivileges: rolePrivilegeRepo,
+		PrivilegeSvc:   privilegeService,
 	})
 
 	ctx := context.Background()

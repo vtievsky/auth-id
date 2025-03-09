@@ -28,7 +28,7 @@ func New(opts *ClientOpts) (*Client, error) {
 	c, err := tarantool.Connect(databaseURL.Host, tarantool.Opts{
 		Auth:                 0,
 		Dialer:               nil,
-		Timeout:              time.Second,
+		Timeout:              time.Minute,
 		Reconnect:            0,
 		MaxReconnects:        0,
 		User:                 "",

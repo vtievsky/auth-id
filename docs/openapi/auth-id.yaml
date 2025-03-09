@@ -284,6 +284,68 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/roles/{code}/privileges:
+    get:
+      tags:
+        - web
+      description: Получение привилегий роли
+      operationId: GetRolePrivileges
+      parameters:
+        - name: code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRolePrivilegesResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRolePrivilegesResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/roles/{role_code}/privileges/{privilege_code}:
+    post:
+      tags:
+        - web
+      description: Добавление привилегии роли
+      operationId: AddRolePrivilege
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: privilege_code
+          description: Код привилегии
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddRolePrivilegeResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddRolePrivilegeResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
 components:
   schemas:
     ResponseStatusOk:
@@ -484,6 +546,22 @@ components:
         - name
         - description
         - blocked
+    RolePrivilege:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        allowed:
+          type: boolean
+      required:
+        - code
+        - name
+        - description
+        - allowed
     GetRoleResponse200:
       type: object
       properties:
@@ -584,6 +662,43 @@ components:
       required:
         - status
     DeleteRoleResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    GetRolePrivilegesResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RolePrivilege"
+      required:
+        - status
+        - data
+    GetRolePrivilegesResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    AddRolePrivilegeResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    AddRolePrivilegeResponse500:
       type: object
       properties:
         status:

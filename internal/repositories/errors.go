@@ -9,4 +9,5 @@ var (
 	ErrRoleNotFound      = errors.New("role not found")
 	ErrRoleScan          = errors.New("role scan error")
 	ErrRoleAlreadyExists = errors.New("role already exists")
+	ErrPrivilegeNotFound = errors.New("privilege not found")
 )
