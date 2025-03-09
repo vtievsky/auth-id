@@ -131,7 +131,7 @@ func (s *PrivilegeSvc) syncPrivileges(ctx context.Context) error {
 		s.cacheByCode[privilege.Code] = privilege
 	}
 
-	// Зафиксируем время синхронизации справочника привилегий
+	// Зафиксируем время синхронизации справочника привилегий роли
 	s.lastTime = time.Now()
 
 	return nil
