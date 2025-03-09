@@ -42,13 +42,13 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, dberrors.ErrUserNotFound)
 	}
 
-	value := s.tupleToUser(resp.Tuples()[0])
+	user := s.tupleToUser(resp.Tuples()[0])
 
 	return &models.User{
-		ID:      int(value.ID), //nolint:gosec
-		Login:   value.Login,
-		Name:    value.Name,
-		Blocked: value.Blocked,
+		ID:      int(user.ID), //nolint:gosec
+		Login:   user.Login,
+		Name:    user.Name,
+		Blocked: user.Blocked,
 	}, nil
 }
 
@@ -62,14 +62,14 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 
 	users := make([]*models.User, 0)
 
-	for _, value := range resp.Tuples() {
-		u := s.tupleToUser(value)
+	for _, tuple := range resp.Tuples() {
+		user := s.tupleToUser(tuple)
 
 		users = append(users, &models.User{
-			ID:      int(u.ID), //nolint:gosec
-			Login:   u.Login,
-			Name:    u.Name,
-			Blocked: u.Blocked,
+			ID:      int(user.ID), //nolint:gosec
+			Login:   user.Login,
+			Name:    user.Name,
+			Blocked: user.Blocked,
 		})
 	}
 

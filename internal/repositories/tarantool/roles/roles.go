@@ -43,14 +43,14 @@ func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) 
 		return nil, fmt.Errorf("failed to get role | %s:%w", op, dberrors.ErrRoleNotFound)
 	}
 
-	value := s.tupleToRole(resp.Tuples()[0])
+	role := s.tupleToRole(resp.Tuples()[0])
 
 	return &models.Role{
-		ID:          int(value.ID), //nolint:gosec
-		Code:        value.Code,
-		Name:        value.Name,
-		Description: value.Description,
-		Blocked:     value.Blocked,
+		ID:          int(role.ID), //nolint:gosec
+		Code:        role.Code,
+		Name:        role.Name,
+		Description: role.Description,
+		Blocked:     role.Blocked,
 	}, nil
 }
 
@@ -64,15 +64,15 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 
 	roles := make([]*models.Role, 0)
 
-	for _, value := range resp.Tuples() {
-		u := s.tupleToRole(value)
+	for _, tuple := range resp.Tuples() {
+		role := s.tupleToRole(tuple)
 
 		roles = append(roles, &models.Role{
-			ID:          int(u.ID), //nolint:gosec
-			Code:        u.Code,
-			Name:        u.Name,
-			Description: u.Description,
-			Blocked:     u.Blocked,
+			ID:          int(role.ID), //nolint:gosec
+			Code:        role.Code,
+			Name:        role.Name,
+			Description: role.Description,
+			Blocked:     role.Blocked,
 		})
 	}
 

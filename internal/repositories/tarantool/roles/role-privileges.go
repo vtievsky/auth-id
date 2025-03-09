@@ -22,19 +22,19 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}
 
-	roles := make([]*models.RolePrivilege, 0)
+	rolePrivileges := make([]*models.RolePrivilege, 0)
 
-	for _, value := range resp.Tuples() {
-		u := s.tupleToRolePrivilege(value)
+	for _, tuple := range resp.Tuples() {
+		rolePrivilege := s.tupleToRolePrivilege(tuple)
 
-		roles = append(roles, &models.RolePrivilege{
-			RoleID:      int(u.RoleID),      //nolint:gosec
-			PrivilegeID: int(u.PrivilegeID), //nolint:gosec
-			Allowed:     u.Allowed,
+		rolePrivileges = append(rolePrivileges, &models.RolePrivilege{
+			RoleID:      int(rolePrivilege.RoleID),      //nolint:gosec
+			PrivilegeID: int(rolePrivilege.PrivilegeID), //nolint:gosec
+			Allowed:     rolePrivilege.Allowed,
 		})
 	}
 
-	return roles, nil
+	return rolePrivileges, nil
 }
 
 func (s *Roles) AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error {
