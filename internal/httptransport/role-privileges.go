@@ -11,7 +11,7 @@ func (t *Transport) GetRolePrivileges(
 	ctx context.Context,
 	request serverhttp.GetRolePrivilegesRequestObject,
 ) (serverhttp.GetRolePrivilegesResponseObject, error) {
-	privileges, err := t.services.RoleSvc.GetRolePrivileges(ctx, request.Code)
+	privileges, err := t.services.RolePrivilegeSvc.GetRolePrivileges(ctx, request.Code)
 	if err != nil {
 		return serverhttp.GetRolePrivileges500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -45,7 +45,7 @@ func (t *Transport) AddRolePrivilege(
 	ctx context.Context,
 	request serverhttp.AddRolePrivilegeRequestObject,
 ) (serverhttp.AddRolePrivilegeResponseObject, error) {
-	if err := t.services.RoleSvc.AddRolePrivilege(ctx, rolesvc.RolePrivilegeCreated{
+	if err := t.services.RolePrivilegeSvc.AddRolePrivilege(ctx, rolesvc.RolePrivilegeCreated{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 		Allowed:       request.Body.Allowed,
@@ -70,7 +70,7 @@ func (t *Transport) UpdateRolePrivilege(
 	ctx context.Context,
 	request serverhttp.UpdateRolePrivilegeRequestObject,
 ) (serverhttp.UpdateRolePrivilegeResponseObject, error) {
-	if err := t.services.RoleSvc.UpdateRolePrivilege(ctx, rolesvc.RolePrivilegeUpdated{
+	if err := t.services.RolePrivilegeSvc.UpdateRolePrivilege(ctx, rolesvc.RolePrivilegeUpdated{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 		Allowed:       request.Body.Allowed,
@@ -95,7 +95,7 @@ func (t *Transport) DeleteRolePrivilege(
 	ctx context.Context,
 	request serverhttp.DeleteRolePrivilegeRequestObject,
 ) (serverhttp.DeleteRolePrivilegeResponseObject, error) {
-	if err := t.services.RoleSvc.DeleteRolePrivilege(ctx, rolesvc.RolePrivilegeDeleted{
+	if err := t.services.RolePrivilegeSvc.DeleteRolePrivilege(ctx, rolesvc.RolePrivilegeDeleted{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 	}); err != nil {

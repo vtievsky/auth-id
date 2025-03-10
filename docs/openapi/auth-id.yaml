@@ -284,6 +284,34 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/roles/{code}/users:
+    get:
+      tags:
+        - web
+      description: Получение пользователей роли
+      operationId: GetRoleUsers
+      parameters:
+        - name: code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoleUsersResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoleUsersResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
   /v1/roles/{code}/privileges:
     get:
       tags:
@@ -423,6 +451,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeleteRolePrivilegeResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/roles/{role_code}/users/{login}:
+    post:
+      tags:
+        - web
+      description: Добавление роли пользователю
+      operationId: AddRoleUser
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRoleUserRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddRoleUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddRoleUserResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -642,6 +711,22 @@ components:
         - name
         - description
         - allowed
+    RoleUser:
+      type: object
+      properties:
+        name:
+          type: string
+        login:
+          type: string
+        date_in:
+          type: string
+        date_out:
+          type: string
+      required:
+        - name
+        - login
+        - date_in
+        - date_out
     GetRoleResponse200:
       type: object
       properties:
@@ -770,6 +855,27 @@ components:
           $ref: "#/components/schemas/ResponseStatusError"
       required:
         - status
+    GetRoleUsersResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleUser"
+      required:
+        - status
+        - data
+    GetRoleUsersResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
     AddRolePrivilegeRequest:
       type: object
       properties:
@@ -826,6 +932,32 @@ components:
       required:
         - status
     DeleteRolePrivilegeResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    AddRoleUserRequest:
+      type: object
+      properties:
+        date_in:
+          type: string
+        date_out:
+          type: string
+      required:
+        - date_in
+        - date_out
+    AddRoleUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    AddRoleUserResponse500:
       type: object
       properties:
         status:

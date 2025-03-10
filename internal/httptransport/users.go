@@ -23,8 +23,8 @@ func (t *Transport) GetUser(
 
 	return serverhttp.GetUser200JSONResponse{
 		Data: serverhttp.User{
+			Name:    user.Name,
 			Login:   user.Login,
-			Name:    user.FullName,
 			Blocked: user.Blocked,
 		},
 		Status: serverhttp.ResponseStatusOk{
@@ -49,8 +49,8 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 
 	for _, user := range users {
 		resp = append(resp, serverhttp.User{
+			Name:    user.Name,
 			Login:   user.Login,
-			Name:    user.FullName,
 			Blocked: user.Blocked,
 		})
 	}
@@ -69,9 +69,9 @@ func (t *Transport) CreateUser(
 	request serverhttp.CreateUserRequestObject,
 ) (serverhttp.CreateUserResponseObject, error) {
 	user, err := t.services.UserSvc.CreateUser(ctx, usersvc.UserCreated{
-		Login:    request.Body.Login,
-		FullName: request.Body.Name,
-		Blocked:  request.Body.Blocked,
+		Name:    request.Body.Name,
+		Login:   request.Body.Login,
+		Blocked: request.Body.Blocked,
 	})
 	if err != nil {
 		return serverhttp.CreateUser500JSONResponse{ //nolint:nilerr
@@ -84,8 +84,8 @@ func (t *Transport) CreateUser(
 
 	return serverhttp.CreateUser200JSONResponse{
 		Data: serverhttp.User{
+			Name:    user.Name,
 			Login:   user.Login,
-			Name:    user.FullName,
 			Blocked: user.Blocked,
 		},
 		Status: serverhttp.ResponseStatusOk{
@@ -100,9 +100,9 @@ func (t *Transport) UpdateUser(
 	request serverhttp.UpdateUserRequestObject,
 ) (serverhttp.UpdateUserResponseObject, error) {
 	user, err := t.services.UserSvc.UpdateUser(ctx, usersvc.UserUpdated{
-		Login:    request.Login,
-		FullName: request.Body.Name,
-		Blocked:  request.Body.Blocked,
+		Name:    request.Body.Name,
+		Login:   request.Login,
+		Blocked: request.Body.Blocked,
 	})
 	if err != nil {
 		return serverhttp.UpdateUser500JSONResponse{ //nolint:nilerr
@@ -115,8 +115,8 @@ func (t *Transport) UpdateUser(
 
 	return serverhttp.UpdateUser200JSONResponse{
 		Data: serverhttp.User{
+			Name:    user.Name,
 			Login:   user.Login,
-			Name:    user.FullName,
 			Blocked: user.Blocked,
 		},
 		Status: serverhttp.ResponseStatusOk{

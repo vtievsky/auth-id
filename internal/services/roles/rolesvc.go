@@ -6,6 +6,7 @@ import (
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
+	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
 )
 
@@ -45,23 +46,39 @@ type RolePrivileges interface {
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
 }
 
+type RoleUsers interface {
+	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
+	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
+	UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error
+	DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDeleted) error
+}
+
 type PrivilegeSvc interface {
 	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
 	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
+}
+
+type UserSvc interface {
+	GetUserByID(ctx context.Context, id int) (*usersvc.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*usersvc.User, error)
 }
 
 type RoleSvcOpts struct {
 	Logger         *zap.Logger
 	Roles          Roles
 	RolePrivileges RolePrivileges
+	RoleUsers      RoleUsers
 	PrivilegeSvc   PrivilegeSvc
+	UserSvc        UserSvc
 }
 
 type RoleSvc struct {
 	logger         *zap.Logger
 	roles          Roles
 	rolePrivileges RolePrivileges
+	roleUsers      RoleUsers
 	privilegeSvc   PrivilegeSvc
+	userSvc        UserSvc
 }
 
 func New(opts *RoleSvcOpts) *RoleSvc {
@@ -69,7 +86,9 @@ func New(opts *RoleSvcOpts) *RoleSvc {
 		logger:         opts.Logger,
 		roles:          opts.Roles,
 		rolePrivileges: opts.RolePrivileges,
+		roleUsers:      opts.RoleUsers,
 		privilegeSvc:   opts.PrivilegeSvc,
+		userSvc:        opts.UserSvc,
 	}
 }
 

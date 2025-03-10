@@ -14,6 +14,7 @@ import (
 const (
 	spaceRole          = "role"
 	spaceRolePrivilege = "role_privilege"
+	spaceRoleUser      = "role_user"
 	limit              = 25
 )
 

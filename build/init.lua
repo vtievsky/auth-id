@@ -85,4 +85,17 @@ box.once('init', function()
         })
         s:create_index('pk', { type = 'tree', parts = { 'role_id', 'privilege_id' } })
     end
+
+    -- role-users
+    if not box.space.role_user then
+        local s = box.schema.space.create('role_user')
+        --
+        s:format({
+            { name = 'role_id',   type = 'unsigned' },
+            { name = 'user_id',   type = 'unsigned' },
+            { name = 'date_in', type = 'unsigned' },
+            { name = 'date_out', type = 'unsigned' },
+        })
+        s:create_index('pk', { type = 'tree', parts = { 'role_id', 'user_id' } })
+    end
 end)

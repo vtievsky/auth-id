@@ -50,6 +50,10 @@ func main() {
 		Client: tarantoolClient,
 	})
 
+	roleUserRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+		Client: tarantoolClient,
+	})
+
 	privilegeRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
 		Client: tarantoolClient,
 	})
@@ -69,14 +73,18 @@ func main() {
 		Logger:         logger.Named("role"),
 		Roles:          roleRepo,
 		RolePrivileges: rolePrivilegeRepo,
+		RoleUsers:      roleUserRepo,
 		PrivilegeSvc:   privilegeService,
+		UserSvc:        userService,
 	})
 
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
-		UserSvc: userService,
-		RoleSvc: roleService,
+		UserSvc:          userService,
+		RoleSvc:          roleService,
+		RolePrivilegeSvc: roleService,
+		RoleUserSvc:      roleService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)
