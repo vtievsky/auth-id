@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -38,10 +39,6 @@ type RoleUserDeleted struct {
 	RoleCode string
 }
 
-type Roles interface {
-	GetRole(ctx context.Context, code string) (*models.Role, error)
-}
-
 type RoleUsers interface {
 	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
 	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
@@ -54,18 +51,23 @@ type UserSvc interface {
 	GetUserByLogin(ctx context.Context, login string) (*usersvc.User, error)
 }
 
+type RoleSvc interface {
+	GetRoleByID(ctx context.Context, id int) (*rolesvc.Role, error)
+	GetRoleByCode(ctx context.Context, code string) (*rolesvc.Role, error)
+}
+
 type RoleUserSvcOpts struct {
 	Logger    *zap.Logger
-	Roles     Roles
 	RoleUsers RoleUsers
 	UserSvc   UserSvc
+	RoleSvc   RoleSvc
 }
 
 type RoleUserSvc struct {
 	logger      *zap.Logger
-	roles       Roles
 	roleUsers   RoleUsers
 	userSvc     UserSvc
+	roleSvc     RoleSvc
 	lastTime    time.Time
 	cacheByID   map[int]*models.Role
 	cacheByCode map[string]*models.Role
@@ -77,6 +79,7 @@ func New(opts *RoleUserSvcOpts) *RoleUserSvc {
 		logger:      opts.Logger,
 		roleUsers:   opts.RoleUsers,
 		userSvc:     opts.UserSvc,
+		roleSvc:     opts.RoleSvc,
 		lastTime:    time.Time{},
 		cacheByID:   make(map[int]*models.Role),
 		cacheByCode: make(map[string]*models.Role),
@@ -128,7 +131,7 @@ func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated)
 	const op = "RoleUserSvc.AddRoleUser"
 
 	var (
-		role *models.Role
+		role *rolesvc.Role
 		user *usersvc.User
 	)
 
@@ -137,7 +140,7 @@ func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated)
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, roleUser.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
 			s.logger.Error("failed to get role",
 				zap.String("role_code", roleUser.RoleCode),
@@ -192,7 +195,7 @@ func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdat
 	const op = "RoleUserSvc.UpdateRoleUser"
 
 	var (
-		role *models.Role
+		role *rolesvc.Role
 		user *usersvc.User
 	)
 
@@ -201,7 +204,7 @@ func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdat
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, roleUser.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
 			s.logger.Error("failed to get role",
 				zap.String("role_code", roleUser.RoleCode),
@@ -256,7 +259,7 @@ func (s *RoleUserSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDelet
 	const op = "RoleUserSvc.DeleteRoleUser"
 
 	var (
-		role *models.Role
+		role *rolesvc.Role
 		user *usersvc.User
 	)
 
@@ -265,7 +268,7 @@ func (s *RoleUserSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDelet
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, roleUser.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
 			s.logger.Error("failed to get role",
 				zap.String("role_code", roleUser.RoleCode),

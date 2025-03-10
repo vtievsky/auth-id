@@ -84,16 +84,15 @@ func main() {
 
 	userRoleService := userrolesvc.New(&userrolesvc.UserRoleSvcOpts{
 		Logger:    logger.Named("user-role"),
-		Users:     usersRepo,
 		UserRoles: userRolesRepo,
 		RoleSvc:   roleService,
 	})
 
 	roleUserService := roleusersvc.New(&roleusersvc.RoleUserSvcOpts{
 		Logger:    logger.Named("role-user"),
-		Roles:     rolesRepo,
 		RoleUsers: roleUsersRepo,
 		UserSvc:   userService,
+		RoleSvc:   roleService,
 	})
 
 	ctx := context.Background()

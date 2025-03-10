@@ -19,10 +19,6 @@ type UserRole struct {
 	DateOut     time.Time
 }
 
-type Users interface {
-	GetUser(ctx context.Context, login string) (*models.User, error)
-}
-
 type UserRoles interface {
 	GetUserRoles(ctx context.Context, login string) ([]*models.UserRole, error)
 }
@@ -34,14 +30,12 @@ type RoleSvc interface {
 
 type UserRoleSvcOpts struct {
 	Logger    *zap.Logger
-	Users     Users
 	UserRoles UserRoles
 	RoleSvc   RoleSvc
 }
 
 type UserRoleSvc struct {
 	logger       *zap.Logger
-	users        Users
 	userRoles    UserRoles
 	roleSvc      RoleSvc
 	lastTime     time.Time
@@ -53,7 +47,6 @@ type UserRoleSvc struct {
 func New(opts *UserRoleSvcOpts) *UserRoleSvc {
 	return &UserRoleSvc{
 		logger:       opts.Logger,
-		users:        opts.Users,
 		userRoles:    opts.UserRoles,
 		roleSvc:      opts.RoleSvc,
 		lastTime:     time.Time{},
