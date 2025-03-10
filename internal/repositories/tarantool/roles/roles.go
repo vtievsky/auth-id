@@ -3,8 +3,8 @@ package tarantoolroles
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/tarantool/go-tarantool"
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -86,7 +86,7 @@ func (s *Roles) CreateRole(ctx context.Context, role models.RoleCreated) (*model
 	const op = "DbRoles.CreateRole"
 
 	roleCreated := tarantoolclient.RoleCreated{
-		Code:        fmt.Sprintf("r%d", time.Now().Unix()),
+		Code:        uuid.NewString(),
 		Name:        role.Name,
 		Description: role.Description,
 		Blocked:     role.Blocked,
