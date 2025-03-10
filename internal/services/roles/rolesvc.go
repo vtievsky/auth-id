@@ -3,10 +3,11 @@ package rolesvc
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
-	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
 )
 
@@ -46,39 +47,27 @@ type RolePrivileges interface {
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
 }
 
-type RoleUsers interface {
-	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
-	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
-	UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error
-	DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDeleted) error
-}
-
 type PrivilegeSvc interface {
 	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
 	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
-}
-
-type UserSvc interface {
-	GetUserByID(ctx context.Context, id int) (*usersvc.User, error)
-	GetUserByLogin(ctx context.Context, login string) (*usersvc.User, error)
 }
 
 type RoleSvcOpts struct {
 	Logger         *zap.Logger
 	Roles          Roles
 	RolePrivileges RolePrivileges
-	RoleUsers      RoleUsers
 	PrivilegeSvc   PrivilegeSvc
-	UserSvc        UserSvc
 }
 
 type RoleSvc struct {
 	logger         *zap.Logger
 	roles          Roles
 	rolePrivileges RolePrivileges
-	roleUsers      RoleUsers
 	privilegeSvc   PrivilegeSvc
-	userSvc        UserSvc
+	lastTime       time.Time
+	cacheByID      map[int]*models.Role
+	cacheByCode    map[string]*models.Role
+	mu             sync.RWMutex
 }
 
 func New(opts *RoleSvcOpts) *RoleSvc {
@@ -86,32 +75,16 @@ func New(opts *RoleSvcOpts) *RoleSvc {
 		logger:         opts.Logger,
 		roles:          opts.Roles,
 		rolePrivileges: opts.RolePrivileges,
-		roleUsers:      opts.RoleUsers,
 		privilegeSvc:   opts.PrivilegeSvc,
-		userSvc:        opts.UserSvc,
+		lastTime:       time.Time{},
+		cacheByID:      make(map[int]*models.Role),
+		cacheByCode:    make(map[string]*models.Role),
+		mu:             sync.RWMutex{},
 	}
 }
 
 func (s *RoleSvc) GetRole(ctx context.Context, code string) (*Role, error) {
-	const op = "RoleSvc.GetUser"
-
-	resp, err := s.roles.GetRole(ctx, code)
-	if err != nil {
-		s.logger.Error("failed to get role",
-			zap.String("role_code", code),
-			zap.Error(err),
-		)
-
-		return nil, fmt.Errorf("failed to get role | %s:%w", op, err)
-	}
-
-	return &Role{
-		ID:          resp.ID,
-		Code:        resp.Code,
-		Name:        resp.Name,
-		Description: resp.Description,
-		Blocked:     false,
-	}, nil
+	return s.GetRoleByCode(ctx, code)
 }
 
 func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {

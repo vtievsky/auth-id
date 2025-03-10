@@ -3,15 +3,18 @@ package services
 import (
 	"context"
 
+	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 )
 
 type SvcLayer struct {
 	UserSvc          UserService
+	UserRoleSvc      UserRoleService
 	RoleSvc          RoleService
-	RolePrivilegeSvc RolePrivilegeService
 	RoleUserSvc      RoleUserService
+	RolePrivilegeSvc RolePrivilegeService
 }
 
 type UserService interface {
@@ -22,6 +25,10 @@ type UserService interface {
 	DeleteUser(ctx context.Context, login string) error
 }
 
+type UserRoleService interface {
+	GetUserRoles(ctx context.Context, login string) ([]*userrolesvc.UserRole, error)
+}
+
 type RoleService interface {
 	GetRole(ctx context.Context, code string) (*rolesvc.Role, error)
 	GetRoles(ctx context.Context) ([]*rolesvc.Role, error)
@@ -30,16 +37,16 @@ type RoleService interface {
 	DeleteRole(ctx context.Context, code string) error
 }
 
+type RoleUserService interface {
+	GetRoleUsers(ctx context.Context, code string) ([]*roleusersvc.RoleUser, error)
+	AddRoleUser(ctx context.Context, roleUser roleusersvc.RoleUserCreated) error
+	UpdateRoleUser(ctx context.Context, roleUser roleusersvc.RoleUserUpdated) error
+	DeleteRoleUser(ctx context.Context, roleUser roleusersvc.RoleUserDeleted) error
+}
+
 type RolePrivilegeService interface {
 	GetRolePrivileges(ctx context.Context, code string) ([]*rolesvc.RolePrivilege, error)
 	AddRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeCreated) error
 	UpdateRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeUpdated) error
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeDeleted) error
-}
-
-type RoleUserService interface {
-	GetRoleUsers(ctx context.Context, code string) ([]*rolesvc.RoleUser, error)
-	AddRoleUser(ctx context.Context, roleUser rolesvc.RoleUserCreated) error
-	UpdateRoleUser(ctx context.Context, roleUser rolesvc.RoleUserUpdated) error
-	DeleteRoleUser(ctx context.Context, roleUser rolesvc.RoleUserDeleted) error
 }

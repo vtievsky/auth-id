@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	space = "user"
-	limit = 25
+	space         = "user"
+	spaceUserRole = "role_user"
+	limit         = 25
 )
 
 type UsersOpts struct {

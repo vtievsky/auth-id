@@ -18,7 +18,7 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRoleUser, "pk", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRoleUser, "primary", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role users | %s:%w", op, err)
 	}

@@ -6,13 +6,8 @@ import (
 	"sync"
 	"time"
 
-	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	"go.uber.org/zap"
-)
-
-const (
-	cacheTTL = time.Second * 60
 )
 
 type User struct {
@@ -34,7 +29,7 @@ type UserUpdated struct {
 	Blocked bool
 }
 
-type Storage interface {
+type Users interface {
 	GetUser(ctx context.Context, login string) (*models.User, error)
 	GetUsers(ctx context.Context) ([]*models.User, error)
 	CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error)
@@ -43,13 +38,13 @@ type Storage interface {
 }
 
 type UserSvcOpts struct {
-	Logger  *zap.Logger
-	Storage Storage
+	Logger *zap.Logger
+	Users  Users
 }
 
 type UserSvc struct {
 	logger       *zap.Logger
-	storage      Storage
+	users        Users
 	lastTime     time.Time
 	cacheByID    map[int]*models.User
 	cacheByLogin map[string]*models.User
@@ -59,7 +54,7 @@ type UserSvc struct {
 func New(opts *UserSvcOpts) *UserSvc {
 	return &UserSvc{
 		logger:       opts.Logger,
-		storage:      opts.Storage,
+		users:        opts.Users,
 		lastTime:     time.Time{},
 		cacheByID:    make(map[int]*models.User),
 		cacheByLogin: make(map[string]*models.User),
@@ -71,70 +66,10 @@ func (s *UserSvc) GetUser(ctx context.Context, login string) (*User, error) {
 	return s.GetUserByLogin(ctx, login)
 }
 
-func (s *UserSvc) GetUserByID(ctx context.Context, id int) (*User, error) {
-	const op = "UserSvc.GetUserByID"
-
-	s.mu.RLock()
-
-	// Кеш невалидный
-	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RLocker().Unlock()
-
-		if err := s.syncUsers(ctx); err != nil {
-			return nil, fmt.Errorf("%s:%w", op, err)
-		}
-
-		s.mu.RLock()
-	}
-
-	defer s.mu.RLocker().Unlock()
-
-	if val, ok := s.cacheByID[id]; ok {
-		return &User{
-			ID:      val.ID,
-			Login:   val.Login,
-			Name:    val.Name,
-			Blocked: val.Blocked,
-		}, nil
-	}
-
-	return nil, dberrors.ErrUserNotFound
-}
-
-func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, error) {
-	const op = "UserSvc.GetUserByLogin"
-
-	s.mu.RLock()
-
-	// Кеш невалидный
-	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RLocker().Unlock()
-
-		if err := s.syncUsers(ctx); err != nil {
-			return nil, fmt.Errorf("%s:%w", op, err)
-		}
-
-		s.mu.RLock()
-	}
-
-	defer s.mu.RLocker().Unlock()
-
-	if val, ok := s.cacheByLogin[login]; ok {
-		return &User{
-			ID:      val.ID,
-			Login:   val.Login,
-			Name:    val.Name,
-			Blocked: val.Blocked,
-		}, nil
-	}
-
-	return nil, dberrors.ErrUserNotFound
-}
-
 func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 	const op = "UserSvc.GetUsers"
 
-	ul, err := s.storage.GetUsers(ctx)
+	ul, err := s.users.GetUsers(ctx)
 	if err != nil {
 		s.logger.Error("failed to get users",
 			zap.Error(err),
@@ -160,7 +95,7 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	const op = "UserSvc.CreateUser"
 
-	u, err := s.storage.CreateUser(ctx, models.UserCreated{
+	u, err := s.users.CreateUser(ctx, models.UserCreated{
 		Login:   user.Login,
 		Name:    user.Name,
 		Blocked: user.Blocked,
@@ -185,7 +120,7 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	const op = "UserSvc.UpdateUser"
 
-	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
+	u, err := s.users.UpdateUser(ctx, models.UserUpdated{
 		Login:   user.Login,
 		Name:    user.Name,
 		Blocked: user.Blocked,
@@ -210,7 +145,7 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 	const op = "UserSvc.UpdateUser"
 
-	if err := s.storage.DeleteUser(ctx, login); err != nil {
+	if err := s.users.DeleteUser(ctx, login); err != nil {
 		s.logger.Error("failed to delete user",
 			zap.String("username", login),
 			zap.Error(err),
@@ -218,32 +153,6 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
 	}
-
-	return nil
-}
-
-func (s *UserSvc) syncUsers(ctx context.Context) error {
-	const op = "UserSvc.syncUsers"
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	resp, err := s.storage.GetUsers(ctx)
-	if err != nil {
-		s.logger.Error("failed to sync users",
-			zap.Error(err),
-		)
-
-		return fmt.Errorf("failed to sync users | %s:%w", op, err)
-	}
-
-	for _, user := range resp {
-		s.cacheByID[user.ID] = user
-		s.cacheByLogin[user.Login] = user
-	}
-
-	// Зафиксируем время синхронизации справочника
-	s.lastTime = time.Now()
 
 	return nil
 }

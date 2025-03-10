@@ -18,7 +18,9 @@ import (
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
+	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
 	"go.uber.org/zap"
@@ -38,53 +40,70 @@ func main() {
 	}
 
 	// repos
-	userRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
+	usersRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
 		Client: tarantoolClient,
 	})
 
-	roleRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+	userRolesRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
 		Client: tarantoolClient,
 	})
 
-	rolePrivilegeRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+	rolesRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
 		Client: tarantoolClient,
 	})
 
-	roleUserRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+	rolePrivilegesRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
 		Client: tarantoolClient,
 	})
 
-	privilegeRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
+	roleUsersRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
+		Client: tarantoolClient,
+	})
+
+	privilegesRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
 		Client: tarantoolClient,
 	})
 
 	// services
-	userService := usersvc.New(&usersvc.UserSvcOpts{
-		Logger:  logger.Named("user"),
-		Storage: userRepo,
-	})
-
 	privilegeService := privilegesvc.New(&privilegesvc.PrivilegeSvcOpts{
 		Logger:  logger.Named("privilege"),
-		Storage: privilegeRepo,
+		Storage: privilegesRepo,
+	})
+
+	userService := usersvc.New(&usersvc.UserSvcOpts{
+		Logger: logger.Named("user"),
+		Users:  usersRepo,
 	})
 
 	roleService := rolesvc.New(&rolesvc.RoleSvcOpts{
 		Logger:         logger.Named("role"),
-		Roles:          roleRepo,
-		RolePrivileges: rolePrivilegeRepo,
-		RoleUsers:      roleUserRepo,
+		Roles:          rolesRepo,
+		RolePrivileges: rolePrivilegesRepo,
 		PrivilegeSvc:   privilegeService,
-		UserSvc:        userService,
+	})
+
+	userRoleService := userrolesvc.New(&userrolesvc.UserRoleSvcOpts{
+		Logger:    logger.Named("user-role"),
+		Users:     usersRepo,
+		UserRoles: userRolesRepo,
+		RoleSvc:   roleService,
+	})
+
+	roleUserService := roleusersvc.New(&roleusersvc.RoleUserSvcOpts{
+		Logger:    logger.Named("role-user"),
+		Roles:     rolesRepo,
+		RoleUsers: roleUsersRepo,
+		UserSvc:   userService,
 	})
 
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
 		UserSvc:          userService,
+		UserRoleSvc:      userRoleService,
 		RoleSvc:          roleService,
+		RoleUserSvc:      roleUserService,
 		RolePrivilegeSvc: roleService,
-		RoleUserSvc:      roleService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)

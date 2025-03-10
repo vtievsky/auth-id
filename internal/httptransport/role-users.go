@@ -5,7 +5,7 @@ import (
 
 	"github.com/oapi-codegen/runtime/types"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
-	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 )
 
 func (t *Transport) GetRoleUsers(
@@ -46,7 +46,7 @@ func (t *Transport) AddRoleUser(
 	ctx context.Context,
 	request serverhttp.AddRoleUserRequestObject,
 ) (serverhttp.AddRoleUserResponseObject, error) {
-	if err := t.services.RoleUserSvc.AddRoleUser(ctx, rolesvc.RoleUserCreated{
+	if err := t.services.RoleUserSvc.AddRoleUser(ctx, roleusersvc.RoleUserCreated{
 		Login:    request.Login,
 		RoleCode: request.RoleCode,
 		DateIn:   request.Body.DateIn.Time,
@@ -72,7 +72,7 @@ func (t *Transport) UpdateRoleUser(
 	ctx context.Context,
 	request serverhttp.UpdateRoleUserRequestObject,
 ) (serverhttp.UpdateRoleUserResponseObject, error) {
-	if err := t.services.RoleUserSvc.UpdateRoleUser(ctx, rolesvc.RoleUserUpdated{
+	if err := t.services.RoleUserSvc.UpdateRoleUser(ctx, roleusersvc.RoleUserUpdated{
 		Login:    request.Login,
 		RoleCode: request.RoleCode,
 		DateIn:   request.Body.DateIn.Time,
@@ -98,7 +98,7 @@ func (t *Transport) DeleteRoleUser(
 	ctx context.Context,
 	request serverhttp.DeleteRoleUserRequestObject,
 ) (serverhttp.DeleteRoleUserResponseObject, error) {
-	if err := t.services.RoleUserSvc.DeleteRoleUser(ctx, rolesvc.RoleUserDeleted{
+	if err := t.services.RoleUserSvc.DeleteRoleUser(ctx, roleusersvc.RoleUserDeleted{
 		Login:    request.Login,
 		RoleCode: request.RoleCode,
 	}); err != nil {

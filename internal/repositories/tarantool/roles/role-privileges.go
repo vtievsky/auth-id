@@ -17,7 +17,7 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRolePrivilege, "pk", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRolePrivilege, "primary", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}

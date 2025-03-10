@@ -206,6 +206,17 @@ type GetUserResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
+// GetUserRolesResponse200 defines model for GetUserRolesResponse200.
+type GetUserRolesResponse200 struct {
+	Data   []UserRole       `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// GetUserRolesResponse500 defines model for GetUserRolesResponse500.
+type GetUserRolesResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // GetUsersResponse200 defines model for GetUsersResponse200.
 type GetUsersResponse200 struct {
 	Data   []User           `json:"data"`
@@ -338,6 +349,15 @@ type User struct {
 	Name    string `json:"name"`
 }
 
+// UserRole defines model for UserRole.
+type UserRole struct {
+	Code        string             `json:"code"`
+	DateIn      openapi_types.Date `json:"date_in"`
+	DateOut     openapi_types.Date `json:"date_out"`
+	Description string             `json:"description"`
+	Name        string             `json:"name"`
+}
+
 // CreateRoleJSONRequestBody defines body for CreateRole for application/json ContentType.
 type CreateRoleJSONRequestBody = CreateRoleRequest
 
@@ -418,6 +438,9 @@ type ServerInterface interface {
 
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx echo.Context, login string) error
+
+	// (GET /v1/users/{login}/roles)
+	GetUserRoles(ctx echo.Context, login string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -769,6 +792,24 @@ func (w *ServerInterfaceWrapper) UpdateUser(ctx echo.Context) error {
 	return err
 }
 
+// GetUserRoles converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserRoles(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetUserRoles(ctx, login)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -815,6 +856,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
 	router.GET(baseURL+"/v1/users/:login", wrapper.GetUser)
 	router.PUT(baseURL+"/v1/users/:login", wrapper.UpdateUser)
+	router.GET(baseURL+"/v1/users/:login/roles", wrapper.GetUserRoles)
 
 }
 
@@ -1296,6 +1338,32 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserRolesRequestObject struct {
+	Login string `json:"login"`
+}
+
+type GetUserRolesResponseObject interface {
+	VisitGetUserRolesResponse(w http.ResponseWriter) error
+}
+
+type GetUserRoles200JSONResponse GetUserRolesResponse200
+
+func (response GetUserRoles200JSONResponse) VisitGetUserRolesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserRoles500JSONResponse GetUserRolesResponse500
+
+func (response GetUserRoles500JSONResponse) VisitGetUserRolesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -1352,6 +1420,9 @@ type StrictServerInterface interface {
 
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
+
+	// (GET /v1/users/{login}/roles)
+	GetUserRoles(ctx context.Context, request GetUserRolesRequestObject) (GetUserRolesResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -1862,39 +1933,65 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 	return nil
 }
 
+// GetUserRoles operation middleware
+func (sh *strictHandler) GetUserRoles(ctx echo.Context, login string) error {
+	var request GetUserRolesRequestObject
+
+	request.Login = login
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserRoles(ctx.Request().Context(), request.(GetUserRolesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserRoles")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetUserRolesResponseObject); ok {
+		return validResponse.VisitGetUserRolesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"7W52/wsAAP//rN41S7RRAAA=",
+	"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",
+	"BQAA///vZmXw5lYAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -7,7 +7,7 @@ box.cfg {
 
 box.schema.user.passwd('admin', 'password')
 
---- Init database
+--- init database
 box.once('init', function()
     -- users
     if not box.space.user then
@@ -23,6 +23,7 @@ box.once('init', function()
             { name = 'login', type = 'string' },
             { name = 'blocked', type = 'boolean' },
         })
+        --
         s:create_index('pk', { sequence = 'user_seq', type = 'tree', parts = { 'id' } })
         s:create_index('secondary', { type = 'tree', parts = { 'login' } })
         --
@@ -45,6 +46,7 @@ box.once('init', function()
             { name = 'description', type = 'string' },
             { name = 'blocked', type = 'boolean' },
         })
+        --
         s:create_index('pk', { sequence = 'role_seq', type = 'tree', parts = { 'id' } })
         s:create_index('secondary', { type = 'tree', parts = { 'code' } })
         --
@@ -65,6 +67,7 @@ box.once('init', function()
             { name = 'name', type = 'string' },
             { name = 'description', type = 'string' },
         })
+        --
         s:create_index('pk', { sequence = 'privilege_seq', type = 'tree', parts = { 'id' } })
         s:create_index('secondary', { type = 'tree', parts = { 'code' } })
         --
@@ -72,18 +75,6 @@ box.once('init', function()
         s:insert { nil, 'user_create', 'Создание пользователя', '' }
         s:insert { nil, 'user_update', 'Изменение пользователя', '' }
         s:insert { nil, 'user_delete', 'Удаление пользователя', '' }
-    end
-
-    -- role-privileges
-    if not box.space.role_privilege then
-        local s = box.schema.space.create('role_privilege')
-        --
-        s:format({
-            { name = 'role_id',   type = 'unsigned' },
-            { name = 'privilege_id',   type = 'unsigned' },
-            { name = 'allowed', type = 'boolean' },
-        })
-        s:create_index('pk', { type = 'tree', parts = { 'role_id', 'privilege_id' } })
     end
 
     -- role-users
@@ -96,6 +87,24 @@ box.once('init', function()
             { name = 'date_in', type = 'unsigned' },
             { name = 'date_out', type = 'unsigned' },
         })
+        --
         s:create_index('pk', { type = 'tree', parts = { 'role_id', 'user_id' } })
+        s:create_index('primary', { type = 'tree', unique = false, parts = { 'role_id' } })
+        s:create_index('secondary', { type = 'tree', unique = false, parts = { 'user_id' } })
+    end
+
+    -- role-privileges
+    if not box.space.role_privilege then
+        local s = box.schema.space.create('role_privilege')
+        --
+        s:format({
+            { name = 'role_id',   type = 'unsigned' },
+            { name = 'privilege_id',   type = 'unsigned' },
+            { name = 'allowed', type = 'boolean' },
+        })
+        --
+        s:create_index('pk', { type = 'tree', parts = { 'role_id', 'privilege_id' } })
+        s:create_index('primary', { type = 'tree', unique = false, parts = { 'role_id' } })
+        s:create_index('secondary', { type = 'tree', unique = false, parts = { 'privilege_id' } })
     end
 end)

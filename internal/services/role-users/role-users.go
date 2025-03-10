@@ -1,8 +1,9 @@
-package rolesvc
+package roleusersvc
 
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -37,8 +38,54 @@ type RoleUserDeleted struct {
 	RoleCode string
 }
 
-func (s *RoleSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUser, error) {
-	const op = "RoleSvc.GetRoleUsers"
+type Roles interface {
+	GetRole(ctx context.Context, code string) (*models.Role, error)
+}
+
+type RoleUsers interface {
+	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
+	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
+	UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error
+	DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDeleted) error
+}
+
+type UserSvc interface {
+	GetUserByID(ctx context.Context, id int) (*usersvc.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*usersvc.User, error)
+}
+
+type RoleUserSvcOpts struct {
+	Logger    *zap.Logger
+	Roles     Roles
+	RoleUsers RoleUsers
+	UserSvc   UserSvc
+}
+
+type RoleUserSvc struct {
+	logger      *zap.Logger
+	roles       Roles
+	roleUsers   RoleUsers
+	userSvc     UserSvc
+	lastTime    time.Time
+	cacheByID   map[int]*models.Role
+	cacheByCode map[string]*models.Role
+	mu          sync.RWMutex
+}
+
+func New(opts *RoleUserSvcOpts) *RoleUserSvc {
+	return &RoleUserSvc{
+		logger:      opts.Logger,
+		roleUsers:   opts.RoleUsers,
+		userSvc:     opts.UserSvc,
+		lastTime:    time.Time{},
+		cacheByID:   make(map[int]*models.Role),
+		cacheByCode: make(map[string]*models.Role),
+		mu:          sync.RWMutex{},
+	}
+}
+
+func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUser, error) {
+	const op = "RoleUserSvc.GetRoleUsers"
 
 	ul, err := s.roleUsers.GetRoleUsers(ctx, code)
 	if err != nil {
@@ -77,8 +124,8 @@ func (s *RoleSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUser, e
 	return resp, nil
 }
 
-func (s *RoleSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated) error {
-	const op = "RoleSvc.AddRoleUser"
+func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated) error {
+	const op = "RoleUserSvc.AddRoleUser"
 
 	var (
 		role *models.Role
@@ -141,8 +188,8 @@ func (s *RoleSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated) err
 	return nil
 }
 
-func (s *RoleSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdated) error {
-	const op = "RoleSvc.UpdateRoleUser"
+func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdated) error {
+	const op = "RoleUserSvc.UpdateRoleUser"
 
 	var (
 		role *models.Role
@@ -205,8 +252,8 @@ func (s *RoleSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdated) 
 	return nil
 }
 
-func (s *RoleSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDeleted) error {
-	const op = "RoleSvc.DeleteRoleUser"
+func (s *RoleUserSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDeleted) error {
+	const op = "RoleUserSvc.DeleteRoleUser"
 
 	var (
 		role *models.Role

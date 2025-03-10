@@ -147,6 +147,34 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/users/{login}/roles:
+    get:
+      tags:
+        - web
+      description: Получение ролей пользователя
+      operationId: GetUserRoles
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserRolesResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserRolesResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
   /v1/roles:
     get:
       tags:
@@ -806,6 +834,31 @@ components:
         - login
         - date_in
         - date_out
+    UserRole:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        date_in:
+          type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
+        date_out:
+          type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
+      required:
+        - code
+        - name
+        - description
+        - date_in
+        - date_out
     GetRoleResponse200:
       type: object
       properties:
@@ -948,6 +1001,27 @@ components:
         - status
         - data
     GetRoleUsersResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    GetUserRolesResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
+      required:
+        - status
+        - data
+    GetUserRolesResponse500:
       type: object
       properties:
         status:
