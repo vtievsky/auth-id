@@ -11,7 +11,7 @@ import (
 )
 
 type Role struct {
-	ID          int
+	ID          uint64
 	Code        string
 	Name        string
 	Description string
@@ -48,7 +48,7 @@ type RoleSvc struct {
 	logger      *zap.Logger
 	roles       Roles
 	lastTime    time.Time
-	cacheByID   map[int]*models.Role
+	cacheByID   map[uint64]*models.Role
 	cacheByCode map[string]*models.Role
 	mu          sync.RWMutex
 }
@@ -58,7 +58,7 @@ func New(opts *RoleSvcOpts) *RoleSvc {
 		logger:      opts.Logger,
 		roles:       opts.Roles,
 		lastTime:    time.Time{},
-		cacheByID:   make(map[int]*models.Role),
+		cacheByID:   make(map[uint64]*models.Role),
 		cacheByCode: make(map[string]*models.Role),
 		mu:          sync.RWMutex{},
 	}

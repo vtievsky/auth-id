@@ -11,7 +11,7 @@ import (
 )
 
 type User struct {
-	ID      int
+	ID      uint64
 	Name    string
 	Login   string
 	Blocked bool
@@ -46,7 +46,7 @@ type UserSvc struct {
 	logger       *zap.Logger
 	users        Users
 	lastTime     time.Time
-	cacheByID    map[int]*models.User
+	cacheByID    map[uint64]*models.User
 	cacheByLogin map[string]*models.User
 	mu           sync.RWMutex
 }
@@ -56,7 +56,7 @@ func New(opts *UserSvcOpts) *UserSvc {
 		logger:       opts.Logger,
 		users:        opts.Users,
 		lastTime:     time.Time{},
-		cacheByID:    make(map[int]*models.User),
+		cacheByID:    make(map[uint64]*models.User),
 		cacheByLogin: make(map[string]*models.User),
 		mu:           sync.RWMutex{},
 	}

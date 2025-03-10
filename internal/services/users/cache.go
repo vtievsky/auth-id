@@ -13,7 +13,7 @@ const (
 	cacheTTL = time.Second * 60
 )
 
-func (s *UserSvc) GetUserByID(ctx context.Context, id int) (*User, error) {
+func (s *UserSvc) GetUserByID(ctx context.Context, id uint64) (*User, error) {
 	const op = "UserSvc.GetUserByID"
 
 	s.mu.RLock()

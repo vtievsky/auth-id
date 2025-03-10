@@ -47,12 +47,12 @@ type RoleUsers interface {
 }
 
 type UserSvc interface {
-	GetUserByID(ctx context.Context, id int) (*usersvc.User, error)
+	GetUserByID(ctx context.Context, id uint64) (*usersvc.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*usersvc.User, error)
 }
 
 type RoleSvc interface {
-	GetRoleByID(ctx context.Context, id int) (*rolesvc.Role, error)
+	GetRoleByID(ctx context.Context, id uint64) (*rolesvc.Role, error)
 	GetRoleByCode(ctx context.Context, code string) (*rolesvc.Role, error)
 }
 
@@ -109,7 +109,7 @@ func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUse
 		if err != nil {
 			s.logger.Error("failed to parse user",
 				zap.String("role_code", code),
-				zap.Int("user_id", user.UserID),
+				zap.Uint64("user_id", user.UserID),
 				zap.Error(err),
 			)
 

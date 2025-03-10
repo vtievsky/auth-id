@@ -30,8 +30,8 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		rolePrivilege = s.tupleToRolePrivilege(tuple)
 
 		rolePrivileges = append(rolePrivileges, &models.RolePrivilege{
-			RoleID:      int(rolePrivilege.RoleID),      //nolint:gosec
-			PrivilegeID: int(rolePrivilege.PrivilegeID), //nolint:gosec
+			RoleID:      rolePrivilege.RoleID,
+			PrivilegeID: rolePrivilege.PrivilegeID,
 			Allowed:     rolePrivilege.Allowed,
 		})
 	}
@@ -43,8 +43,8 @@ func (s *Roles) AddRolePrivilege(ctx context.Context, rolePrivilege models.RoleP
 	const op = "DbRoles.AddRolePrivilege"
 
 	rolePrivilegeCreated := tarantoolclient.RolePrivilegeCreated{
-		RoleID:      uint64(rolePrivilege.RoleID),      //nolint:gosec
-		PrivilegeID: uint64(rolePrivilege.PrivilegeID), //nolint:gosec
+		RoleID:      rolePrivilege.RoleID,
+		PrivilegeID: rolePrivilege.PrivilegeID,
 		Allowed:     rolePrivilege.Allowed,
 	}
 
@@ -59,8 +59,8 @@ func (s *Roles) UpdateRolePrivilege(ctx context.Context, rolePrivilege models.Ro
 	const op = "DbRoles.UpdateRolePrivilege"
 
 	rolePrivilegeUpdated := tarantoolclient.RolePrivilegeUpdated{
-		RoleID:      uint64(rolePrivilege.RoleID),      //nolint:gosec
-		PrivilegeID: uint64(rolePrivilege.PrivilegeID), //nolint:gosec
+		RoleID:      rolePrivilege.RoleID,
+		PrivilegeID: rolePrivilege.PrivilegeID,
 		Allowed:     rolePrivilege.Allowed,
 	}
 
@@ -75,8 +75,8 @@ func (s *Roles) DeleteRolePrivilege(ctx context.Context, rolePrivilege models.Ro
 	const op = "DbRoles.DeleteRolePrivilege"
 
 	rolePrivilegeDeleted := tarantoolclient.RolePrivilegeDeleted{
-		RoleID:      uint64(rolePrivilege.RoleID),      //nolint:gosec
-		PrivilegeID: uint64(rolePrivilege.PrivilegeID), //nolint:gosec
+		RoleID:      rolePrivilege.RoleID,
+		PrivilegeID: rolePrivilege.PrivilegeID,
 	}
 
 	if _, err := s.c.Connection.Delete(spaceRolePrivilege, "pk", rolePrivilegeDeleted.ToTuple()); err != nil {

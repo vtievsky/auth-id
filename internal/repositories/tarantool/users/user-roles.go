@@ -31,8 +31,8 @@ func (s *Users) GetUserRoles(ctx context.Context, login string) ([]*models.UserR
 		roleUser = s.tupleToUserRole(tuple)
 
 		roleUsers = append(roleUsers, &models.UserRole{
-			RoleID:  int(roleUser.RoleID), //nolint:gosec
-			UserID:  int(roleUser.UserID), //nolint:gosec
+			RoleID:  roleUser.RoleID,
+			UserID:  roleUser.UserID,
 			DateIn:  roleUser.DateIn,
 			DateOut: roleUser.DateOut,
 		})

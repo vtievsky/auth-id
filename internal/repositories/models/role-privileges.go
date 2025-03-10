@@ -2,24 +2,24 @@
 package models
 
 type RolePrivilege struct {
-	RoleID      int
-	PrivilegeID int
+	RoleID      uint64
+	PrivilegeID uint64
 	Allowed     bool
 }
 
 type RolePrivilegeCreated struct {
-	RoleID      int
-	PrivilegeID int
+	RoleID      uint64
+	PrivilegeID uint64
 	Allowed     bool
 }
 
 type RolePrivilegeUpdated struct {
-	RoleID      int
-	PrivilegeID int
+	RoleID      uint64
+	PrivilegeID uint64
 	Allowed     bool
 }
 
 type RolePrivilegeDeleted struct {
-	RoleID      int
-	PrivilegeID int
+	RoleID      uint64
+	PrivilegeID uint64
 }

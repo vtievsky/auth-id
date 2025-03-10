@@ -45,12 +45,12 @@ type RolePrivileges interface {
 }
 
 type RoleSvc interface {
-	GetRoleByID(ctx context.Context, id int) (*rolesvc.Role, error)
+	GetRoleByID(ctx context.Context, id uint64) (*rolesvc.Role, error)
 	GetRoleByCode(ctx context.Context, code string) (*rolesvc.Role, error)
 }
 
 type PrivilegeSvc interface {
-	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
+	GetPrivilegeByID(ctx context.Context, id uint64) (*privilegesvc.Privilege, error)
 	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
 }
 
@@ -67,7 +67,7 @@ type RolePrivilegeSvc struct {
 	privilegeSvc   PrivilegeSvc
 	roleSvc        RoleSvc
 	lastTime       time.Time
-	cacheByID      map[int]*models.Role
+	cacheByID      map[uint64]*models.Role
 	cacheByCode    map[string]*models.Role
 	mu             sync.RWMutex
 }
@@ -79,7 +79,7 @@ func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
 		privilegeSvc:   opts.PrivilegeSvc,
 		roleSvc:        opts.RoleSvc,
 		lastTime:       time.Time{},
-		cacheByID:      make(map[int]*models.Role),
+		cacheByID:      make(map[uint64]*models.Role),
 		cacheByCode:    make(map[string]*models.Role),
 		mu:             sync.RWMutex{},
 	}
@@ -107,7 +107,7 @@ func (s *RolePrivilegeSvc) GetRolePrivileges(ctx context.Context, code string) (
 		if err != nil {
 			s.logger.Error("failed to parse privilege",
 				zap.String("role_code", code),
-				zap.Int("privilege_id", privilege.PrivilegeID),
+				zap.Uint64("privilege_id", privilege.PrivilegeID),
 				zap.Error(err),
 			)
 

@@ -46,7 +46,7 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 	user := s.tupleToUser(resp.Tuples()[0])
 
 	return &models.User{
-		ID:      int(user.ID), //nolint:gosec
+		ID:      user.ID,
 		Login:   user.Login,
 		Name:    user.Name,
 		Blocked: user.Blocked,
@@ -69,7 +69,7 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 		user = s.tupleToUser(tuple)
 
 		users = append(users, &models.User{
-			ID:      int(user.ID), //nolint:gosec
+			ID:      user.ID,
 			Login:   user.Login,
 			Name:    user.Name,
 			Blocked: user.Blocked,
@@ -112,7 +112,7 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 	}
 
 	userUpdated := tarantoolclient.UserUpdated{
-		ID:      uint64(u.ID), //nolint:gosec
+		ID:      u.ID,
 		Name:    user.Name,
 		Login:   u.Login,
 		Blocked: user.Blocked,

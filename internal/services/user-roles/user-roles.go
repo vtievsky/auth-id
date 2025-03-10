@@ -24,7 +24,7 @@ type UserRoles interface {
 }
 
 type RoleSvc interface {
-	GetRoleByID(ctx context.Context, id int) (*rolesvc.Role, error)
+	GetRoleByID(ctx context.Context, id uint64) (*rolesvc.Role, error)
 	GetRoleByCode(ctx context.Context, code string) (*rolesvc.Role, error)
 }
 
@@ -39,7 +39,7 @@ type UserRoleSvc struct {
 	userRoles    UserRoles
 	roleSvc      RoleSvc
 	lastTime     time.Time
-	cacheByID    map[int]*models.User
+	cacheByID    map[uint64]*models.User
 	cacheByLogin map[string]*models.User
 	mu           sync.RWMutex
 }
@@ -50,7 +50,7 @@ func New(opts *UserRoleSvcOpts) *UserRoleSvc {
 		userRoles:    opts.UserRoles,
 		roleSvc:      opts.RoleSvc,
 		lastTime:     time.Time{},
-		cacheByID:    make(map[int]*models.User),
+		cacheByID:    make(map[uint64]*models.User),
 		cacheByLogin: make(map[string]*models.User),
 		mu:           sync.RWMutex{},
 	}
@@ -78,7 +78,7 @@ func (s *UserRoleSvc) GetUserRoles(ctx context.Context, login string) ([]*UserRo
 		if err != nil {
 			s.logger.Error("failed to parse role",
 				zap.String("login", login),
-				zap.Int("role_id", role.RoleID),
+				zap.Uint64("role_id", role.RoleID),
 				zap.Error(err),
 			)
 

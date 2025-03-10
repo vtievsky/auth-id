@@ -2,7 +2,7 @@
 package models
 
 type User struct {
-	ID      int // Ключевое поле для БД
+	ID      uint64 // Ключевое поле для БД
 	Name    string
 	Login   string // Ключевое поле для интерфейса
 	Blocked bool

@@ -47,7 +47,7 @@ func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) 
 	role := s.tupleToRole(resp.Tuples()[0])
 
 	return &models.Role{
-		ID:          int(role.ID), //nolint:gosec
+		ID:          role.ID,
 		Code:        role.Code,
 		Name:        role.Name,
 		Description: role.Description,
@@ -71,7 +71,7 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 		role = s.tupleToRole(tuple)
 
 		roles = append(roles, &models.Role{
-			ID:          int(role.ID), //nolint:gosec
+			ID:          role.ID,
 			Code:        role.Code,
 			Name:        role.Name,
 			Description: role.Description,
@@ -108,7 +108,7 @@ func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*model
 	}
 
 	roleUpdated := tarantoolclient.RoleUpdated{
-		ID:          uint64(u.ID), //nolint:gosec
+		ID:          u.ID,
 		Name:        role.Name,
 		Description: u.Description,
 		Blocked:     role.Blocked,

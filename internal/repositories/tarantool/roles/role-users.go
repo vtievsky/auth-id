@@ -31,8 +31,8 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 		roleUser = s.tupleToRoleUser(tuple)
 
 		roleUsers = append(roleUsers, &models.RoleUser{
-			RoleID:  int(roleUser.RoleID), //nolint:gosec
-			UserID:  int(roleUser.UserID), //nolint:gosec
+			RoleID:  roleUser.RoleID,
+			UserID:  roleUser.UserID,
 			DateIn:  roleUser.DateIn,
 			DateOut: roleUser.DateOut,
 		})
@@ -45,8 +45,8 @@ func (s *Roles) AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated
 	const op = "DbRoles.AddRoleUser"
 
 	roleUserCreated := tarantoolclient.RoleUserCreated{
-		RoleID:  uint64(roleUser.RoleID), //nolint:gosec
-		UserID:  uint64(roleUser.UserID), //nolint:gosec
+		RoleID:  roleUser.RoleID,
+		UserID:  roleUser.UserID,
 		DateIn:  roleUser.DateIn,
 		DateOut: roleUser.DateOut,
 	}
@@ -62,8 +62,8 @@ func (s *Roles) UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpda
 	const op = "DbRoles.UpdateRoleUser"
 
 	roleUserUpdated := tarantoolclient.RoleUserUpdated{
-		RoleID:  uint64(roleUser.RoleID), //nolint:gosec
-		UserID:  uint64(roleUser.UserID), //nolint:gosec
+		RoleID:  roleUser.RoleID,
+		UserID:  roleUser.UserID,
 		DateIn:  roleUser.DateIn,
 		DateOut: roleUser.DateOut,
 	}
@@ -79,8 +79,8 @@ func (s *Roles) DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDele
 	const op = "DbRoles.DeleteRoleUser"
 
 	roleUserDeleted := tarantoolclient.RoleUserDeleted{
-		RoleID: uint64(roleUser.RoleID), //nolint:gosec
-		UserID: uint64(roleUser.UserID), //nolint:gosec
+		RoleID: roleUser.RoleID,
+		UserID: roleUser.UserID,
 	}
 
 	if _, err := s.c.Connection.Delete(spaceRoleUser, "pk", roleUserDeleted.ToTuple()); err != nil {

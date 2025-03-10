@@ -4,8 +4,8 @@ package models
 import "time"
 
 type UserRole struct {
-	RoleID  int
-	UserID  int
+	RoleID  uint64
+	UserID  uint64
 	DateIn  time.Time
 	DateOut time.Time
 }

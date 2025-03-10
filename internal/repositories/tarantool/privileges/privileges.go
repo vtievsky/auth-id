@@ -44,7 +44,7 @@ func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, er
 		value = s.tupleToPrivilege(tuple)
 
 		privileges = append(privileges, &models.Privilege{
-			ID:          int(value.ID), //nolint:gosec
+			ID:          value.ID,
 			Code:        value.Code,
 			Name:        value.Name,
 			Description: value.Description,

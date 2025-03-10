@@ -13,7 +13,7 @@ const (
 	cacheTTL = time.Second * 60
 )
 
-func (s *RoleSvc) GetRoleByID(ctx context.Context, id int) (*Role, error) {
+func (s *RoleSvc) GetRoleByID(ctx context.Context, id uint64) (*Role, error) {
 	const op = "RoleSvc.GetRoleByID"
 
 	s.mu.RLock()

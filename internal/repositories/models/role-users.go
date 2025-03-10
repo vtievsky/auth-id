@@ -4,27 +4,27 @@ package models
 import "time"
 
 type RoleUser struct {
-	RoleID  int
-	UserID  int
+	RoleID  uint64
+	UserID  uint64
 	DateIn  time.Time
 	DateOut time.Time
 }
 
 type RoleUserCreated struct {
-	RoleID  int
-	UserID  int
+	RoleID  uint64
+	UserID  uint64
 	DateIn  time.Time
 	DateOut time.Time
 }
 
 type RoleUserUpdated struct {
-	RoleID  int
-	UserID  int
+	RoleID  uint64
+	UserID  uint64
 	DateIn  time.Time
 	DateOut time.Time
 }
 
 type RoleUserDeleted struct {
-	RoleID int
-	UserID int
+	RoleID uint64
+	UserID uint64
 }

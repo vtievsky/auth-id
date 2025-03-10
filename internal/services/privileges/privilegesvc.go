@@ -16,7 +16,7 @@ const (
 )
 
 type Privilege struct {
-	ID          int    // Ключевое поле для БД
+	ID          uint64 // Ключевое поле для БД
 	Code        string // Ключевое поле для интерфейса
 	Name        string
 	Description string
@@ -35,7 +35,7 @@ type PrivilegeSvc struct {
 	logger      *zap.Logger
 	storage     Storage
 	lastTime    time.Time
-	cacheByID   map[int]*models.Privilege
+	cacheByID   map[uint64]*models.Privilege
 	cacheByCode map[string]*models.Privilege
 	mu          sync.RWMutex
 }
@@ -45,13 +45,13 @@ func New(opts *PrivilegeSvcOpts) *PrivilegeSvc {
 		logger:      opts.Logger,
 		storage:     opts.Storage,
 		lastTime:    time.Time{},
-		cacheByID:   make(map[int]*models.Privilege),
+		cacheByID:   make(map[uint64]*models.Privilege),
 		cacheByCode: make(map[string]*models.Privilege),
 		mu:          sync.RWMutex{},
 	}
 }
 
-func (s *PrivilegeSvc) GetPrivilegeByID(ctx context.Context, id int) (*Privilege, error) {
+func (s *PrivilegeSvc) GetPrivilegeByID(ctx context.Context, id uint64) (*Privilege, error) {
 	const op = "PrivilegeSvc.GetPrivilegeByID"
 
 	s.mu.RLock()
