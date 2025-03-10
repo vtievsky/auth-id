@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	"go.uber.org/zap"
 )
 
@@ -45,10 +46,12 @@ func (s *RoleSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePr
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}
 
+	var p *privilegesvc.Privilege
+
 	resp := make([]*RolePrivilege, 0, len(ul))
 
 	for _, privilege := range ul {
-		p, err := s.privilegeSvc.GetPrivilegeByID(ctx, privilege.PrivilegeID)
+		p, err = s.privilegeSvc.GetPrivilegeByID(ctx, privilege.PrivilegeID)
 		if err != nil {
 			s.logger.Error("failed to parse privilege",
 				zap.String("role_code", code),
