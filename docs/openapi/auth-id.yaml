@@ -331,6 +331,13 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRolePrivilegeRequest"
+        description: Параметры запроса
+        required: true
       responses:
         "200":
           content:
@@ -343,6 +350,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AddRolePrivilegeResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    put:
+      tags:
+        - web
+      description: Изменение привилегии роли
+      operationId: UpdateRolePrivilege
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: privilege_code
+          description: Код привилегии
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRolePrivilegeRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRolePrivilegeResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRolePrivilegeResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    delete:
+      tags:
+        - web
+      description: Удаление привилегии роли
+      operationId: DeleteRolePrivilege
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: privilege_code
+          description: Код привилегии
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRolePrivilegeResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRolePrivilegeResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -690,6 +770,14 @@ components:
           $ref: "#/components/schemas/ResponseStatusError"
       required:
         - status
+    AddRolePrivilegeRequest:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          default: true
+      required:
+        - allowed
     AddRolePrivilegeResponse200:
       type: object
       properties:
@@ -699,6 +787,45 @@ components:
       required:
         - status
     AddRolePrivilegeResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    UpdateRolePrivilegeRequest:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+      required:
+        - allowed
+    UpdateRolePrivilegeResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    UpdateRolePrivilegeResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    DeleteRolePrivilegeResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    DeleteRolePrivilegeResponse500:
       type: object
       properties:
         status:

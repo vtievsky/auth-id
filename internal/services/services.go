@@ -29,4 +29,6 @@ type RoleService interface {
 
 	GetRolePrivileges(ctx context.Context, code string) ([]*rolesvc.RolePrivilege, error)
 	AddRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeCreated) error
+	UpdateRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeUpdated) error
+	DeleteRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeDeleted) error
 }

@@ -55,6 +55,37 @@ func (s *Roles) AddRolePrivilege(ctx context.Context, rolePrivilege models.RoleP
 	return nil
 }
 
+func (s *Roles) UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error {
+	const op = "DbRoles.UpdateRolePrivilege"
+
+	rolePrivilegeUpdated := tarantoolclient.RolePrivilegeUpdated{
+		RoleID:      uint64(rolePrivilege.RoleID),      //nolint:gosec
+		PrivilegeID: uint64(rolePrivilege.PrivilegeID), //nolint:gosec
+		Allowed:     rolePrivilege.Allowed,
+	}
+
+	if _, err := s.c.Connection.Replace(spaceRolePrivilege, rolePrivilegeUpdated.ToTuple()); err != nil {
+		return fmt.Errorf("failed to update a role privilege | %s:%w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Roles) DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error {
+	const op = "DbRoles.DeleteRolePrivilege"
+
+	rolePrivilegeDeleted := tarantoolclient.RolePrivilegeDeleted{
+		RoleID:      uint64(rolePrivilege.RoleID),      //nolint:gosec
+		PrivilegeID: uint64(rolePrivilege.PrivilegeID), //nolint:gosec
+	}
+
+	if _, err := s.c.Connection.Delete(spaceRolePrivilege, "pk", rolePrivilegeDeleted.ToTuple()); err != nil {
+		return fmt.Errorf("failed to delete a role privilege | %s:%w", op, err)
+	}
+
+	return nil
+}
+
 func (s *Roles) tupleToRolePrivilege(tuple tarantoolclient.Tuple) tarantoolclient.RolePrivilege {
 	return tarantoolclient.RolePrivilege{
 		RoleID:      tuple[0].(uint64), //nolint:forcetypeassert

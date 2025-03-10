@@ -18,3 +18,8 @@ type RolePrivilegeUpdated struct {
 	PrivilegeID int
 	Allowed     bool
 }
+
+type RolePrivilegeDeleted struct {
+	RoleID      int
+	PrivilegeID int
+}

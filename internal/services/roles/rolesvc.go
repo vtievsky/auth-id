@@ -41,6 +41,8 @@ type Roles interface {
 type RolePrivileges interface {
 	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
 	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
+	UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error
+	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
 }
 
 type PrivilegeSvc interface {
