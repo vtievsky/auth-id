@@ -25,7 +25,7 @@ box.once('init', function()
         })
         --
         s:create_index('pk', { sequence = 'user_seq', type = 'tree', parts = { 'id' } })
-        s:create_index('secondary', { type = 'tree', parts = { 'login' } })
+        s:create_index('secondary', { type = 'tree', unique = true, parts = { 'login' } })
         --
         s:insert { nil, 'Пупкин Василий Иванович', 'pupkin_vi', false }
         s:insert { nil, 'Папироскина Мария Ивановна', 'papiroskina_mi', false }
@@ -48,7 +48,7 @@ box.once('init', function()
         })
         --
         s:create_index('pk', { sequence = 'role_seq', type = 'tree', parts = { 'id' } })
-        s:create_index('secondary', { type = 'tree', parts = { 'code' } })
+        s:create_index('secondary', { type = 'tree', unique = true, parts = { 'code' } })
         --
         s:insert { nil, 'admin', 'Администраторы казино', '', false }
     end
@@ -69,7 +69,7 @@ box.once('init', function()
         })
         --
         s:create_index('pk', { sequence = 'privilege_seq', type = 'tree', parts = { 'id' } })
-        s:create_index('secondary', { type = 'tree', parts = { 'code' } })
+        s:create_index('secondary', { type = 'tree', unique = true, parts = { 'code' } })
         --
         s:insert { nil, 'user_read', 'Чтение справочника пользователей', '' }
         s:insert { nil, 'user_create', 'Создание пользователя', '' }
