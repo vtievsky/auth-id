@@ -4,7 +4,7 @@ import (
 	"context"
 
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
-	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 )
 
 func (t *Transport) GetRolePrivileges(
@@ -45,7 +45,7 @@ func (t *Transport) AddRolePrivilege(
 	ctx context.Context,
 	request serverhttp.AddRolePrivilegeRequestObject,
 ) (serverhttp.AddRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.AddRolePrivilege(ctx, rolesvc.RolePrivilegeCreated{
+	if err := t.services.RolePrivilegeSvc.AddRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeCreated{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 		Allowed:       request.Body.Allowed,
@@ -70,7 +70,7 @@ func (t *Transport) UpdateRolePrivilege(
 	ctx context.Context,
 	request serverhttp.UpdateRolePrivilegeRequestObject,
 ) (serverhttp.UpdateRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.UpdateRolePrivilege(ctx, rolesvc.RolePrivilegeUpdated{
+	if err := t.services.RolePrivilegeSvc.UpdateRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeUpdated{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 		Allowed:       request.Body.Allowed,
@@ -95,7 +95,7 @@ func (t *Transport) DeleteRolePrivilege(
 	ctx context.Context,
 	request serverhttp.DeleteRolePrivilegeRequestObject,
 ) (serverhttp.DeleteRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.DeleteRolePrivilege(ctx, rolesvc.RolePrivilegeDeleted{
+	if err := t.services.RolePrivilegeSvc.DeleteRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeDeleted{
 		RoleCode:      request.RoleCode,
 		PrivilegeCode: request.PrivilegeCode,
 	}); err != nil {

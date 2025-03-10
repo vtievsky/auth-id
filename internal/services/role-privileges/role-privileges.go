@@ -1,11 +1,14 @@
-package rolesvc
+package roleprivilegesvc
 
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
+	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -34,8 +37,56 @@ type RolePrivilegeDeleted struct {
 	PrivilegeCode string
 }
 
-func (s *RoleSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePrivilege, error) {
-	const op = "RoleSvc.GetRolePrivileges"
+type RolePrivileges interface {
+	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
+	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
+	UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error
+	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
+}
+
+type RoleSvc interface {
+	GetRoleByID(ctx context.Context, id int) (*rolesvc.Role, error)
+	GetRoleByCode(ctx context.Context, code string) (*rolesvc.Role, error)
+}
+
+type PrivilegeSvc interface {
+	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
+	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
+}
+
+type RolePrivilegeSvcOpts struct {
+	Logger         *zap.Logger
+	RolePrivileges RolePrivileges
+	PrivilegeSvc   PrivilegeSvc
+	RoleSvc        RoleSvc
+}
+
+type RolePrivilegeSvc struct {
+	logger         *zap.Logger
+	rolePrivileges RolePrivileges
+	privilegeSvc   PrivilegeSvc
+	roleSvc        RoleSvc
+	lastTime       time.Time
+	cacheByID      map[int]*models.Role
+	cacheByCode    map[string]*models.Role
+	mu             sync.RWMutex
+}
+
+func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
+	return &RolePrivilegeSvc{
+		logger:         opts.Logger,
+		rolePrivileges: opts.RolePrivileges,
+		privilegeSvc:   opts.PrivilegeSvc,
+		roleSvc:        opts.RoleSvc,
+		lastTime:       time.Time{},
+		cacheByID:      make(map[int]*models.Role),
+		cacheByCode:    make(map[string]*models.Role),
+		mu:             sync.RWMutex{},
+	}
+}
+
+func (s *RolePrivilegeSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePrivilege, error) {
+	const op = "RolePrivilegeSvc.GetRolePrivileges"
 
 	ul, err := s.rolePrivileges.GetRolePrivileges(ctx, code)
 	if err != nil {
@@ -74,11 +125,11 @@ func (s *RoleSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePr
 	return resp, nil
 }
 
-func (s *RoleSvc) AddRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeCreated) error {
-	const op = "RoleSvc.AddRolePrivilege"
+func (s *RolePrivilegeSvc) AddRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeCreated) error {
+	const op = "RolePrivilegeSvc.AddRolePrivilege"
 
 	var (
-		role      *models.Role
+		role      *rolesvc.Role
 		privilege *privilegesvc.Privilege
 	)
 
@@ -87,14 +138,14 @@ func (s *RoleSvc) AddRolePrivilege(ctx context.Context, rolePrivilege RolePrivil
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, rolePrivilege.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, rolePrivilege.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", rolePrivilege.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil
@@ -137,11 +188,11 @@ func (s *RoleSvc) AddRolePrivilege(ctx context.Context, rolePrivilege RolePrivil
 	return nil
 }
 
-func (s *RoleSvc) UpdateRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeUpdated) error {
-	const op = "RoleSvc.UpdateRolePrivilege"
+func (s *RolePrivilegeSvc) UpdateRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeUpdated) error {
+	const op = "RolePrivilegeSvc.UpdateRolePrivilege"
 
 	var (
-		role      *models.Role
+		role      *rolesvc.Role
 		privilege *privilegesvc.Privilege
 	)
 
@@ -150,14 +201,14 @@ func (s *RoleSvc) UpdateRolePrivilege(ctx context.Context, rolePrivilege RolePri
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, rolePrivilege.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, rolePrivilege.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", rolePrivilege.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil
@@ -200,11 +251,11 @@ func (s *RoleSvc) UpdateRolePrivilege(ctx context.Context, rolePrivilege RolePri
 	return nil
 }
 
-func (s *RoleSvc) DeleteRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeDeleted) error {
-	const op = "RoleSvc.DeleteRolePrivilege"
+func (s *RolePrivilegeSvc) DeleteRolePrivilege(ctx context.Context, rolePrivilege RolePrivilegeDeleted) error {
+	const op = "RolePrivilegeSvc.DeleteRolePrivilege"
 
 	var (
-		role      *models.Role
+		role      *rolesvc.Role
 		privilege *privilegesvc.Privilege
 	)
 
@@ -213,14 +264,14 @@ func (s *RoleSvc) DeleteRolePrivilege(ctx context.Context, rolePrivilege RolePri
 	g.Go(func() error {
 		var err error
 
-		role, err = s.roles.GetRole(gCtx, rolePrivilege.RoleCode)
+		role, err = s.roleSvc.GetRoleByCode(gCtx, rolePrivilege.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", rolePrivilege.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil

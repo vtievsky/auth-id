@@ -142,12 +142,12 @@ func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated)
 
 		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", roleUser.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil
@@ -206,12 +206,12 @@ func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdat
 
 		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", roleUser.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil
@@ -270,12 +270,12 @@ func (s *RoleUserSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDelet
 
 		role, err = s.roleSvc.GetRoleByCode(gCtx, roleUser.RoleCode)
 		if err != nil {
-			s.logger.Error("failed to get role",
+			s.logger.Error("failed to parse role",
 				zap.String("role_code", roleUser.RoleCode),
 				zap.Error(err),
 			)
 
-			return fmt.Errorf("failed to get role | %s:%w", op, err)
+			return fmt.Errorf("failed to parse role | %s:%w", op, err)
 		}
 
 		return nil

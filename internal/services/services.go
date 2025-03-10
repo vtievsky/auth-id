@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
@@ -45,8 +46,8 @@ type RoleUserService interface {
 }
 
 type RolePrivilegeService interface {
-	GetRolePrivileges(ctx context.Context, code string) ([]*rolesvc.RolePrivilege, error)
-	AddRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeCreated) error
-	UpdateRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeUpdated) error
-	DeleteRolePrivilege(ctx context.Context, rolePrivilege rolesvc.RolePrivilegeDeleted) error
+	GetRolePrivileges(ctx context.Context, code string) ([]*roleprivilegesvc.RolePrivilege, error)
+	AddRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeCreated) error
+	UpdateRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeUpdated) error
+	DeleteRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeDeleted) error
 }

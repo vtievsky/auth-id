@@ -18,6 +18,7 @@ import (
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
 	"github.com/vtievsky/auth-id/internal/services"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
+	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
@@ -76,10 +77,8 @@ func main() {
 	})
 
 	roleService := rolesvc.New(&rolesvc.RoleSvcOpts{
-		Logger:         logger.Named("role"),
-		Roles:          rolesRepo,
-		RolePrivileges: rolePrivilegesRepo,
-		PrivilegeSvc:   privilegeService,
+		Logger: logger.Named("role"),
+		Roles:  rolesRepo,
 	})
 
 	userRoleService := userrolesvc.New(&userrolesvc.UserRoleSvcOpts{
@@ -95,6 +94,13 @@ func main() {
 		RoleSvc:   roleService,
 	})
 
+	rolePrivilegeService := roleprivilegesvc.New(&roleprivilegesvc.RolePrivilegeSvcOpts{
+		Logger:         logger.Named("role-privilege"),
+		RolePrivileges: rolePrivilegesRepo,
+		PrivilegeSvc:   privilegeService,
+		RoleSvc:        roleService,
+	})
+
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
@@ -102,7 +108,7 @@ func main() {
 		UserRoleSvc:      userRoleService,
 		RoleSvc:          roleService,
 		RoleUserSvc:      roleUserService,
-		RolePrivilegeSvc: roleService,
+		RolePrivilegeSvc: rolePrivilegeService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)

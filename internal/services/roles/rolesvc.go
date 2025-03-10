@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
-	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	"go.uber.org/zap"
 )
 
@@ -40,46 +39,28 @@ type Roles interface {
 	DeleteRole(ctx context.Context, code string) error
 }
 
-type RolePrivileges interface {
-	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
-	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
-	UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error
-	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
-}
-
-type PrivilegeSvc interface {
-	GetPrivilegeByID(ctx context.Context, id int) (*privilegesvc.Privilege, error)
-	GetPrivilegeByCode(ctx context.Context, code string) (*privilegesvc.Privilege, error)
-}
-
 type RoleSvcOpts struct {
-	Logger         *zap.Logger
-	Roles          Roles
-	RolePrivileges RolePrivileges
-	PrivilegeSvc   PrivilegeSvc
+	Logger *zap.Logger
+	Roles  Roles
 }
 
 type RoleSvc struct {
-	logger         *zap.Logger
-	roles          Roles
-	rolePrivileges RolePrivileges
-	privilegeSvc   PrivilegeSvc
-	lastTime       time.Time
-	cacheByID      map[int]*models.Role
-	cacheByCode    map[string]*models.Role
-	mu             sync.RWMutex
+	logger      *zap.Logger
+	roles       Roles
+	lastTime    time.Time
+	cacheByID   map[int]*models.Role
+	cacheByCode map[string]*models.Role
+	mu          sync.RWMutex
 }
 
 func New(opts *RoleSvcOpts) *RoleSvc {
 	return &RoleSvc{
-		logger:         opts.Logger,
-		roles:          opts.Roles,
-		rolePrivileges: opts.RolePrivileges,
-		privilegeSvc:   opts.PrivilegeSvc,
-		lastTime:       time.Time{},
-		cacheByID:      make(map[int]*models.Role),
-		cacheByCode:    make(map[string]*models.Role),
-		mu:             sync.RWMutex{},
+		logger:      opts.Logger,
+		roles:       opts.Roles,
+		lastTime:    time.Time{},
+		cacheByID:   make(map[int]*models.Role),
+		cacheByCode: make(map[string]*models.Role),
+		mu:          sync.RWMutex{},
 	}
 }
 
