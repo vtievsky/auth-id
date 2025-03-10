@@ -11,6 +11,7 @@ require (
 	github.com/tarantool/go-tarantool v1.12.2
 	github.com/vtievsky/golibs v1.0.0
 	go.uber.org/zap v1.27.0
+	golang.org/x/sync v0.10.0
 )
 
 require (
