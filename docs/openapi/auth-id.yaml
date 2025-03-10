@@ -495,6 +495,79 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+    put:
+      tags:
+        - web
+      description: Изменение роли пользователя
+      operationId: UpdateRoleUser
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleUserRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRoleUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateRoleUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    delete:
+      tags:
+        - web
+      description: Удаление роли пользователя
+      operationId: DeleteRoleUser
+      parameters:
+        - name: role_code
+          description: Код роли
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRoleUserResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteRoleUserResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
 components:
   schemas:
     ResponseStatusOk:
@@ -720,8 +793,14 @@ components:
           type: string
         date_in:
           type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
         date_out:
           type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
       required:
         - name
         - login
@@ -944,8 +1023,14 @@ components:
       properties:
         date_in:
           type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
         date_out:
           type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
       required:
         - date_in
         - date_out
@@ -958,6 +1043,54 @@ components:
       required:
         - status
     AddRoleUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    UpdateRoleUserRequest:
+      type: object
+      properties:
+        date_in:
+          type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
+        date_out:
+          type: string
+          format: date
+          pattern: "YYYY-MM-DD"
+          example: "2017-01-01"
+      required:
+        - date_in
+        - date_out
+    UpdateRoleUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    UpdateRoleUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    DeleteRoleUserResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    DeleteRoleUserResponse500:
       type: object
       properties:
         status:

@@ -19,6 +19,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
 	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -52,8 +53,8 @@ type AddRolePrivilegeResponse500 struct {
 
 // AddRoleUserRequest defines model for AddRoleUserRequest.
 type AddRoleUserRequest struct {
-	DateIn  string `json:"date_in"`
-	DateOut string `json:"date_out"`
+	DateIn  openapi_types.Date `json:"date_in"`
+	DateOut openapi_types.Date `json:"date_out"`
 }
 
 // AddRoleUserResponse200 defines model for AddRoleUserResponse200.
@@ -127,6 +128,16 @@ type DeleteRoleResponse200 struct {
 
 // DeleteRoleResponse500 defines model for DeleteRoleResponse500.
 type DeleteRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
+// DeleteRoleUserResponse200 defines model for DeleteRoleUserResponse200.
+type DeleteRoleUserResponse200 struct {
+	Status ResponseStatusOk `json:"status"`
+}
+
+// DeleteRoleUserResponse500 defines model for DeleteRoleUserResponse500.
+type DeleteRoleUserResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
@@ -242,10 +253,10 @@ type RolePrivilege struct {
 
 // RoleUser defines model for RoleUser.
 type RoleUser struct {
-	DateIn  string `json:"date_in"`
-	DateOut string `json:"date_out"`
-	Login   string `json:"login"`
-	Name    string `json:"name"`
+	DateIn  openapi_types.Date `json:"date_in"`
+	DateOut openapi_types.Date `json:"date_out"`
+	Login   string             `json:"login"`
+	Name    string             `json:"name"`
 }
 
 // UpdateRolePrivilegeRequest defines model for UpdateRolePrivilegeRequest.
@@ -282,6 +293,22 @@ type UpdateRoleResponse200 struct {
 
 // UpdateRoleResponse500 defines model for UpdateRoleResponse500.
 type UpdateRoleResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
+// UpdateRoleUserRequest defines model for UpdateRoleUserRequest.
+type UpdateRoleUserRequest struct {
+	DateIn  openapi_types.Date `json:"date_in"`
+	DateOut openapi_types.Date `json:"date_out"`
+}
+
+// UpdateRoleUserResponse200 defines model for UpdateRoleUserResponse200.
+type UpdateRoleUserResponse200 struct {
+	Status ResponseStatusOk `json:"status"`
+}
+
+// UpdateRoleUserResponse500 defines model for UpdateRoleUserResponse500.
+type UpdateRoleUserResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
@@ -326,6 +353,9 @@ type UpdateRolePrivilegeJSONRequestBody = UpdateRolePrivilegeRequest
 // AddRoleUserJSONRequestBody defines body for AddRoleUser for application/json ContentType.
 type AddRoleUserJSONRequestBody = AddRoleUserRequest
 
+// UpdateRoleUserJSONRequestBody defines body for UpdateRoleUser for application/json ContentType.
+type UpdateRoleUserJSONRequestBody = UpdateRoleUserRequest
+
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = CreateUserRequest
 
@@ -365,8 +395,14 @@ type ServerInterface interface {
 	// (PUT /v1/roles/{role_code}/privileges/{privilege_code})
 	UpdateRolePrivilege(ctx echo.Context, roleCode string, privilegeCode string) error
 
+	// (DELETE /v1/roles/{role_code}/users/{login})
+	DeleteRoleUser(ctx echo.Context, roleCode string, login string) error
+
 	// (POST /v1/roles/{role_code}/users/{login})
 	AddRoleUser(ctx echo.Context, roleCode string, login string) error
+
+	// (PUT /v1/roles/{role_code}/users/{login})
+	UpdateRoleUser(ctx echo.Context, roleCode string, login string) error
 
 	// (GET /v1/users)
 	GetUsers(ctx echo.Context) error
@@ -579,6 +615,32 @@ func (w *ServerInterfaceWrapper) UpdateRolePrivilege(ctx echo.Context) error {
 	return err
 }
 
+// DeleteRoleUser converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteRoleUser(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "role_code" -------------
+	var roleCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
+	}
+
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteRoleUser(ctx, roleCode, login)
+	return err
+}
+
 // AddRoleUser converts echo context to params.
 func (w *ServerInterfaceWrapper) AddRoleUser(ctx echo.Context) error {
 	var err error
@@ -602,6 +664,32 @@ func (w *ServerInterfaceWrapper) AddRoleUser(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddRoleUser(ctx, roleCode, login)
+	return err
+}
+
+// UpdateRoleUser converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateRoleUser(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "role_code" -------------
+	var roleCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
+	}
+
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateRoleUser(ctx, roleCode, login)
 	return err
 }
 
@@ -719,7 +807,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.DeleteRolePrivilege)
 	router.POST(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.AddRolePrivilege)
 	router.PUT(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.UpdateRolePrivilege)
+	router.DELETE(baseURL+"/v1/roles/:role_code/users/:login", wrapper.DeleteRoleUser)
 	router.POST(baseURL+"/v1/roles/:role_code/users/:login", wrapper.AddRoleUser)
+	router.PUT(baseURL+"/v1/roles/:role_code/users/:login", wrapper.UpdateRoleUser)
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
@@ -993,6 +1083,33 @@ func (response UpdateRolePrivilege500JSONResponse) VisitUpdateRolePrivilegeRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteRoleUserRequestObject struct {
+	RoleCode string `json:"role_code"`
+	Login    string `json:"login"`
+}
+
+type DeleteRoleUserResponseObject interface {
+	VisitDeleteRoleUserResponse(w http.ResponseWriter) error
+}
+
+type DeleteRoleUser200JSONResponse DeleteRoleUserResponse200
+
+func (response DeleteRoleUser200JSONResponse) VisitDeleteRoleUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteRoleUser500JSONResponse DeleteRoleUserResponse500
+
+func (response DeleteRoleUser500JSONResponse) VisitDeleteRoleUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type AddRoleUserRequestObject struct {
 	RoleCode string `json:"role_code"`
 	Login    string `json:"login"`
@@ -1015,6 +1132,34 @@ func (response AddRoleUser200JSONResponse) VisitAddRoleUserResponse(w http.Respo
 type AddRoleUser500JSONResponse AddRoleUserResponse500
 
 func (response AddRoleUser500JSONResponse) VisitAddRoleUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateRoleUserRequestObject struct {
+	RoleCode string `json:"role_code"`
+	Login    string `json:"login"`
+	Body     *UpdateRoleUserJSONRequestBody
+}
+
+type UpdateRoleUserResponseObject interface {
+	VisitUpdateRoleUserResponse(w http.ResponseWriter) error
+}
+
+type UpdateRoleUser200JSONResponse UpdateRoleUserResponse200
+
+func (response UpdateRoleUser200JSONResponse) VisitUpdateRoleUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateRoleUser500JSONResponse UpdateRoleUserResponse500
+
+func (response UpdateRoleUser500JSONResponse) VisitUpdateRoleUserResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1184,8 +1329,14 @@ type StrictServerInterface interface {
 	// (PUT /v1/roles/{role_code}/privileges/{privilege_code})
 	UpdateRolePrivilege(ctx context.Context, request UpdateRolePrivilegeRequestObject) (UpdateRolePrivilegeResponseObject, error)
 
+	// (DELETE /v1/roles/{role_code}/users/{login})
+	DeleteRoleUser(ctx context.Context, request DeleteRoleUserRequestObject) (DeleteRoleUserResponseObject, error)
+
 	// (POST /v1/roles/{role_code}/users/{login})
 	AddRoleUser(ctx context.Context, request AddRoleUserRequestObject) (AddRoleUserResponseObject, error)
+
+	// (PUT /v1/roles/{role_code}/users/{login})
+	UpdateRoleUser(ctx context.Context, request UpdateRoleUserRequestObject) (UpdateRoleUserResponseObject, error)
 
 	// (GET /v1/users)
 	GetUsers(ctx context.Context, request GetUsersRequestObject) (GetUsersResponseObject, error)
@@ -1488,6 +1639,32 @@ func (sh *strictHandler) UpdateRolePrivilege(ctx echo.Context, roleCode string, 
 	return nil
 }
 
+// DeleteRoleUser operation middleware
+func (sh *strictHandler) DeleteRoleUser(ctx echo.Context, roleCode string, login string) error {
+	var request DeleteRoleUserRequestObject
+
+	request.RoleCode = roleCode
+	request.Login = login
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRoleUser(ctx.Request().Context(), request.(DeleteRoleUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRoleUser")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeleteRoleUserResponseObject); ok {
+		return validResponse.VisitDeleteRoleUserResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // AddRoleUser operation middleware
 func (sh *strictHandler) AddRoleUser(ctx echo.Context, roleCode string, login string) error {
 	var request AddRoleUserRequestObject
@@ -1514,6 +1691,38 @@ func (sh *strictHandler) AddRoleUser(ctx echo.Context, roleCode string, login st
 		return err
 	} else if validResponse, ok := response.(AddRoleUserResponseObject); ok {
 		return validResponse.VisitAddRoleUserResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UpdateRoleUser operation middleware
+func (sh *strictHandler) UpdateRoleUser(ctx echo.Context, roleCode string, login string) error {
+	var request UpdateRoleUserRequestObject
+
+	request.RoleCode = roleCode
+	request.Login = login
+
+	var body UpdateRoleUserJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateRoleUser(ctx.Request().Context(), request.(UpdateRoleUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRoleUser")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UpdateRoleUserResponseObject); ok {
+		return validResponse.VisitUpdateRoleUserResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1656,34 +1865,36 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xc3W4TRxR+FWvayw12qFAl39FSVahCIBAXEYrQxp4kS9a7y+xsaBRZIklRL6jITS+q",
+	"/qGqL2ACVsyPzSuceaNqZm2v1zv7l9qz48AVi5k9c+bMd/7PcohabsdzHexQHzUPkd/axR1TPF5vt++6",
+	"Nr5DrH3Lxjv4Ln4cYJ/yf/KI62FCLSwWmrbtPsFt/tjG22ZgU9SkJMAGogceRk205bo2Nh3U7RqI4MeB",
+	"RfjqB9MXN6cr3a1HuEVR15Ds7nuu4+OrjUaSA5+aNBBPXxK8jZroi3p0rPr4TPUJiXti9e29BD9jMmXY",
+	"ubYodr4jxCUX4Oi+j0nqzbRNih9aDn/EP5odz+YkrjbWv15rrK811pGBtl3SMSlqiqXIQJ5JKSYOaqKN",
+	"jY2NtVu31m7cQNPdfUosZ4fvLii7AV046TkBTE4ws2OuMHQAyiwn1WHkW4JNijk/qRDZst3WXiHlNVAb",
+	"+y1iedRynXD9zF8R/A0fYcCOoAdDGEC/xp7CCN7DQAYfx+xgCYm/oAfncFaAxJwMBL04g8b0aHmSycBL",
+	"26Rm7h25NuYkF4stI9y7GO9VIyzTCJVBmO3uWBJsiZ9r8JGjgf0C5zDiIGHH0If37LQEwF4KPA1hBP0a",
+	"DOADOy1BVY65kOUiaMu1TkXQxolUgDY97NkNbOMQ+brEBRkc6SAmbaSjk1A0iBLkzFQtHG0Eo4dQvsc0",
+	"pth+IeNtUdzxi8QMU7p8r/HmJiHmgVLznnrIyuW+eoHZHOOVS5Cr0YJBOwk/qsZr7GiVC3rBQtZBwHoI",
+	"dzVD5jnGK5fgAuGpg/5rovuy1xOctNy2yEOxE3Q4PSyWbcoqavHiSnbuKcjG38ln8fZePn/unjrmuKXL",
+	"qhYkywMTbkvyF5UDCjFeupgUj+ay6uNaHSmr/D719ZehpjxTV7qgGOdqPQWr0ve9tpkoDuQ3Uf5H10S6",
+	"Y6UJXQZH1ZnuiKkiVctLXQifFcWq5VtJ3nWA1OeOnEwemhghPeLykJ+iXZOk/VHX3cg3HauZoiV5rxAN",
+	"0jgrEwALjmfSb5nfCW4FxKIH9/hpx7xhk4Q8CxEI5sKfpgR2KfVQl79vOdtumGo41GxxqM97UAR/Qp8d",
+	"wwjesOc1eMMByl1eD17BiB2z5zV2VLt+52YNzqAPr9gzdgLvOJ75dhYVhs4M6O6a1ebLkIH2MfFD0utX",
+	"Glwsrocd07NQE311pXFlPTR+u+Iw9f31OnHt8GQ7mKYpFjthP0N/4pCPxk7+HfQm3rkPb5HYiZj8xZtt",
+	"1JxWUxCXf4gSsc9YU7hMsCO2ND3PtlrizfojPwwsQoDlwU9WhBKSj5/i9g9cENeWuPE1+cY3He5lTLt2",
+	"D5N9TGqRgkyghZoPIlA92OxyHJo7PkfqE7yFNrsG8lxfdjP/wAjO4Y0sUIpfRNQ0R6EqYJ9+47YPFiaM",
+	"5KyFRBTwEnoC2B844NlTDvdz6MFHzjcPGdGsnlIS4O4SgSMfglACHfkMw3LA0zUiHa8f8oy4GyLJxlTm",
+	"Rv8VeHof6XoapqIunrAnxOxgiokvGJqj+Ts3bjV2EpJmp9CHDzCCt7PEuUUXZmmSsDcn6XscEsaMjOfN",
+	"/OYS4SJvKyuBi7yRvCxbU9QJjO3OkD1nz9JRMraSRSGyOniQ9OlUuh0lXieQIeE3OOcGHIb5JiLKPAre",
+	"PwwmxJdsJBbvAZNVFe09oLz6oQTF8uKFMg9Y96Yd/zJxr7inAZzBQDjI1zCIw1Nq+qLhgktrBOVDIirN",
+	"oXyCQx2eAl9caRkoyUoTPIvKBZToAF5aLCVatiphlGiuqkAQ/+PhvFmqH06fH5YP2iWGalAkko/6eIuA",
+	"1/RgpTBmpMUGkjPJ941LTsMMQtqeUpxKSBtSiusXv8IIXkEPzi4M3fkvkz5p3C4+qE37Ck770DbrAzol",
+	"ipb1yVzV+Vo5FZP0sD9r2ZJSx9VTtJyZC8XJpEJ1S43hRCpQPxTdpYuVWrP6lmmRm2ij6aSWf8BIaOEw",
+	"6zSS/SddOd1itvlOr+Jwbb5Zq0GklgfXF2nR2qeO1aXFabMzFasSolWiVynfqetSSC/uAOKzPZ+Vajlh",
+	"2UrpVfrsmeJgTI12jeOw0gXY2AxLejVWVoSdFGCXWQqtrAyqqARaeKalsCmMPtVf6ozLStkC+X+9oHDG",
+	"Rb0NuFDmVTLhKuRrI/+XGHx5DaNLkBVVmBGpCtwuNAtTGExja1sCSasMGskHrSp9ml4F2FLhfVmQJIdo",
+	"lBmcZUXhKxiBVxh9K/K6YjF/OwRkQGzURHU0szKpCyLsHuOQnbAX7JgdsdPp2PtPIjcdCmwOuVWNEMk3",
+	"7W52/wsAAP//rN41S7RRAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
