@@ -208,58 +208,61 @@ func (s *RoleSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdated) 
 func (s *RoleSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDeleted) error {
 	const op = "RoleSvc.DeleteRoleUser"
 
-	// var (
-	// 	err       error
-	// 	role      *models.Role
-	// 	privilege *privilegesvc.Privilege
-	// )
+	var (
+		role *models.Role
+		user *usersvc.User
+	)
 
-	// g, gCtx := errgroup.WithContext(ctx)
+	g, gCtx := errgroup.WithContext(ctx)
 
-	// g.Go(func() error {
-	// 	role, err = s.roles.GetRole(gCtx, rolePrivilege.RoleCode)
-	// 	if err != nil {
-	// 		s.logger.Error("failed to get role",
-	// 			zap.String("role_code", rolePrivilege.RoleCode),
-	// 			zap.Error(err),
-	// 		)
+	g.Go(func() error {
+		var err error
 
-	// 		return fmt.Errorf("failed to get role | %s:%w", op, err)
-	// 	}
+		role, err = s.roles.GetRole(gCtx, roleUser.RoleCode)
+		if err != nil {
+			s.logger.Error("failed to get role",
+				zap.String("role_code", roleUser.RoleCode),
+				zap.Error(err),
+			)
 
-	// 	return nil
-	// })
+			return fmt.Errorf("failed to get role | %s:%w", op, err)
+		}
 
-	// g.Go(func() error {
-	// 	privilege, err = s.privilegeSvc.GetPrivilegeByCode(gCtx, rolePrivilege.PrivilegeCode)
-	// 	if err != nil {
-	// 		s.logger.Error("failed to parse privilege",
-	// 			zap.String("privilege_code", rolePrivilege.PrivilegeCode),
-	// 			zap.Error(err),
-	// 		)
+		return nil
+	})
 
-	// 		return fmt.Errorf("failed to parse privilege | %s:%w", op, err)
-	// 	}
+	g.Go(func() error {
+		var err error
 
-	// 	return nil
-	// })
+		user, err = s.userSvc.GetUserByLogin(gCtx, roleUser.Login)
+		if err != nil {
+			s.logger.Error("failed to parse user",
+				zap.String("login", roleUser.Login),
+				zap.Error(err),
+			)
 
-	// if err = g.Wait(); err != nil {
-	// 	return fmt.Errorf("%s:%w", op, err)
-	// }
+			return fmt.Errorf("failed to parse user | %s:%w", op, err)
+		}
 
-	// if err := s.rolePrivileges.DeleteRolePrivilege(ctx, models.RolePrivilegeDeleted{
-	// 	RoleID:      role.ID,
-	// 	PrivilegeID: privilege.ID,
-	// }); err != nil {
-	// 	s.logger.Error("failed to delete role to privilege",
-	// 		zap.String("role_code", rolePrivilege.RoleCode),
-	// 		zap.String("privilege_code", rolePrivilege.PrivilegeCode),
-	// 		zap.Error(err),
-	// 	)
+		return nil
+	})
 
-	// 	return fmt.Errorf("failed to delete role to privilege | %s:%w", op, err)
-	// }
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("%s:%w", op, err)
+	}
+
+	if err := s.roleUsers.DeleteRoleUser(ctx, models.RoleUserDeleted{
+		RoleID: role.ID,
+		UserID: user.ID,
+	}); err != nil {
+		s.logger.Error("failed to delete role to user",
+			zap.String("role_code", roleUser.RoleCode),
+			zap.String("login", roleUser.Login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to delete role to user | %s:%w", op, err)
+	}
 
 	return nil
 }

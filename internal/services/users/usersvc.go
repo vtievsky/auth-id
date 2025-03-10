@@ -129,24 +129,6 @@ func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, erro
 	}
 
 	return nil, dberrors.ErrUserNotFound
-
-	// resp, err := s.storage.GetUser(ctx, login)
-	// if err != nil {
-	// 	s.logger.Error("failed to get user",
-	// 		zap.String("username", login),
-	// 		zap.Error(err),
-	// 	)
-
-	// 	return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
-	// }
-
-	// return &User{
-	// 	ID:      resp.ID,
-	// 	Login:   resp.Login,
-	// 	Name:    resp.Name,
-	// 	Blocked: resp.Blocked,
-	// }, nil
-
 }
 
 func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
