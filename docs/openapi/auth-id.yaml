@@ -1,7 +1,6 @@
 openapi: 3.0.1
 info:
   contact: {}
-  description: Методы для работы с API вебхуков
   title: auth-id API
   version: "1.0"
 servers:
