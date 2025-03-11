@@ -69,9 +69,10 @@ func (t *Transport) CreateUser(
 	request serverhttp.CreateUserRequestObject,
 ) (serverhttp.CreateUserResponseObject, error) {
 	user, err := t.services.UserSvc.CreateUser(ctx, usersvc.UserCreated{
-		Name:    request.Body.Name,
-		Login:   request.Body.Login,
-		Blocked: request.Body.Blocked,
+		Name:     request.Body.Name,
+		Login:    request.Body.Login,
+		Password: request.Body.Password,
+		Blocked:  request.Body.Blocked,
 	})
 	if err != nil {
 		return serverhttp.CreateUser500JSONResponse{ //nolint:nilerr

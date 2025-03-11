@@ -46,10 +46,11 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 	user := s.tupleToUser(resp.Tuples()[0])
 
 	return &models.User{
-		ID:      user.ID,
-		Name:    user.Name,
-		Login:   user.Login,
-		Blocked: user.Blocked,
+		ID:       user.ID,
+		Name:     user.Name,
+		Login:    user.Login,
+		Password: user.Password,
+		Blocked:  user.Blocked,
 	}, nil
 }
 
@@ -69,10 +70,11 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 		user = s.tupleToUser(tuple)
 
 		users = append(users, &models.User{
-			ID:      user.ID,
-			Name:    user.Name,
-			Login:   user.Login,
-			Blocked: user.Blocked,
+			ID:       user.ID,
+			Name:     user.Name,
+			Login:    user.Login,
+			Password: user.Password,
+			Blocked:  user.Blocked,
 		})
 	}
 
@@ -88,9 +90,10 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 		}
 
 		userCreated := tarantoolclient.UserCreated{
-			Name:    user.Name,
-			Login:   user.Login,
-			Blocked: user.Blocked,
+			Name:     user.Name,
+			Login:    user.Login,
+			Password: user.Password,
+			Blocked:  user.Blocked,
 		}
 
 		if _, err := s.c.Connection.Insert(space, userCreated.ToTuple()); err != nil {
@@ -112,10 +115,11 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 	}
 
 	userUpdated := tarantoolclient.UserUpdated{
-		ID:      u.ID,
-		Name:    user.Name,
-		Login:   u.Login,
-		Blocked: user.Blocked,
+		ID:       u.ID,
+		Name:     user.Name,
+		Login:    u.Login,
+		Password: u.Password,
+		Blocked:  user.Blocked,
 	}
 
 	if _, err := s.c.Connection.Replace(space, userUpdated.ToTuple()); err != nil {
@@ -141,9 +145,10 @@ func (s *Users) DeleteUser(ctx context.Context, login string) error {
 
 func (s *Users) tupleToUser(tuple tarantoolclient.Tuple) tarantoolclient.User {
 	return tarantoolclient.User{
-		ID:      tuple[0].(uint64), //nolint:forcetypeassert
-		Name:    tuple[1].(string), //nolint:forcetypeassert
-		Login:   tuple[2].(string), //nolint:forcetypeassert
-		Blocked: tuple[3].(bool),   //nolint:forcetypeassert
+		ID:       tuple[0].(uint64), //nolint:forcetypeassert
+		Name:     tuple[1].(string), //nolint:forcetypeassert
+		Login:    tuple[2].(string), //nolint:forcetypeassert
+		Password: tuple[3].(string), //nolint:forcetypeassert
+		Blocked:  tuple[4].(bool),   //nolint:forcetypeassert
 	}
 }

@@ -684,12 +684,17 @@ components:
         login:
           type: string
           description: login пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+          format: password
         blocked:
           type: boolean
           default: true
       required:
         - name
         - login
+        - password
         - blocked
     CreateUserResponse200:
       type: object

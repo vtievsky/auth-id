@@ -7,6 +7,7 @@ import (
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	"github.com/vtievsky/auth-id/pkg/cache"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -17,9 +18,10 @@ type User struct {
 }
 
 type UserCreated struct {
-	Name    string
-	Login   string
-	Blocked bool
+	Name     string
+	Login    string
+	Password string
+	Blocked  bool
 }
 
 type UserUpdated struct {
@@ -90,10 +92,21 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	const op = "UserSvc.CreateUser"
 
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Error("failed to generate has from password",
+			zap.String("username", user.Login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+	}
+
 	u, err := s.storage.CreateUser(ctx, models.UserCreated{
-		Name:    user.Name,
-		Login:   user.Login,
-		Blocked: user.Blocked,
+		Name:     user.Name,
+		Login:    user.Login,
+		Password: string(hash),
+		Blocked:  user.Blocked,
 	})
 	if err != nil {
 		s.logger.Error("failed to create user",
