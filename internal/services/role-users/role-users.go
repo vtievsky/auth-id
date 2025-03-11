@@ -3,7 +3,6 @@ package roleusersvc
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -64,26 +63,18 @@ type RoleUserSvcOpts struct {
 }
 
 type RoleUserSvc struct {
-	logger      *zap.Logger
-	roleUsers   RoleUsers
-	userSvc     UserSvc
-	roleSvc     RoleSvc
-	lastTime    time.Time
-	cacheByID   map[int]*models.Role
-	cacheByCode map[string]*models.Role
-	mu          sync.RWMutex
+	logger    *zap.Logger
+	roleUsers RoleUsers
+	userSvc   UserSvc
+	roleSvc   RoleSvc
 }
 
 func New(opts *RoleUserSvcOpts) *RoleUserSvc {
 	return &RoleUserSvc{
-		logger:      opts.Logger,
-		roleUsers:   opts.RoleUsers,
-		userSvc:     opts.UserSvc,
-		roleSvc:     opts.RoleSvc,
-		lastTime:    time.Time{},
-		cacheByID:   make(map[int]*models.Role),
-		cacheByCode: make(map[string]*models.Role),
-		mu:          sync.RWMutex{},
+		logger:    opts.Logger,
+		roleUsers: opts.RoleUsers,
+		userSvc:   opts.UserSvc,
+		roleSvc:   opts.RoleSvc,
 	}
 }
 

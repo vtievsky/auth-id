@@ -3,8 +3,6 @@ package roleprivilegesvc
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
@@ -66,10 +64,6 @@ type RolePrivilegeSvc struct {
 	rolePrivileges RolePrivileges
 	privilegeSvc   PrivilegeSvc
 	roleSvc        RoleSvc
-	lastTime       time.Time
-	cacheByID      map[uint64]*models.Role
-	cacheByCode    map[string]*models.Role
-	mu             sync.RWMutex
 }
 
 func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
@@ -78,10 +72,6 @@ func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
 		rolePrivileges: opts.RolePrivileges,
 		privilegeSvc:   opts.PrivilegeSvc,
 		roleSvc:        opts.RoleSvc,
-		lastTime:       time.Time{},
-		cacheByID:      make(map[uint64]*models.Role),
-		cacheByCode:    make(map[string]*models.Role),
-		mu:             sync.RWMutex{},
 	}
 }
 
