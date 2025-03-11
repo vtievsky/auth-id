@@ -57,5 +57,9 @@ func (s *PrivilegeSvc) syncPrivileges(ctx context.Context) error {
 		s.cacheByCode.Add(privilege.Code, privilege)
 	}
 
+	s.logger.Debug("privileges has been synchronized",
+		zap.Int("num", len(resp)),
+	)
+
 	return nil
 }

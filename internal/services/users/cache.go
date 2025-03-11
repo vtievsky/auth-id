@@ -57,5 +57,9 @@ func (s *UserSvc) syncUsers(ctx context.Context) error {
 		s.cacheByLogin.Add(user.Login, user)
 	}
 
+	s.logger.Debug("users has been synchronized",
+		zap.Int("num", len(resp)),
+	)
+
 	return nil
 }

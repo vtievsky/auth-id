@@ -59,5 +59,9 @@ func (s *RoleSvc) syncRoles(ctx context.Context) error {
 		s.cacheByCode.Add(role.Code, role)
 	}
 
+	s.logger.Debug("roles has been synchronized",
+		zap.Int("num", len(resp)),
+	)
+
 	return nil
 }

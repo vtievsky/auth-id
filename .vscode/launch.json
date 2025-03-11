@@ -8,11 +8,11 @@
             "mode": "auto",
             "program": "${workspaceRoot}/cmd/auth-id/main.go",
             "env": {
+                "AUTH_DEBUG": "true",
                 // "AUTH_DB_URL":"127.0.0.1:6379"
-                "AUTH_DB_URL":"http://127.0.0.1:3301"
+                "AUTH_DB_URL": "http://127.0.0.1:3301"
             },
-            "args": [
-            ]
+            "args": []
         }
     ]
 }
