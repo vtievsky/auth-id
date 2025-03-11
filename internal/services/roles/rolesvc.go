@@ -107,6 +107,9 @@ func (s *RoleSvc) CreateRole(ctx context.Context, role RoleCreated) (*Role, erro
 		return nil, fmt.Errorf("failed to create role | %s:%w", op, err)
 	}
 
+	s.cacheByID.Add(u.ID, u)
+	s.cacheByCode.Add(u.Code, u)
+
 	return &Role{
 		ID:          u.ID,
 		Code:        u.Code,

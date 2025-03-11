@@ -29,15 +29,28 @@ func New[K comparable, V any]() Cache[K, V] {
 	}
 }
 
-func (s *Cache[K, V]) Get(ctx context.Context, id K, syncFunc func(ctx context.Context) error) (V, error) {
+func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.Context) error) (V, error) {
 	s.mu.RLock()
 
-	// Кеш невалидный
-	if cacheTTL < time.Since(s.lastTime) {
+	var (
+		ok    bool
+		value V
+	)
+
+	if value, ok = s.m[key]; ok {
+		s.mu.RLocker().Unlock()
+
+		return value, nil
+	}
+
+	// Выполним синхронизацию, если значение отсутствует или кеш стал неактуальным
+	// Проверка на отсутствие значения, в этом условии, необходимо в случае, когда
+	// значение было создано в другом экземпляре приложения, а запрашивается здесь
+	if !ok || cacheTTL < time.Since(s.lastTime) {
 		s.mu.RLocker().Unlock()
 
 		if err := syncFunc(ctx); err != nil {
-			return *new(V), err
+			return value, err
 		}
 
 		s.mu.RLock()
@@ -45,11 +58,11 @@ func (s *Cache[K, V]) Get(ctx context.Context, id K, syncFunc func(ctx context.C
 
 	defer s.mu.RLocker().Unlock()
 
-	if val, ok := s.m[id]; ok {
-		return val, nil
+	if value, ok = s.m[key]; ok {
+		return value, nil
 	}
 
-	return *new(V), ErrValueNotFound
+	return value, ErrValueNotFound
 }
 
 func (s *Cache[K, V]) Add(key K, value V) {

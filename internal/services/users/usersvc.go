@@ -104,6 +104,9 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 	}
 
+	s.cacheByID.Add(u.ID, u)
+	s.cacheByLogin.Add(u.Login, u)
+
 	return &User{
 		ID:      u.ID,
 		Name:    u.Name,
