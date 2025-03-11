@@ -72,13 +72,13 @@ func main() {
 	})
 
 	userService := usersvc.New(&usersvc.UserSvcOpts{
-		Logger: logger.Named("user"),
-		Users:  usersRepo,
+		Logger:  logger.Named("user"),
+		Storage: usersRepo,
 	})
 
 	roleService := rolesvc.New(&rolesvc.RoleSvcOpts{
-		Logger: logger.Named("role"),
-		Roles:  rolesRepo,
+		Logger:  logger.Named("role"),
+		Storage: rolesRepo,
 	})
 
 	userRoleService := userrolesvc.New(&userrolesvc.UserRoleSvcOpts{

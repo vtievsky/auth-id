@@ -3,10 +3,9 @@ package rolesvc
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	"github.com/vtievsky/auth-id/pkg/cache"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +30,7 @@ type RoleUpdated struct {
 	Blocked     bool
 }
 
-type Roles interface {
+type Storage interface {
 	GetRole(ctx context.Context, code string) (*models.Role, error)
 	GetRoles(ctx context.Context) ([]*models.Role, error)
 	CreateRole(ctx context.Context, user models.RoleCreated) (*models.Role, error)
@@ -40,27 +39,23 @@ type Roles interface {
 }
 
 type RoleSvcOpts struct {
-	Logger *zap.Logger
-	Roles  Roles
+	Logger  *zap.Logger
+	Storage Storage
 }
 
 type RoleSvc struct {
 	logger      *zap.Logger
-	roles       Roles
-	lastTime    time.Time
-	cacheByID   map[uint64]*models.Role
-	cacheByCode map[string]*models.Role
-	mu          sync.RWMutex
+	storage     Storage
+	cacheByID   cache.Cache[uint64, *models.Role]
+	cacheByCode cache.Cache[string, *models.Role]
 }
 
 func New(opts *RoleSvcOpts) *RoleSvc {
 	return &RoleSvc{
 		logger:      opts.Logger,
-		roles:       opts.Roles,
-		lastTime:    time.Time{},
-		cacheByID:   make(map[uint64]*models.Role),
-		cacheByCode: make(map[string]*models.Role),
-		mu:          sync.RWMutex{},
+		storage:     opts.Storage,
+		cacheByID:   cache.New[uint64, *models.Role](),
+		cacheByCode: cache.New[string, *models.Role](),
 	}
 }
 
@@ -71,7 +66,7 @@ func (s *RoleSvc) GetRole(ctx context.Context, code string) (*Role, error) {
 func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {
 	const op = "RoleSvc.GetRoles"
 
-	ul, err := s.roles.GetRoles(ctx)
+	ul, err := s.storage.GetRoles(ctx)
 	if err != nil {
 		s.logger.Error("failed to get roles",
 			zap.Error(err),
@@ -98,7 +93,7 @@ func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {
 func (s *RoleSvc) CreateRole(ctx context.Context, role RoleCreated) (*Role, error) {
 	const op = "RoleSvc.CreateRole"
 
-	u, err := s.roles.CreateRole(ctx, models.RoleCreated{
+	u, err := s.storage.CreateRole(ctx, models.RoleCreated{
 		Name:        role.Name,
 		Description: role.Description,
 		Blocked:     role.Blocked,
@@ -124,7 +119,7 @@ func (s *RoleSvc) CreateRole(ctx context.Context, role RoleCreated) (*Role, erro
 func (s *RoleSvc) UpdateRole(ctx context.Context, role RoleUpdated) (*Role, error) {
 	const op = "RoleSvc.UpdateRole"
 
-	u, err := s.roles.UpdateRole(ctx, models.RoleUpdated{
+	u, err := s.storage.UpdateRole(ctx, models.RoleUpdated{
 		Code:        role.Code,
 		Name:        role.Name,
 		Description: role.Description,
@@ -149,9 +144,9 @@ func (s *RoleSvc) UpdateRole(ctx context.Context, role RoleUpdated) (*Role, erro
 }
 
 func (s *RoleSvc) DeleteRole(ctx context.Context, code string) error {
-	const op = "RoleSvc.RoleUser"
+	const op = "RoleSvc.DeleteRole"
 
-	if err := s.roles.DeleteRole(ctx, code); err != nil {
+	if err := s.storage.DeleteRole(ctx, code); err != nil {
 		s.logger.Error("failed to delete role",
 			zap.String("role_code", code),
 			zap.Error(err),

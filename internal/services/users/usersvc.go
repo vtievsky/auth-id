@@ -3,10 +3,9 @@ package usersvc
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	"github.com/vtievsky/auth-id/pkg/cache"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +28,7 @@ type UserUpdated struct {
 	Blocked bool
 }
 
-type Users interface {
+type Storage interface {
 	GetUser(ctx context.Context, login string) (*models.User, error)
 	GetUsers(ctx context.Context) ([]*models.User, error)
 	CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error)
@@ -38,27 +37,23 @@ type Users interface {
 }
 
 type UserSvcOpts struct {
-	Logger *zap.Logger
-	Users  Users
+	Logger  *zap.Logger
+	Storage Storage
 }
 
 type UserSvc struct {
 	logger       *zap.Logger
-	users        Users
-	lastTime     time.Time
-	cacheByID    map[uint64]*models.User
-	cacheByLogin map[string]*models.User
-	mu           sync.RWMutex
+	storage      Storage
+	cacheByID    cache.Cache[uint64, *models.User]
+	cacheByLogin cache.Cache[string, *models.User]
 }
 
 func New(opts *UserSvcOpts) *UserSvc {
 	return &UserSvc{
 		logger:       opts.Logger,
-		users:        opts.Users,
-		lastTime:     time.Time{},
-		cacheByID:    make(map[uint64]*models.User),
-		cacheByLogin: make(map[string]*models.User),
-		mu:           sync.RWMutex{},
+		storage:      opts.Storage,
+		cacheByID:    cache.New[uint64, *models.User](),
+		cacheByLogin: cache.New[string, *models.User](),
 	}
 }
 
@@ -69,7 +64,7 @@ func (s *UserSvc) GetUser(ctx context.Context, login string) (*User, error) {
 func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 	const op = "UserSvc.GetUsers"
 
-	ul, err := s.users.GetUsers(ctx)
+	ul, err := s.storage.GetUsers(ctx)
 	if err != nil {
 		s.logger.Error("failed to get users",
 			zap.Error(err),
@@ -83,8 +78,8 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 	for _, user := range ul {
 		users = append(users, &User{
 			ID:      user.ID,
-			Login:   user.Login,
 			Name:    user.Name,
+			Login:   user.Login,
 			Blocked: user.Blocked,
 		})
 	}
@@ -95,9 +90,9 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	const op = "UserSvc.CreateUser"
 
-	u, err := s.users.CreateUser(ctx, models.UserCreated{
-		Login:   user.Login,
+	u, err := s.storage.CreateUser(ctx, models.UserCreated{
 		Name:    user.Name,
+		Login:   user.Login,
 		Blocked: user.Blocked,
 	})
 	if err != nil {
@@ -111,8 +106,8 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 
 	return &User{
 		ID:      u.ID,
-		Login:   u.Login,
 		Name:    u.Name,
+		Login:   u.Login,
 		Blocked: u.Blocked,
 	}, nil
 }
@@ -120,9 +115,9 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	const op = "UserSvc.UpdateUser"
 
-	u, err := s.users.UpdateUser(ctx, models.UserUpdated{
-		Login:   user.Login,
+	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
 		Name:    user.Name,
+		Login:   user.Login,
 		Blocked: user.Blocked,
 	})
 	if err != nil {
@@ -136,16 +131,16 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 
 	return &User{
 		ID:      u.ID,
-		Login:   u.Login,
 		Name:    u.Name,
+		Login:   u.Login,
 		Blocked: u.Blocked,
 	}, nil
 }
 
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
-	const op = "UserSvc.UpdateUser"
+	const op = "UserSvc.DeleteUser"
 
-	if err := s.users.DeleteUser(ctx, login); err != nil {
+	if err := s.storage.DeleteUser(ctx, login); err != nil {
 		s.logger.Error("failed to delete user",
 			zap.String("username", login),
 			zap.Error(err),

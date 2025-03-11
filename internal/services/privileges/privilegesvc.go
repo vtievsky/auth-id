@@ -2,17 +2,10 @@ package privilegesvc
 
 import (
 	"context"
-	"fmt"
-	"sync"
-	"time"
 
-	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
+	"github.com/vtievsky/auth-id/pkg/cache"
 	"go.uber.org/zap"
-)
-
-const (
-	cacheTTL = time.Second * 60
 )
 
 type Privilege struct {
@@ -34,105 +27,15 @@ type PrivilegeSvcOpts struct {
 type PrivilegeSvc struct {
 	logger      *zap.Logger
 	storage     Storage
-	lastTime    time.Time
-	cacheByID   map[uint64]*models.Privilege
-	cacheByCode map[string]*models.Privilege
-	mu          sync.RWMutex
+	cacheByID   cache.Cache[uint64, *models.Privilege]
+	cacheByCode cache.Cache[string, *models.Privilege]
 }
 
 func New(opts *PrivilegeSvcOpts) *PrivilegeSvc {
 	return &PrivilegeSvc{
 		logger:      opts.Logger,
 		storage:     opts.Storage,
-		lastTime:    time.Time{},
-		cacheByID:   make(map[uint64]*models.Privilege),
-		cacheByCode: make(map[string]*models.Privilege),
-		mu:          sync.RWMutex{},
+		cacheByID:   cache.New[uint64, *models.Privilege](),
+		cacheByCode: cache.New[string, *models.Privilege](),
 	}
-}
-
-func (s *PrivilegeSvc) GetPrivilegeByID(ctx context.Context, id uint64) (*Privilege, error) {
-	const op = "PrivilegeSvc.GetPrivilegeByID"
-
-	s.mu.RLock()
-
-	// Кеш невалидный
-	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RLocker().Unlock()
-
-		if err := s.syncPrivileges(ctx); err != nil {
-			return nil, fmt.Errorf("%s:%w", op, err)
-		}
-
-		s.mu.RLock()
-	}
-
-	defer s.mu.RLocker().Unlock()
-
-	if val, ok := s.cacheByID[id]; ok {
-		return &Privilege{
-			ID:          val.ID,
-			Code:        val.Code,
-			Name:        val.Name,
-			Description: val.Description,
-		}, nil
-	}
-
-	return nil, dberrors.ErrPrivilegeNotFound
-}
-
-func (s *PrivilegeSvc) GetPrivilegeByCode(ctx context.Context, code string) (*Privilege, error) {
-	const op = "PrivilegeSvc.GetPrivilegeByCode"
-
-	s.mu.RLock()
-
-	// Кеш невалидный
-	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RLocker().Unlock()
-
-		if err := s.syncPrivileges(ctx); err != nil {
-			return nil, fmt.Errorf("%s:%w", op, err)
-		}
-
-		s.mu.RLock()
-	}
-
-	defer s.mu.RLocker().Unlock()
-
-	if val, ok := s.cacheByCode[code]; ok {
-		return &Privilege{
-			ID:          val.ID,
-			Code:        val.Code,
-			Name:        val.Name,
-			Description: val.Description,
-		}, nil
-	}
-
-	return nil, dberrors.ErrPrivilegeNotFound
-}
-
-func (s *PrivilegeSvc) syncPrivileges(ctx context.Context) error {
-	const op = "PrivilegeSvc.syncPrivileges"
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	resp, err := s.storage.GetPrivileges(ctx)
-	if err != nil {
-		s.logger.Error("failed to sync privileges",
-			zap.Error(err),
-		)
-
-		return fmt.Errorf("failed to sync privileges | %s:%w", op, err)
-	}
-
-	for _, privilege := range resp {
-		s.cacheByID[privilege.ID] = privilege
-		s.cacheByCode[privilege.Code] = privilege
-	}
-
-	// Зафиксируем время синхронизации справочника
-	s.lastTime = time.Now()
-
-	return nil
 }
