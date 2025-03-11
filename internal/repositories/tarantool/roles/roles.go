@@ -109,8 +109,9 @@ func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*model
 
 	roleUpdated := tarantoolclient.RoleUpdated{
 		ID:          u.ID,
+		Code:        u.Code,
 		Name:        role.Name,
-		Description: u.Description,
+		Description: role.Description,
 		Blocked:     role.Blocked,
 	}
 

@@ -47,8 +47,8 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 
 	return &models.User{
 		ID:      user.ID,
-		Login:   user.Login,
 		Name:    user.Name,
+		Login:   user.Login,
 		Blocked: user.Blocked,
 	}, nil
 }
@@ -70,8 +70,8 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 
 		users = append(users, &models.User{
 			ID:      user.ID,
-			Login:   user.Login,
 			Name:    user.Name,
+			Login:   user.Login,
 			Blocked: user.Blocked,
 		})
 	}

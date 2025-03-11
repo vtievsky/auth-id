@@ -28,6 +28,7 @@ func (s RoleCreated) ToTuple() Tuple {
 
 type RoleUpdated struct {
 	ID          uint64 `json:"id"`
+	Code        string `json:"code"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Blocked     bool   `json:"blocked"`
@@ -36,6 +37,7 @@ type RoleUpdated struct {
 func (s RoleUpdated) ToTuple() Tuple {
 	return Tuple{
 		s.ID,
+		s.Code,
 		s.Name,
 		s.Description,
 		s.Blocked,
