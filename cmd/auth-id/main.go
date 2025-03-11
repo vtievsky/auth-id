@@ -73,8 +73,8 @@ func main() {
 	roleUserService := roleusersvc.New(&roleusersvc.RoleUserSvcOpts{
 		Logger:  logger.Named("role-user"),
 		Storage: rolesRepo,
-		UserSvc: userService,
 		RoleSvc: roleService,
+		UserSvc: userService,
 	})
 
 	privilegeService := privilegesvc.New(&privilegesvc.PrivilegeSvcOpts{

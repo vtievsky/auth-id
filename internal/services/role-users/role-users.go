@@ -58,23 +58,23 @@ type RoleSvc interface {
 type RoleUserSvcOpts struct {
 	Logger  *zap.Logger
 	Storage Storage
-	UserSvc UserSvc
 	RoleSvc RoleSvc
+	UserSvc UserSvc
 }
 
 type RoleUserSvc struct {
 	logger  *zap.Logger
 	storage Storage
-	userSvc UserSvc
 	roleSvc RoleSvc
+	userSvc UserSvc
 }
 
 func New(opts *RoleUserSvcOpts) *RoleUserSvc {
 	return &RoleUserSvc{
 		logger:  opts.Logger,
 		storage: opts.Storage,
-		userSvc: opts.UserSvc,
 		roleSvc: opts.RoleSvc,
+		userSvc: opts.UserSvc,
 	}
 }
 
