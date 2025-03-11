@@ -3,6 +3,7 @@ package usersvc
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 	"github.com/vtievsky/auth-id/pkg/cache"
@@ -92,14 +93,41 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, error) {
 	const op = "UserSvc.CreateUser"
 
+	if strings.TrimSpace(user.Name) == "" {
+		s.logger.Error("failed to create user",
+			zap.String("username", user.Name),
+			zap.Error(ErrInvalidName),
+		)
+
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, ErrInvalidName)
+	}
+
+	if strings.TrimSpace(user.Login) == "" {
+		s.logger.Error("failed to create user",
+			zap.String("login", user.Login),
+			zap.Error(ErrInvalidLogin),
+		)
+
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, ErrInvalidLogin)
+	}
+
+	if strings.TrimSpace(user.Password) == "" {
+		s.logger.Error("failed to create user",
+			zap.String("login", user.Login),
+			zap.Error(ErrInvalidPassword),
+		)
+
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, ErrInvalidPassword)
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		s.logger.Error("failed to generate has from password",
-			zap.String("username", user.Login),
+			zap.String("login", user.Login),
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
+		return nil, fmt.Errorf("failed to generate has from password | %s:%w:%v", op, ErrGeneratePassword, err)
 	}
 
 	u, err := s.storage.CreateUser(ctx, models.UserCreated{
@@ -110,7 +138,7 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 	})
 	if err != nil {
 		s.logger.Error("failed to create user",
-			zap.String("username", user.Login),
+			zap.String("login", user.Login),
 			zap.Error(err),
 		)
 
@@ -131,6 +159,24 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	const op = "UserSvc.UpdateUser"
 
+	if strings.TrimSpace(user.Name) == "" {
+		s.logger.Error("failed to update user",
+			zap.String("username", user.Name),
+			zap.Error(ErrInvalidName),
+		)
+
+		return nil, fmt.Errorf("failed to update user | %s:%w", op, ErrInvalidLogin)
+	}
+
+	if strings.TrimSpace(user.Login) == "" {
+		s.logger.Error("failed to update user",
+			zap.String("login", user.Login),
+			zap.Error(ErrInvalidLogin),
+		)
+
+		return nil, fmt.Errorf("failed to update user | %s:%w", op, ErrInvalidLogin)
+	}
+
 	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
 		Name:    user.Name,
 		Login:   user.Login,
@@ -138,7 +184,7 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 	})
 	if err != nil {
 		s.logger.Error("failed to update user",
-			zap.String("username", user.Login),
+			zap.String("login", user.Login),
 			zap.Error(err),
 		)
 
@@ -158,7 +204,7 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 
 	if err := s.storage.DeleteUser(ctx, login); err != nil {
 		s.logger.Error("failed to delete user",
-			zap.String("username", login),
+			zap.String("login", login),
 			zap.Error(err),
 		)
 
