@@ -1,19 +1,8 @@
 name: auth-id-group
 services:
-  auth-id-redis:
-    image: "redis:alpine"
-    container_name: "redis"
-    restart: no
-    ports:
-      - ${REDIS_PORT}:6379
-    volumes:
-      - auth-id-redis:/data
-    networks:
-      - auth-id
-
-  auth-id-tarantool:
+  auth-id-storage:
     image: tarantool/tarantool
-    container_name: tarantool
+    container_name: auth-id-storage
     restart: no
     environment:
       - TARANTOOL_USER_NAME=${DB_USER}
@@ -27,8 +16,21 @@ services:
     networks:
       - auth-id
 
+  auth-id-service:
+    image: slaventius/auth-id:latest
+    container_name: auth-id-service
+    restart: "no"
+    environment:
+      AUTH_PORT: 8080
+      AUTH_DB_URL: http://auth-id-storage:33011
+    ports:
+      - "9815:8080"
+    networks:
+      - auth-id
+    depends_on:
+      - auth-id-storage
+
 volumes:
-  auth-id-redis:
   auth-id-tarantool:
 
 networks:

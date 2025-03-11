@@ -1,5 +1,11 @@
 FROM golang:1.24-bookworm AS base
 
+RUN apt-get update; \
+# RUN apt-get install openssl-dev musl-dev gcc
+# RUN apt-get install gcc
+    apt-get install \
+    libssl-dev
+
 WORKDIR /app
 
 RUN mkdir /out
@@ -21,6 +27,8 @@ WORKDIR /app
 ADD . /app
 
 # COPY build/app/migrations /out/migrations
+
+# RUN apk add openssl-dev musl-dev gcc
 
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
