@@ -35,7 +35,7 @@ type RolePrivilegeDeleted struct {
 	PrivilegeCode string
 }
 
-type RolePrivileges interface {
+type Storage interface {
 	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
 	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
 	UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error
@@ -53,32 +53,32 @@ type PrivilegeSvc interface {
 }
 
 type RolePrivilegeSvcOpts struct {
-	Logger         *zap.Logger
-	RolePrivileges RolePrivileges
-	PrivilegeSvc   PrivilegeSvc
-	RoleSvc        RoleSvc
+	Logger       *zap.Logger
+	Storage      Storage
+	RoleSvc      RoleSvc
+	PrivilegeSvc PrivilegeSvc
 }
 
 type RolePrivilegeSvc struct {
-	logger         *zap.Logger
-	rolePrivileges RolePrivileges
-	privilegeSvc   PrivilegeSvc
-	roleSvc        RoleSvc
+	logger       *zap.Logger
+	storage      Storage
+	roleSvc      RoleSvc
+	privilegeSvc PrivilegeSvc
 }
 
 func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
 	return &RolePrivilegeSvc{
-		logger:         opts.Logger,
-		rolePrivileges: opts.RolePrivileges,
-		privilegeSvc:   opts.PrivilegeSvc,
-		roleSvc:        opts.RoleSvc,
+		logger:       opts.Logger,
+		storage:      opts.Storage,
+		roleSvc:      opts.RoleSvc,
+		privilegeSvc: opts.PrivilegeSvc,
 	}
 }
 
 func (s *RolePrivilegeSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePrivilege, error) {
 	const op = "RolePrivilegeSvc.GetRolePrivileges"
 
-	ul, err := s.rolePrivileges.GetRolePrivileges(ctx, code)
+	ul, err := s.storage.GetRolePrivileges(ctx, code)
 	if err != nil {
 		s.logger.Error("failed to get role privileges",
 			zap.String("role_code", code),
@@ -161,7 +161,7 @@ func (s *RolePrivilegeSvc) AddRolePrivilege(ctx context.Context, rolePrivilege R
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.rolePrivileges.AddRolePrivilege(ctx, models.RolePrivilegeCreated{
+	if err := s.storage.AddRolePrivilege(ctx, models.RolePrivilegeCreated{
 		RoleID:      role.ID,
 		PrivilegeID: privilege.ID,
 		Allowed:     rolePrivilege.Allowed,
@@ -224,7 +224,7 @@ func (s *RolePrivilegeSvc) UpdateRolePrivilege(ctx context.Context, rolePrivileg
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.rolePrivileges.UpdateRolePrivilege(ctx, models.RolePrivilegeUpdated{
+	if err := s.storage.UpdateRolePrivilege(ctx, models.RolePrivilegeUpdated{
 		RoleID:      role.ID,
 		PrivilegeID: privilege.ID,
 		Allowed:     rolePrivilege.Allowed,
@@ -287,7 +287,7 @@ func (s *RolePrivilegeSvc) DeleteRolePrivilege(ctx context.Context, rolePrivileg
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.rolePrivileges.DeleteRolePrivilege(ctx, models.RolePrivilegeDeleted{
+	if err := s.storage.DeleteRolePrivilege(ctx, models.RolePrivilegeDeleted{
 		RoleID:      role.ID,
 		PrivilegeID: privilege.ID,
 	}); err != nil {

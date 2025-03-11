@@ -32,7 +32,7 @@ func main() {
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
 
-	tarantoolClient, err := tarantoolclient.New(&tarantoolclient.ClientOpts{
+	dbClient, err := tarantoolclient.New(&tarantoolclient.ClientOpts{
 		URL:       conf.DB.URL,
 		RateLimit: 25, //nolint:mnd
 	})
@@ -42,35 +42,18 @@ func main() {
 
 	// repos
 	usersRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
-		Client: tarantoolClient,
-	})
-
-	userRolesRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
-		Client: tarantoolClient,
+		Client: dbClient,
 	})
 
 	rolesRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
-		Client: tarantoolClient,
-	})
-
-	rolePrivilegesRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
-		Client: tarantoolClient,
-	})
-
-	roleUsersRepo := tarantoolroles.New(&tarantoolroles.RolesOpts{
-		Client: tarantoolClient,
+		Client: dbClient,
 	})
 
 	privilegesRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
-		Client: tarantoolClient,
+		Client: dbClient,
 	})
 
 	// services
-	privilegeService := privilegesvc.New(&privilegesvc.PrivilegeSvcOpts{
-		Logger:  logger.Named("privilege"),
-		Storage: privilegesRepo,
-	})
-
 	userService := usersvc.New(&usersvc.UserSvcOpts{
 		Logger:  logger.Named("user"),
 		Storage: usersRepo,
@@ -82,23 +65,28 @@ func main() {
 	})
 
 	userRoleService := userrolesvc.New(&userrolesvc.UserRoleSvcOpts{
-		Logger:    logger.Named("user-role"),
-		UserRoles: userRolesRepo,
-		RoleSvc:   roleService,
+		Logger:  logger.Named("user-role"),
+		Storage: usersRepo,
+		RoleSvc: roleService,
 	})
 
 	roleUserService := roleusersvc.New(&roleusersvc.RoleUserSvcOpts{
-		Logger:    logger.Named("role-user"),
-		RoleUsers: roleUsersRepo,
-		UserSvc:   userService,
-		RoleSvc:   roleService,
+		Logger:  logger.Named("role-user"),
+		Storage: rolesRepo,
+		UserSvc: userService,
+		RoleSvc: roleService,
+	})
+
+	privilegeService := privilegesvc.New(&privilegesvc.PrivilegeSvcOpts{
+		Logger:  logger.Named("privilege"),
+		Storage: privilegesRepo,
 	})
 
 	rolePrivilegeService := roleprivilegesvc.New(&roleprivilegesvc.RolePrivilegeSvcOpts{
-		Logger:         logger.Named("role-privilege"),
-		RolePrivileges: rolePrivilegesRepo,
-		PrivilegeSvc:   privilegeService,
-		RoleSvc:        roleService,
+		Logger:       logger.Named("role-privilege"),
+		Storage:      rolesRepo,
+		RoleSvc:      roleService,
+		PrivilegeSvc: privilegeService,
 	})
 
 	ctx := context.Background()

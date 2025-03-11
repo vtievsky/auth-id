@@ -18,7 +18,7 @@ type UserRole struct {
 	DateOut     time.Time
 }
 
-type UserRoles interface {
+type Storage interface {
 	GetUserRoles(ctx context.Context, login string) ([]*models.UserRole, error)
 }
 
@@ -28,29 +28,29 @@ type RoleSvc interface {
 }
 
 type UserRoleSvcOpts struct {
-	Logger    *zap.Logger
-	UserRoles UserRoles
-	RoleSvc   RoleSvc
+	Logger  *zap.Logger
+	Storage Storage
+	RoleSvc RoleSvc
 }
 
 type UserRoleSvc struct {
-	logger    *zap.Logger
-	userRoles UserRoles
-	roleSvc   RoleSvc
+	logger  *zap.Logger
+	storage Storage
+	roleSvc RoleSvc
 }
 
 func New(opts *UserRoleSvcOpts) *UserRoleSvc {
 	return &UserRoleSvc{
-		logger:    opts.Logger,
-		userRoles: opts.UserRoles,
-		roleSvc:   opts.RoleSvc,
+		logger:  opts.Logger,
+		storage: opts.Storage,
+		roleSvc: opts.RoleSvc,
 	}
 }
 
 func (s *UserRoleSvc) GetUserRoles(ctx context.Context, login string) ([]*UserRole, error) {
 	const op = "UserRoleSvc.GetUserRoles"
 
-	ul, err := s.userRoles.GetUserRoles(ctx, login)
+	ul, err := s.storage.GetUserRoles(ctx, login)
 	if err != nil {
 		s.logger.Error("failed to get user roles",
 			zap.String("login", login),

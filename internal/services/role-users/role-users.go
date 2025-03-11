@@ -38,7 +38,7 @@ type RoleUserDeleted struct {
 	RoleCode string
 }
 
-type RoleUsers interface {
+type Storage interface {
 	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
 	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
 	UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error
@@ -56,32 +56,32 @@ type RoleSvc interface {
 }
 
 type RoleUserSvcOpts struct {
-	Logger    *zap.Logger
-	RoleUsers RoleUsers
-	UserSvc   UserSvc
-	RoleSvc   RoleSvc
+	Logger  *zap.Logger
+	Storage Storage
+	UserSvc UserSvc
+	RoleSvc RoleSvc
 }
 
 type RoleUserSvc struct {
-	logger    *zap.Logger
-	roleUsers RoleUsers
-	userSvc   UserSvc
-	roleSvc   RoleSvc
+	logger  *zap.Logger
+	storage Storage
+	userSvc UserSvc
+	roleSvc RoleSvc
 }
 
 func New(opts *RoleUserSvcOpts) *RoleUserSvc {
 	return &RoleUserSvc{
-		logger:    opts.Logger,
-		roleUsers: opts.RoleUsers,
-		userSvc:   opts.UserSvc,
-		roleSvc:   opts.RoleSvc,
+		logger:  opts.Logger,
+		storage: opts.Storage,
+		userSvc: opts.UserSvc,
+		roleSvc: opts.RoleSvc,
 	}
 }
 
 func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUser, error) {
 	const op = "RoleUserSvc.GetRoleUsers"
 
-	ul, err := s.roleUsers.GetRoleUsers(ctx, code)
+	ul, err := s.storage.GetRoleUsers(ctx, code)
 	if err != nil {
 		s.logger.Error("failed to get role users",
 			zap.String("role_code", code),
@@ -164,7 +164,7 @@ func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated)
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.roleUsers.AddRoleUser(ctx, models.RoleUserCreated{
+	if err := s.storage.AddRoleUser(ctx, models.RoleUserCreated{
 		RoleID:  role.ID,
 		UserID:  user.ID,
 		DateIn:  roleUser.DateIn,
@@ -228,7 +228,7 @@ func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdat
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.roleUsers.UpdateRoleUser(ctx, models.RoleUserUpdated{
+	if err := s.storage.UpdateRoleUser(ctx, models.RoleUserUpdated{
 		RoleID:  role.ID,
 		UserID:  user.ID,
 		DateIn:  roleUser.DateIn,
@@ -292,7 +292,7 @@ func (s *RoleUserSvc) DeleteRoleUser(ctx context.Context, roleUser RoleUserDelet
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	if err := s.roleUsers.DeleteRoleUser(ctx, models.RoleUserDeleted{
+	if err := s.storage.DeleteRoleUser(ctx, models.RoleUserDeleted{
 		RoleID: role.ID,
 		UserID: user.ID,
 	}); err != nil {
