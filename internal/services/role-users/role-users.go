@@ -121,6 +121,18 @@ func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUse
 func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated) error {
 	const op = "RoleUserSvc.AddRoleUser"
 
+	if roleUser.DateOut.Before(roleUser.DateIn) {
+		s.logger.Error("failed to add role to user",
+			zap.String("role_code", roleUser.RoleCode),
+			zap.String("login", roleUser.Login),
+			zap.String("date_in", roleUser.DateIn.String()),
+			zap.String("date_out", roleUser.DateOut.String()),
+			zap.Error(ErrInvalidDateRange),
+		)
+
+		return fmt.Errorf("%s:%w", op, ErrInvalidDateRange)
+	}
+
 	var (
 		role *rolesvc.Role
 		user *usersvc.User
@@ -184,6 +196,18 @@ func (s *RoleUserSvc) AddRoleUser(ctx context.Context, roleUser RoleUserCreated)
 
 func (s *RoleUserSvc) UpdateRoleUser(ctx context.Context, roleUser RoleUserUpdated) error {
 	const op = "RoleUserSvc.UpdateRoleUser"
+
+	if roleUser.DateOut.Before(roleUser.DateIn) {
+		s.logger.Error("failed to update role to user",
+			zap.String("role_code", roleUser.RoleCode),
+			zap.String("login", roleUser.Login),
+			zap.String("date_in", roleUser.DateIn.String()),
+			zap.String("date_out", roleUser.DateOut.String()),
+			zap.Error(ErrInvalidDateRange),
+		)
+
+		return fmt.Errorf("%s:%w", op, ErrInvalidDateRange)
+	}
 
 	var (
 		role *rolesvc.Role
