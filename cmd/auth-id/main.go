@@ -21,6 +21,7 @@ import (
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
@@ -89,11 +90,18 @@ func main() {
 		PrivilegeSvc: privilegeService,
 	})
 
+	userPrivilegeService := userprivilegesvc.New(&userprivilegesvc.UserPrivilegeSvcOpts{
+		Logger:           logger.Named("user-privilege"),
+		UserRoleSvc:      userRoleService,
+		RolePrivilegeSvc: rolePrivilegeService,
+	})
+
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
 		UserSvc:          userService,
 		UserRoleSvc:      userRoleService,
+		UserPrivilegeSvc: userPrivilegeService,
 		RoleSvc:          roleService,
 		RoleUserSvc:      roleUserService,
 		RolePrivilegeSvc: rolePrivilegeService,

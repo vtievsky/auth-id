@@ -3,7 +3,7 @@ services:
   auth-id-storage:
     image: tarantool/tarantool
     container_name: auth-id-storage
-    restart: no
+    restart: on-failure
     environment:
       - TARANTOOL_USER_NAME=${DB_USER}
       - TARANTOOL_USER_PASSWORD=${DB_PASSWORD}
@@ -16,19 +16,19 @@ services:
     networks:
       - auth-id
 
-  auth-id-service:
-    image: slaventius/auth-id:latest
-    container_name: auth-id-service
-    restart: "no"
-    environment:
-      AUTH_PORT: 8080
-      AUTH_DB_URL: http://auth-id-storage:33011
-    ports:
-      - "9815:8080"
-    networks:
-      - auth-id
-    depends_on:
-      - auth-id-storage
+  # auth-id-service:
+  #   image: slaventius/auth-id:latest
+  #   container_name: auth-id-service
+  #   restart: on-failure
+  #   environment:
+  #     AUTH_PORT: 8080
+  #     AUTH_DB_URL: http://auth-id-storage:33011
+  #   ports:
+  #     - "9815:8080"
+  #   networks:
+  #     - auth-id
+  #   depends_on:
+  #     - auth-id-storage
 
 volumes:
   auth-id-tarantool:

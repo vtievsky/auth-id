@@ -47,9 +47,6 @@ box.once('init', function()
             unique = true,
             parts = {'login'}
         })
-        --
-        s:insert{nil, 'Пупкин Василий Иванович', 'pupkin_vi', false}
-        s:insert{nil, 'Папироскина Мария Ивановна', 'papiroskina_mi', false}
     end
 
     -- roles

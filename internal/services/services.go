@@ -6,6 +6,7 @@ import (
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 )
@@ -13,6 +14,7 @@ import (
 type SvcLayer struct {
 	UserSvc          UserService
 	UserRoleSvc      UserRoleService
+	UserPrivilegeSvc UserPrivilegeService
 	RoleSvc          RoleService
 	RoleUserSvc      RoleUserService
 	RolePrivilegeSvc RolePrivilegeService
@@ -28,6 +30,10 @@ type UserService interface {
 
 type UserRoleService interface {
 	GetUserRoles(ctx context.Context, login string) ([]*userrolesvc.UserRole, error)
+}
+
+type UserPrivilegeService interface {
+	GetUserPrivileges(ctx context.Context, login string) ([]*userprivilegesvc.UserPrivilege, error)
 }
 
 type RoleService interface {
