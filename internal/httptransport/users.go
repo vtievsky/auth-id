@@ -168,3 +168,24 @@ func (t *Transport) ChangePass(
 		},
 	}, nil
 }
+
+func (t *Transport) ResetPass(
+	ctx context.Context,
+	request serverhttp.ResetPassRequestObject,
+) (serverhttp.ResetPassResponseObject, error) {
+	if err := t.services.UserSvc.ResetPass(ctx, request.Login, request.Body.Changed); err != nil {
+		return serverhttp.ResetPass500JSONResponse{ //nolint:nilerr
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.ResetPass200JSONResponse{
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}

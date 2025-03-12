@@ -150,7 +150,7 @@ paths:
     put:
       tags:
         - web
-      description: Изменение пароля пользователя
+      description: Смена пароля пользователем
       operationId: ChangePass
       parameters:
         - name: login
@@ -178,6 +178,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChangePassResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+  /v1/passresets/{login}:
+    put:
+      tags:
+        - web
+      description: Сброс пароля пользователя
+      operationId: ResetPass
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPassRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetPassResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetPassResponse500"
           description: Internal Server Error
       security:
         - bearer: []
@@ -833,6 +868,31 @@ components:
       required:
         - status
     ChangePassResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    ResetPassRequest:
+      type: object
+      properties:
+        changed:
+          type: string
+          description: Новый пароль
+          format: password
+      required:
+        - changed
+    ResetPassResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    ResetPassResponse500:
       type: object
       properties:
         status:

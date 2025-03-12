@@ -28,6 +28,7 @@ type UserService interface {
 	DeleteUser(ctx context.Context, login string) error
 
 	ChangePass(ctx context.Context, login, current, changed string) error
+	ResetPass(ctx context.Context, login, changed string) error
 }
 
 type UserRoleService interface {
