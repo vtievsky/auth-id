@@ -120,14 +120,14 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 		return nil, fmt.Errorf("failed to create user | %s:%w", op, ErrInvalidPassword)
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hash, err := s.generateHashPassword([]byte(user.Password))
 	if err != nil {
-		s.logger.Error("failed to generate has from password",
+		s.logger.Error("failed to create user",
 			zap.String("login", user.Login),
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to generate has from password | %s:%w:%v", op, ErrGeneratePassword, err)
+		return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 	}
 
 	u, err := s.storage.CreateUser(ctx, models.UserCreated{
@@ -212,4 +212,13 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 	}
 
 	return nil
+}
+
+func (s *UserSvc) generateHashPassword(password []byte) ([]byte, error) {
+	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("%w:%v", ErrGeneratePassword, err)
+	}
+
+	return hash, nil
 }
