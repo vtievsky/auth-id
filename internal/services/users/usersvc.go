@@ -32,7 +32,7 @@ type UserUpdated struct {
 	Blocked bool
 }
 
-type UserUpdatedWithPassword struct {
+type UserUpdatedWithPass struct {
 	Name     string
 	Login    string
 	Password string
@@ -180,7 +180,7 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
 
-	userUpdated, err := s.updateUser(ctx, UserUpdatedWithPassword{
+	userUpdated, err := s.updateUser(ctx, UserUpdatedWithPass{
 		Name:     user.Name,
 		Login:    user.Login,
 		Password: u.Password,
@@ -222,7 +222,7 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 		return fmt.Errorf("failed to compare password | %s:%w", op, err)
 	}
 
-	hashChanged, err := s.generateHashPassword([]byte(changed))
+	hash, err := s.generateHashPassword([]byte(changed))
 	if err != nil {
 		s.logger.Error("failed to generate hash password",
 			zap.String("login", login),
@@ -232,10 +232,10 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 		return fmt.Errorf("failed to generate hash password | %s:%w", op, err)
 	}
 
-	if _, err = s.updateUser(ctx, UserUpdatedWithPassword{
+	if _, err = s.updateUser(ctx, UserUpdatedWithPass{
 		Name:     u.Name,
 		Login:    u.Login,
-		Password: string(hashChanged),
+		Password: string(hash),
 		Blocked:  u.Blocked,
 	}); err != nil {
 		s.logger.Error("failed to update password",
@@ -246,7 +246,7 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 		return fmt.Errorf("failed to update password | %s:%w", op, err)
 	}
 
-	// Удалим старые данные из кеша
+	// Удалим старые данные пользователя из кеша
 	s.cacheByID.Del(u.ID)
 	s.cacheByLogin.Del(u.Login)
 
@@ -254,7 +254,7 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 }
 
 // Смена пароля пользователя без предварительной проверки
-func (s *UserSvc) ResetPass(ctx context.Context, login, password string) (*User, error) {
+func (s *UserSvc) ResetPass(ctx context.Context, login, changed string) error {
 	const op = "UserSvc.ResetPass"
 
 	u, err := s.GetUserByLogin(ctx, login)
@@ -264,35 +264,38 @@ func (s *UserSvc) ResetPass(ctx context.Context, login, password string) (*User,
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
+		return fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
 
-	hash, err := s.generateHashPassword([]byte(password))
+	hash, err := s.generateHashPassword([]byte(changed))
 	if err != nil {
 		s.logger.Error("failed to generate hash password",
 			zap.String("login", login),
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to generate hash password | %s:%w", op, err)
+		return fmt.Errorf("failed to generate hash password | %s:%w", op, err)
 	}
 
-	userUpdated, err := s.updateUser(ctx, UserUpdatedWithPassword{
+	if _, err = s.updateUser(ctx, UserUpdatedWithPass{
 		Name:     u.Name,
 		Login:    u.Login,
 		Password: string(hash),
 		Blocked:  u.Blocked,
-	})
-	if err != nil {
+	}); err != nil {
 		s.logger.Error("failed to update password",
 			zap.String("login", login),
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to update password | %s:%w", op, err)
+		return fmt.Errorf("failed to update password | %s:%w", op, err)
 	}
 
-	return userUpdated, nil
+	// Удалим старые данные пользователя из кеша
+	s.cacheByID.Del(u.ID)
+	s.cacheByLogin.Del(u.Login)
+
+	return nil
 }
 
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
@@ -310,7 +313,7 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 	return nil
 }
 
-func (s *UserSvc) updateUser(ctx context.Context, user UserUpdatedWithPassword) (*User, error) {
+func (s *UserSvc) updateUser(ctx context.Context, user UserUpdatedWithPass) (*User, error) {
 	if strings.TrimSpace(user.Name) == "" {
 		return nil, ErrInvalidName
 	}
