@@ -17,10 +17,11 @@ func (s *UserSvc) GetUserByID(ctx context.Context, id uint64) (*User, error) {
 	}
 
 	return &User{
-		ID:      val.ID,
-		Login:   val.Login,
-		Name:    val.Name,
-		Blocked: val.Blocked,
+		ID:       val.ID,
+		Name:     val.Name,
+		Login:    val.Login,
+		Password: val.Password,
+		Blocked:  val.Blocked,
 	}, nil
 }
 
@@ -33,10 +34,11 @@ func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, erro
 	}
 
 	return &User{
-		ID:      val.ID,
-		Login:   val.Login,
-		Name:    val.Name,
-		Blocked: val.Blocked,
+		ID:       val.ID,
+		Name:     val.Name,
+		Login:    val.Login,
+		Password: val.Password,
+		Blocked:  val.Blocked,
 	}, nil
 }
 

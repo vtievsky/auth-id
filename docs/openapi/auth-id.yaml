@@ -146,6 +146,41 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/passchanges/{login}:
+    put:
+      tags:
+        - web
+      description: Изменение пароля пользователя
+      operationId: ChangePass
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePassRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePassResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePassResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
   /v1/users/{login}/roles:
     get:
       tags:
@@ -768,6 +803,36 @@ components:
         - status
         - data
     UpdateUserResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    ChangePassRequest:
+      type: object
+      properties:
+        current:
+          type: string
+          description: Текущий пароль
+          format: password
+        changed:
+          type: string
+          description: Новый пароль
+          format: password
+      required:
+        - current
+        - changed
+    ChangePassResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    ChangePassResponse500:
       type: object
       properties:
         status:

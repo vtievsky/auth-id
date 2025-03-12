@@ -26,6 +26,8 @@ type UserService interface {
 	CreateUser(ctx context.Context, user usersvc.UserCreated) (*usersvc.User, error)
 	UpdateUser(ctx context.Context, user usersvc.UserUpdated) (*usersvc.User, error)
 	DeleteUser(ctx context.Context, login string) error
+
+	ChangePass(ctx context.Context, login, current, changed string) error
 }
 
 type UserRoleService interface {

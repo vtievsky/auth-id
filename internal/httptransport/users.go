@@ -147,3 +147,24 @@ func (t *Transport) DeleteUser(
 		},
 	}, nil
 }
+
+func (t *Transport) ChangePass(
+	ctx context.Context,
+	request serverhttp.ChangePassRequestObject,
+) (serverhttp.ChangePassResponseObject, error) {
+	if err := t.services.UserSvc.ChangePass(ctx, request.Login, request.Body.Current, request.Body.Changed); err != nil {
+		return serverhttp.ChangePass500JSONResponse{ //nolint:nilerr
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.ChangePass200JSONResponse{
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}

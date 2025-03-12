@@ -84,3 +84,12 @@ func (s *Cache[K, V]) Add(key K, value V) {
 
 	s.lastTime = time.Now()
 }
+
+func (s *Cache[K, V]) Del(key K) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.m, key)
+
+	s.lastTime = time.Now()
+}

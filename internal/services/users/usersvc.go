@@ -12,10 +12,11 @@ import (
 )
 
 type User struct {
-	ID      uint64
-	Name    string
-	Login   string
-	Blocked bool
+	ID       uint64
+	Name     string
+	Login    string
+	Password string
+	Blocked  bool
 }
 
 type UserCreated struct {
@@ -29,6 +30,13 @@ type UserUpdated struct {
 	Name    string
 	Login   string
 	Blocked bool
+}
+
+type UserUpdatedWithPassword struct {
+	Name     string
+	Login    string
+	Password string
+	Blocked  bool
 }
 
 type Storage interface {
@@ -80,10 +88,11 @@ func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
 
 	for _, user := range ul {
 		users = append(users, &User{
-			ID:      user.ID,
-			Name:    user.Name,
-			Login:   user.Login,
-			Blocked: user.Blocked,
+			ID:       user.ID,
+			Name:     user.Name,
+			Login:    user.Login,
+			Password: user.Password,
+			Blocked:  user.Blocked,
 		})
 	}
 
@@ -95,7 +104,7 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 
 	if strings.TrimSpace(user.Name) == "" {
 		s.logger.Error("failed to create user",
-			zap.String("username", user.Name),
+			zap.String("login", user.Login),
 			zap.Error(ErrInvalidName),
 		)
 
@@ -149,38 +158,33 @@ func (s *UserSvc) CreateUser(ctx context.Context, user UserCreated) (*User, erro
 	s.cacheByLogin.Add(u.Login, u)
 
 	return &User{
-		ID:      u.ID,
-		Name:    u.Name,
-		Login:   u.Login,
-		Blocked: u.Blocked,
+		ID:       u.ID,
+		Name:     u.Name,
+		Login:    u.Login,
+		Password: u.Password,
+		Blocked:  u.Blocked,
 	}, nil
 }
 
+// При "обычном" изменении пользователя пароль не изменяется
 func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, error) {
 	const op = "UserSvc.UpdateUser"
 
-	if strings.TrimSpace(user.Name) == "" {
-		s.logger.Error("failed to update user",
-			zap.String("username", user.Name),
-			zap.Error(ErrInvalidName),
-		)
-
-		return nil, fmt.Errorf("failed to update user | %s:%w", op, ErrInvalidLogin)
-	}
-
-	if strings.TrimSpace(user.Login) == "" {
-		s.logger.Error("failed to update user",
+	u, err := s.GetUserByLogin(ctx, user.Login)
+	if err != nil {
+		s.logger.Error("failed to get user",
 			zap.String("login", user.Login),
-			zap.Error(ErrInvalidLogin),
+			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to update user | %s:%w", op, ErrInvalidLogin)
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
 
-	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
-		Name:    user.Name,
-		Login:   user.Login,
-		Blocked: user.Blocked,
+	userUpdated, err := s.updateUser(ctx, UserUpdatedWithPassword{
+		Name:     user.Name,
+		Login:    user.Login,
+		Password: u.Password,
+		Blocked:  user.Blocked,
 	})
 	if err != nil {
 		s.logger.Error("failed to update user",
@@ -191,12 +195,104 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
-	return &User{
-		ID:      u.ID,
-		Name:    u.Name,
-		Login:   u.Login,
-		Blocked: u.Blocked,
-	}, nil
+	return userUpdated, nil
+}
+
+// Смена пароля пользователя с предварительной проверкой
+func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string) error {
+	const op = "UserSvc.ChangePass"
+
+	u, err := s.GetUserByLogin(ctx, login)
+	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to get user | %s:%w", op, err)
+	}
+
+	// Проверка текущего пароля
+	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(current)); err != nil {
+		s.logger.Error("failed to compare password",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to compare password | %s:%w", op, err)
+	}
+
+	hashChanged, err := s.generateHashPassword([]byte(changed))
+	if err != nil {
+		s.logger.Error("failed to generate hash password",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to generate hash password | %s:%w", op, err)
+	}
+
+	if _, err = s.updateUser(ctx, UserUpdatedWithPassword{
+		Name:     u.Name,
+		Login:    u.Login,
+		Password: string(hashChanged),
+		Blocked:  u.Blocked,
+	}); err != nil {
+		s.logger.Error("failed to update password",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to update password | %s:%w", op, err)
+	}
+
+	// Удалим старые данные из кеша
+	s.cacheByID.Del(u.ID)
+	s.cacheByLogin.Del(u.Login)
+
+	return nil
+}
+
+// Смена пароля пользователя без предварительной проверки
+func (s *UserSvc) ResetPass(ctx context.Context, login, password string) (*User, error) {
+	const op = "UserSvc.ResetPass"
+
+	u, err := s.GetUserByLogin(ctx, login)
+	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
+	}
+
+	hash, err := s.generateHashPassword([]byte(password))
+	if err != nil {
+		s.logger.Error("failed to generate hash password",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to generate hash password | %s:%w", op, err)
+	}
+
+	userUpdated, err := s.updateUser(ctx, UserUpdatedWithPassword{
+		Name:     u.Name,
+		Login:    u.Login,
+		Password: string(hash),
+		Blocked:  u.Blocked,
+	})
+	if err != nil {
+		s.logger.Error("failed to update password",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to update password | %s:%w", op, err)
+	}
+
+	return userUpdated, nil
 }
 
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
@@ -212,6 +308,38 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 	}
 
 	return nil
+}
+
+func (s *UserSvc) updateUser(ctx context.Context, user UserUpdatedWithPassword) (*User, error) {
+	if strings.TrimSpace(user.Name) == "" {
+		return nil, ErrInvalidName
+	}
+
+	if strings.TrimSpace(user.Login) == "" {
+		return nil, ErrInvalidLogin
+	}
+
+	if strings.TrimSpace(user.Password) == "" {
+		return nil, ErrInvalidPassword
+	}
+
+	u, err := s.storage.UpdateUser(ctx, models.UserUpdated{
+		Name:     user.Name,
+		Login:    user.Login,
+		Password: user.Password,
+		Blocked:  user.Blocked,
+	})
+	if err != nil {
+		return nil, err //nolint:wrapcheck
+	}
+
+	return &User{
+		ID:       u.ID,
+		Name:     u.Name,
+		Login:    u.Login,
+		Password: u.Password,
+		Blocked:  u.Blocked,
+	}, nil
 }
 
 func (s *UserSvc) generateHashPassword(password []byte) ([]byte, error) {

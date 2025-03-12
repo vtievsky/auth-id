@@ -17,7 +17,8 @@ type UserCreated struct {
 }
 
 type UserUpdated struct {
-	Name    string
-	Login   string // Ключевое поле для интерфейса
-	Blocked bool
+	Name     string
+	Login    string // Ключевое поле для интерфейса
+	Password string
+	Blocked  bool
 }

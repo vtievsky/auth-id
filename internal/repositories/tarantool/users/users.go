@@ -117,8 +117,8 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 	userUpdated := tarantoolclient.UserUpdated{
 		ID:       u.ID,
 		Name:     user.Name,
-		Login:    u.Login,
-		Password: u.Password,
+		Login:    user.Login,
+		Password: user.Password,
 		Blocked:  user.Blocked,
 	}
 
