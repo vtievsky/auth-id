@@ -1,5 +1,16 @@
 name: auth-id-group
 services:
+  auth-id-redis:
+    image: redis:alpine
+    container_name: auth-id-redis
+    restart: on-failure
+    ports:
+      - ${REDIS_PORT}:6379
+    volumes:
+      - auth-id-redis:/data
+    networks:
+      - auth-id
+
   auth-id-storage:
     image: tarantool/tarantool
     container_name: auth-id-storage
@@ -31,6 +42,7 @@ services:
   #     - auth-id-storage
 
 volumes:
+  auth-id-redis:
   auth-id-tarantool:
 
 networks:
