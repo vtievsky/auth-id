@@ -29,8 +29,8 @@ func New(opts *ClientOpts) (*Client, error) {
 		Auth:                 0,
 		Dialer:               nil,
 		Timeout:              time.Second,
-		Reconnect:            time.Millisecond * 100,
-		MaxReconnects:        3,
+		Reconnect:            time.Millisecond * 100, //nolint:mnd
+		MaxReconnects:        3,                      //nolint:mnd
 		User:                 "",
 		Pass:                 "",
 		RateLimit:            0,

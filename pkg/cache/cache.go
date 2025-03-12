@@ -37,16 +37,27 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 		value V
 	)
 
+	// Синхронизация кеша с истекшим сроком годности
+	if cacheTTL < time.Since(s.lastTime) {
+		s.mu.RLocker().Unlock()
+
+		if err := syncFunc(ctx); err != nil {
+			return value, err
+		}
+
+		s.mu.RLock()
+	}
+
+	// Поиск значения в актуальном кеше
 	if value, ok = s.m[key]; ok {
 		s.mu.RLocker().Unlock()
 
 		return value, nil
 	}
 
-	// Выполним синхронизацию, если значение отсутствует или кеш стал неактуальным
-	// Проверка на отсутствие значения, в этом условии, необходимо в случае, когда
-	// значение было создано в другом экземпляре приложения, а запрашивается здесь
-	if !ok || cacheTTL < time.Since(s.lastTime) {
+	// Синхронизация кеша в случае, когда кеш еще актуален,
+	// а значение могло быть добавлено в хранилище другим экземпляром приложения
+	{
 		s.mu.RLocker().Unlock()
 
 		if err := syncFunc(ctx); err != nil {
