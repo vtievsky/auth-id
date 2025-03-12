@@ -198,7 +198,7 @@ func (s *UserSvc) UpdateUser(ctx context.Context, user UserUpdated) (*User, erro
 	return userUpdated, nil
 }
 
-// Смена пароля пользователя с предварительной проверкой
+// Смена текущего пароля пользователя
 func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string) error {
 	const op = "UserSvc.ChangePass"
 
@@ -253,7 +253,7 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 	return nil
 }
 
-// Смена пароля пользователя без предварительной проверки
+// Сброс текущего пароля пользователя
 func (s *UserSvc) ResetPass(ctx context.Context, login, changed string) error {
 	const op = "UserSvc.ResetPass"
 
