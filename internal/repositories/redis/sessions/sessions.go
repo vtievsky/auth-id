@@ -85,7 +85,7 @@ func (s *Sessions) Delete(ctx context.Context, login, sessionID string) error {
 		return fmt.Errorf("failed to remove session privileges | %s:%w", op, err)
 	}
 
-	// Удаление сессии в списка сессий пользователя
+	// Удаление сессии из списка сессий пользователя
 	keyLoginSessions := s.keyLoginSessions(login)
 
 	if _, err := s.client.SRem(ctx, keyLoginSessions, keySession).Result(); err != nil {
