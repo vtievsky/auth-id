@@ -53,7 +53,7 @@ func (s *Sessions) Store(
 
 	g, gCtx := errgroup.WithContext(ctx)
 
-	// Сохранение логина пользователя
+	// Сохранение карты пользователя
 	g.Go(func() error {
 		if _, err := s.client.Set(gCtx, keyCart, login, ttl).Result(); err != nil {
 			return fmt.Errorf("failed to add session cart | %s:%w", op, err)
@@ -110,7 +110,7 @@ func (s *Sessions) Delete(ctx context.Context, sessionID string) error {
 
 	g, gCtx := errgroup.WithContext(ctx)
 
-	// Удаление списка привилегий сессии
+	// Удаление карты пользователя
 	g.Go(func() error {
 		if _, err := s.client.Del(gCtx, keyCart).Result(); err != nil {
 			return fmt.Errorf("failed to remove session cart | %s:%w", op, err)
