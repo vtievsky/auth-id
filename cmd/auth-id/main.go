@@ -98,8 +98,9 @@ func main() {
 	})
 
 	sessionService := sessionsvc.New(&sessionsvc.SessionSvcOpts{
-		Logger:  logger,
-		UserSvc: userService,
+		Logger:           logger,
+		UserSvc:          userService,
+		UserPrivilegeSvc: userPrivilegeService,
 	})
 
 	ctx := context.Background()

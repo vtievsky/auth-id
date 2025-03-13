@@ -194,7 +194,8 @@ func (t *Transport) Login(
 	ctx context.Context,
 	request serverhttp.LoginRequestObject,
 ) (serverhttp.LoginResponseObject, error) {
-	if err := t.services.SessionSvc.Login(ctx, request.Login, request.Body.Password); err != nil {
+	session, err := t.services.SessionSvc.Login(ctx, request.Login, request.Body.Password)
+	if err != nil {
 		return serverhttp.Login500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
@@ -205,7 +206,7 @@ func (t *Transport) Login(
 
 	return serverhttp.Login200JSONResponse{
 		Data: serverhttp.Session{
-			Session: "",
+			Session: string(session),
 		},
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,

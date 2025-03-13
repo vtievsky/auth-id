@@ -63,5 +63,5 @@ type RolePrivilegeService interface {
 }
 
 type SessionService interface {
-	Login(ctx context.Context, login, password string) error
+	Login(ctx context.Context, login, password string) ([]byte, error)
 }
