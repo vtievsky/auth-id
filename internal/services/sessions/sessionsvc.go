@@ -18,7 +18,7 @@ const (
 type Storage interface {
 	Find(ctx context.Context, sessionID, privilege string) error
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
-	Delete(ctx context.Context, login, sessionID string) error
+	Delete(ctx context.Context, sessionID string) error
 }
 
 type UserSvc interface {

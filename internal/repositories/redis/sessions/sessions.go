@@ -9,10 +9,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	space = "ses"
-)
-
 type SessionsOpts struct {
 	Client *redisclient.Client
 }
@@ -51,10 +47,20 @@ func (s *Sessions) Store(
 ) error {
 	const op = "Sessions.Store"
 
+	keyCart := s.keyCart(sessionID)
 	keySession := s.keySession(sessionID)
 	keyLoginSessions := s.keyLoginSessions(login)
 
 	g, gCtx := errgroup.WithContext(ctx)
+
+	// Сохранение логина пользователя
+	g.Go(func() error {
+		if _, err := s.client.Set(gCtx, keyCart, login, ttl).Result(); err != nil {
+			return fmt.Errorf("failed to add session cart | %s:%w", op, err)
+		}
+
+		return nil
+	})
 
 	// Сохранение списка привилегий сессии
 	g.Go(func() error {
@@ -89,13 +95,29 @@ func (s *Sessions) Store(
 	return nil
 }
 
-func (s *Sessions) Delete(ctx context.Context, login, sessionID string) error {
+func (s *Sessions) Delete(ctx context.Context, sessionID string) error {
 	const op = "Sessions.Delete"
+
+	keyCart := s.keyCart(sessionID)
+
+	login, err := s.client.Get(ctx, keyCart).Result()
+	if err != nil {
+		return fmt.Errorf("failed to get session cart | %s:%w", op, err)
+	}
 
 	keySession := s.keySession(sessionID)
 	keyLoginSessions := s.keyLoginSessions(login)
 
 	g, gCtx := errgroup.WithContext(ctx)
+
+	// Удаление списка привилегий сессии
+	g.Go(func() error {
+		if _, err := s.client.Del(gCtx, keyCart).Result(); err != nil {
+			return fmt.Errorf("failed to remove session cart | %s:%w", op, err)
+		}
+
+		return nil
+	})
 
 	// Удаление списка привилегий сессии
 	g.Go(func() error {
@@ -122,10 +144,17 @@ func (s *Sessions) Delete(ctx context.Context, login, sessionID string) error {
 	return nil
 }
 
-func (s *Sessions) keySession(sessionID string) string {
-	return fmt.Sprintf("%s:%s", space, sessionID)
+// Ключ карты (с логином)
+func (s *Sessions) keyCart(login string) string {
+	return fmt.Sprintf("pok:%s", login)
 }
 
+// Ключ с набором привилегий
+func (s *Sessions) keySession(sessionID string) string {
+	return fmt.Sprintf("omo:%s", sessionID)
+}
+
+// Ключ с сессиями пользователя
 func (s *Sessions) keyLoginSessions(login string) string {
-	return fmt.Sprintf("%s:%s", space, login)
+	return fmt.Sprintf("omo:%s", login)
 }
