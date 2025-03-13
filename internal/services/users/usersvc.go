@@ -213,7 +213,7 @@ func (s *UserSvc) ChangePass(ctx context.Context, login, current, changed string
 	}
 
 	// Проверка текущего пароля
-	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(current)); err != nil {
+	if err = s.ComparePassword([]byte(u.Password), []byte(current)); err != nil {
 		s.logger.Error("failed to compare password",
 			zap.String("login", login),
 			zap.Error(err),
@@ -301,6 +301,16 @@ func (s *UserSvc) ResetPass(ctx context.Context, login, changed string) error {
 func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 	const op = "UserSvc.DeleteUser"
 
+	u, err := s.GetUserByLogin(ctx, login)
+	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to get user | %s:%w", op, err)
+	}
+
 	if err := s.storage.DeleteUser(ctx, login); err != nil {
 		s.logger.Error("failed to delete user",
 			zap.String("login", login),
@@ -308,6 +318,18 @@ func (s *UserSvc) DeleteUser(ctx context.Context, login string) error {
 		)
 
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
+	}
+
+	// Удалим данные пользователя из кеша
+	s.cacheByID.Del(u.ID)
+	s.cacheByLogin.Del(u.Login)
+
+	return nil
+}
+
+func (s *UserSvc) ComparePassword(password, current []byte) error {
+	if err := bcrypt.CompareHashAndPassword(password, current); err != nil {
+		return ErrInvalidPassword
 	}
 
 	return nil

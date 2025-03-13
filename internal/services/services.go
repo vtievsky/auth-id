@@ -18,6 +18,7 @@ type SvcLayer struct {
 	RoleSvc          RoleService
 	RoleUserSvc      RoleUserService
 	RolePrivilegeSvc RolePrivilegeService
+	SessionSvc       SessionService
 }
 
 type UserService interface {
@@ -59,4 +60,8 @@ type RolePrivilegeService interface {
 	AddRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeCreated) error
 	UpdateRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeUpdated) error
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeDeleted) error
+}
+
+type SessionService interface {
+	Login(ctx context.Context, login, password string) error
 }

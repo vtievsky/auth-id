@@ -21,6 +21,7 @@ import (
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	sessionsvc "github.com/vtievsky/auth-id/internal/services/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -96,6 +97,11 @@ func main() {
 		RolePrivilegeSvc: rolePrivilegeService,
 	})
 
+	sessionService := sessionsvc.New(&sessionsvc.SessionSvcOpts{
+		Logger:  logger,
+		UserSvc: userService,
+	})
+
 	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
@@ -105,6 +111,7 @@ func main() {
 		RoleSvc:          roleService,
 		RoleUserSvc:      roleUserService,
 		RolePrivilegeSvc: rolePrivilegeService,
+		SessionSvc:       sessionService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)
