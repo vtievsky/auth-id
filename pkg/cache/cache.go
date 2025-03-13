@@ -90,6 +90,4 @@ func (s *Cache[K, V]) Del(key K) {
 	defer s.mu.Unlock()
 
 	delete(s.m, key)
-
-	s.lastTime = time.Now()
 }
