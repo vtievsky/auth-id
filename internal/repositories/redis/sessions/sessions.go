@@ -6,6 +6,7 @@ import (
 	"time"
 
 	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -50,26 +51,39 @@ func (s *Sessions) Store(
 ) error {
 	const op = "Sessions.Store"
 
-	// Сохранение списка привилегий сессии
 	keySession := s.keySession(sessionID)
-
-	if _, err := s.client.SAdd(ctx, keySession, privileges).Result(); err != nil {
-		return fmt.Errorf("failed to add session privileges | %s:%w", op, err)
-	}
-
-	if _, err := s.client.Expire(ctx, keySession, ttl).Result(); err != nil {
-		return fmt.Errorf("failed to set ttl session privileges | %s:%w", op, err)
-	}
-
-	// Добавление сессии в список сессий пользователя
 	keyLoginSessions := s.keyLoginSessions(login)
 
-	if _, err := s.client.SAdd(ctx, keyLoginSessions, keySession).Result(); err != nil {
-		return fmt.Errorf("failed to add session to sessions list | %s:%w", op, err)
-	}
+	g, gCtx := errgroup.WithContext(ctx)
 
-	if _, err := s.client.Expire(ctx, keyLoginSessions, ttl).Result(); err != nil {
-		return fmt.Errorf("failed to set ttl sessions list | %s:%w", op, err)
+	// Сохранение списка привилегий сессии
+	g.Go(func() error {
+		if _, err := s.client.SAdd(gCtx, keySession, privileges).Result(); err != nil {
+			return fmt.Errorf("failed to add session privileges | %s:%w", op, err)
+		}
+
+		if _, err := s.client.Expire(gCtx, keySession, ttl).Result(); err != nil {
+			return fmt.Errorf("failed to set ttl session privileges | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	// Добавление сессии в список сессий пользователя
+	g.Go(func() error {
+		if _, err := s.client.SAdd(gCtx, keyLoginSessions, keySession).Result(); err != nil {
+			return fmt.Errorf("failed to add session to sessions list | %s:%w", op, err)
+		}
+
+		if _, err := s.client.Expire(gCtx, keyLoginSessions, ttl).Result(); err != nil {
+			return fmt.Errorf("failed to set ttl sessions list | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err //nolint:wrapcheck
 	}
 
 	return nil
@@ -78,18 +92,31 @@ func (s *Sessions) Store(
 func (s *Sessions) Delete(ctx context.Context, login, sessionID string) error {
 	const op = "Sessions.Delete"
 
-	// Удаление списка привилегий сессии
 	keySession := s.keySession(sessionID)
-
-	if _, err := s.client.Del(ctx, keySession).Result(); err != nil {
-		return fmt.Errorf("failed to remove session privileges | %s:%w", op, err)
-	}
-
-	// Удаление сессии из списка сессий пользователя
 	keyLoginSessions := s.keyLoginSessions(login)
 
-	if _, err := s.client.SRem(ctx, keyLoginSessions, keySession).Result(); err != nil {
-		return fmt.Errorf("failed to remove session from sessions list | %s:%w", op, err)
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Удаление списка привилегий сессии
+	g.Go(func() error {
+		if _, err := s.client.Del(gCtx, keySession).Result(); err != nil {
+			return fmt.Errorf("failed to remove session privileges | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	// Удаление сессии из списка сессий пользователя
+	g.Go(func() error {
+		if _, err := s.client.SRem(gCtx, keyLoginSessions, keySession).Result(); err != nil {
+			return fmt.Errorf("failed to remove session from sessions list | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err //nolint:wrapcheck
 	}
 
 	return nil
