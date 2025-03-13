@@ -12,6 +12,8 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
+	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
+	redissessions "github.com/vtievsky/auth-id/internal/repositories/redis/sessions"
 	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
 	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/tarantool/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/tarantool/roles"
@@ -42,6 +44,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	sessionClient := redisclient.New(&redisclient.ClientOpts{
+		URL: conf.Session.URL,
+	})
+
 	// repos
 	usersRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
 		Client: dbClient,
@@ -53,6 +59,10 @@ func main() {
 
 	privilegesRepo := tarantoolprivileges.New(&tarantoolprivileges.PrivilegesOpts{
 		Client: dbClient,
+	})
+
+	sessionsRepo := redissessions.New(&redissessions.SessionsOpts{
+		Client: sessionClient,
 	})
 
 	// services
@@ -99,6 +109,7 @@ func main() {
 
 	sessionService := sessionsvc.New(&sessionsvc.SessionSvcOpts{
 		Logger:           logger,
+		Storage:          sessionsRepo,
 		UserSvc:          userService,
 		UserPrivilegeSvc: userPrivilegeService,
 	})

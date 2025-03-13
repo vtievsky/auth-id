@@ -11,6 +11,10 @@ type DBConfig struct {
 	URL string `envconfig:"AUTH_DB_URL" required:"true"`
 }
 
+type SessionConfig struct {
+	URL string `envconfig:"AUTH_SESSION_URL" required:"true"`
+}
+
 type LogConfig struct {
 	EnableStacktrace bool `envconfig:"AUTH_LOG_ENABLE_STACKTRACE" default:"false"`
 }
@@ -20,8 +24,9 @@ type Config struct {
 
 	Port int `envconfig:"AUTH_PORT" default:"8080"`
 
-	DB  DBConfig
-	Log LogConfig
+	DB      DBConfig
+	Session SessionConfig
+	Log     LogConfig
 }
 
 func New() *Config {
