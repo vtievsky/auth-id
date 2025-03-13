@@ -104,7 +104,6 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) ([]byte,
 	sessionDuration := time.Until(sessionDateOut)
 	sessionDuration = min(sessionTTL, sessionDuration)
 
-	// fmt.Printf("user: %s\nsession: %s\ndate_out: %v\nduration: %v\n", login, sessionID, sessionDateOut, sessionDuration)
 	err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration)
 	if err != nil {
 		s.logger.Error("failed to store session",
