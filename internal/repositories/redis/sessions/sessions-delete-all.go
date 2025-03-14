@@ -55,7 +55,7 @@ func (s *Sessions) DeleteAll(ctx context.Context, sessionID string) error {
 	}
 
 	for _, session := range sessions {
-		// Удаление карты сессии
+		// Удаление сессии
 		g.Go(func() error {
 			if _, err := s.client.Del(gCtx, session).Result(); err != nil {
 				return fmt.Errorf("failed to delete session | %s:%w", op, err)
@@ -64,7 +64,7 @@ func (s *Sessions) DeleteAll(ctx context.Context, sessionID string) error {
 			return nil
 		})
 
-		// Удаление из списка карт сессии
+		// Удаление из списка сессий
 		g.Go(func() error {
 			if _, err := s.client.SRem(gCtx, keySessions, session).Result(); err != nil {
 				return fmt.Errorf("failed to delete session from sessions list | %s:%w", op, err)
