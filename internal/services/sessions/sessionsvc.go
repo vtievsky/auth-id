@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	redissessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
+	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ type Session struct {
 }
 
 type Storage interface {
-	List(ctx context.Context, login string) ([]*redissessions.Session, error)
+	List(ctx context.Context, login string) ([]*reposessions.Session, error)
 	Find(ctx context.Context, sessionID, privilege string) error
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
 	Delete(ctx context.Context, login, sessionID string) error

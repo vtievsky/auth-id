@@ -1,4 +1,4 @@
-package redissessions
+package reposessions
 
 import (
 	"context"

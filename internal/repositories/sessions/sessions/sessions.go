@@ -1,4 +1,4 @@
-package redissessions
+package reposessions
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	redisclient "github.com/vtievsky/auth-id/internal/repositories/sessions/client"
+	clientredis "github.com/vtievsky/auth-id/internal/repositories/sessions/client/redis"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -28,12 +28,12 @@ type Session struct {
 
 type SessionsOpts struct {
 	Logger *zap.Logger
-	Client *redisclient.Client
+	Client *clientredis.Client
 }
 
 type Sessions struct {
 	logger *zap.Logger
-	client *redisclient.Client
+	client *clientredis.Client
 }
 
 func New(opts *SessionsOpts) *Sessions {

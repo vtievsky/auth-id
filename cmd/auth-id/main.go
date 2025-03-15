@@ -16,8 +16,8 @@ import (
 	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/db/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/db/roles"
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/db/users"
-	redisclient "github.com/vtievsky/auth-id/internal/repositories/sessions/client"
-	redissessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
+	clientredis "github.com/vtievsky/auth-id/internal/repositories/sessions/client/redis"
+	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	"github.com/vtievsky/auth-id/internal/services"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
@@ -44,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sessionClient := redisclient.New(&redisclient.ClientOpts{
+	sessionClient := clientredis.New(&clientredis.ClientOpts{
 		URL: conf.Session.URL,
 	})
 
@@ -61,7 +61,7 @@ func main() {
 		Client: dbClient,
 	})
 
-	sessionsRepo := redissessions.New(&redissessions.SessionsOpts{
+	sessionsRepo := reposessions.New(&reposessions.SessionsOpts{
 		Logger: logger.Named("session"),
 		Client: sessionClient,
 	})
