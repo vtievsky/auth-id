@@ -17,8 +17,8 @@ const (
 )
 
 type sessionStats struct {
-	id  string
-	ttl time.Duration
+	ID  string
+	TTL time.Duration
 }
 
 type Session struct {
@@ -75,8 +75,8 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 			}
 
 			acombine <- sessionStats{
-				id:  asessionID,
-				ttl: ttl,
+				ID:  asessionID,
+				TTL: ttl,
 			}
 
 			return nil
@@ -111,8 +111,8 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 
 	for v := range combine {
 		sessions = append(sessions, &Session{
-			ID:  s.sanitizeID(v.id),
-			TTL: v.ttl,
+			ID:  s.sanitizeID(v.ID),
+			TTL: v.TTL,
 		})
 	}
 
