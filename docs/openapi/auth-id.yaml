@@ -85,40 +85,6 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
-    post:
-      tags:
-        - web
-      description: Аутентификация
-      operationId: Login
-      parameters:
-        - name: login
-          description: Логин пользователя
-          in: path
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-        description: Параметры запроса
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LoginResponse200"
-          description: OK
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LoginResponse500"
-          description: Internal Server Error
-      security:
-        - bearer: []
     put:
       tags:
         - web
@@ -306,6 +272,69 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/users/{login}/sessions:
+    get:
+      tags:
+        - web
+      description: Получение сессий пользователя
+      operationId: GetUserSessions
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserSessionsResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserSessionsResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+    post:
+      tags:
+        - web
+      description: Аутентификация
+      operationId: Login
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
+
   /v1/roles:
     get:
       tags:
@@ -790,11 +819,23 @@ components:
     Session:
       type: object
       properties:
-        session:
+        id:
           type: string
           description: Идентификатор сессии
+        created_at:
+          type: string
+          description: Время создания сессии
+          format: date-time
+          example: "2019-10-12T07:20:50.52Z"
+        expired_at:
+          type: string
+          description: Время истечения срока действия сессии
+          format: date-time
+          example: "2019-10-12T07:20:50.52Z"
       required:
-        - session
+        - id
+        - created_at
+        - expired_at
     GetUserResponse200:
       type: object
       properties:
@@ -1439,6 +1480,27 @@ components:
         - status
         - data
     LoginResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    GetUserSessionsResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+      required:
+        - status
+        - data
+    GetUserSessionsResponse500:
       type: object
       properties:
         status:

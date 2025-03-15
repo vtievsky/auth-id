@@ -7,8 +7,8 @@ import (
 
 	"github.com/tarantool/go-tarantool"
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
+	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
 )
 
 const (

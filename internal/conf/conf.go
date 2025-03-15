@@ -3,6 +3,7 @@ package conf
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -12,7 +13,8 @@ type DBConfig struct {
 }
 
 type SessionConfig struct {
-	URL string `envconfig:"AUTH_SESSION_URL" required:"true"`
+	URL string        `envconfig:"AUTH_SESSION_URL" required:"true"`
+	TTL time.Duration `envconfig:"AUTH_SESSION_TTL" default:"24h"`
 }
 
 type LogConfig struct {

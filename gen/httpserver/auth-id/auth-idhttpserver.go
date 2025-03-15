@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -250,6 +251,17 @@ type GetUserRolesResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
+// GetUserSessionsResponse200 defines model for GetUserSessionsResponse200.
+type GetUserSessionsResponse200 struct {
+	Data   []Session        `json:"data"`
+	Status ResponseStatusOk `json:"status"`
+}
+
+// GetUserSessionsResponse500 defines model for GetUserSessionsResponse500.
+type GetUserSessionsResponse500 struct {
+	Status ResponseStatusError `json:"status"`
+}
+
 // GetUsersResponse200 defines model for GetUsersResponse200.
 type GetUsersResponse200 struct {
 	Data   []User           `json:"data"`
@@ -338,8 +350,14 @@ type RoleUser struct {
 
 // Session defines model for Session.
 type Session struct {
-	// Session Идентификатор сессии
-	Session string `json:"session"`
+	// CreatedAt Время создания сессии
+	CreatedAt time.Time `json:"created_at"`
+
+	// ExpiredAt Время истечения срока действия сессии
+	ExpiredAt time.Time `json:"expired_at"`
+
+	// Id Идентификатор сессии
+	Id string `json:"id"`
 }
 
 // UpdateRolePrivilegeRequest defines model for UpdateRolePrivilegeRequest.
@@ -466,11 +484,11 @@ type UpdateRoleUserJSONRequestBody = UpdateRoleUserRequest
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = CreateUserRequest
 
-// LoginJSONRequestBody defines body for Login for application/json ContentType.
-type LoginJSONRequestBody = LoginRequest
-
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserRequest
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -532,9 +550,6 @@ type ServerInterface interface {
 	// (GET /v1/users/{login})
 	GetUser(ctx echo.Context, login string) error
 
-	// (POST /v1/users/{login})
-	Login(ctx echo.Context, login string) error
-
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx echo.Context, login string) error
 
@@ -543,6 +558,12 @@ type ServerInterface interface {
 
 	// (GET /v1/users/{login}/roles)
 	GetUserRoles(ctx echo.Context, login string) error
+
+	// (GET /v1/users/{login}/sessions)
+	GetUserSessions(ctx echo.Context, login string) error
+
+	// (POST /v1/users/{login}/sessions)
+	Login(ctx echo.Context, login string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -912,24 +933,6 @@ func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
 	return err
 }
 
-// Login converts echo context to params.
-func (w *ServerInterfaceWrapper) Login(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "login" -------------
-	var login string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
-	}
-
-	ctx.Set(BearerScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Login(ctx, login)
-	return err
-}
-
 // UpdateUser converts echo context to params.
 func (w *ServerInterfaceWrapper) UpdateUser(ctx echo.Context) error {
 	var err error
@@ -984,6 +987,42 @@ func (w *ServerInterfaceWrapper) GetUserRoles(ctx echo.Context) error {
 	return err
 }
 
+// GetUserSessions converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserSessions(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetUserSessions(ctx, login)
+	return err
+}
+
+// Login converts echo context to params.
+func (w *ServerInterfaceWrapper) Login(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+	}
+
+	ctx.Set(BearerScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Login(ctx, login)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1031,10 +1070,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
 	router.GET(baseURL+"/v1/users/:login", wrapper.GetUser)
-	router.POST(baseURL+"/v1/users/:login", wrapper.Login)
 	router.PUT(baseURL+"/v1/users/:login", wrapper.UpdateUser)
 	router.GET(baseURL+"/v1/users/:login/privileges", wrapper.GetUserPrivileges)
 	router.GET(baseURL+"/v1/users/:login/roles", wrapper.GetUserRoles)
+	router.GET(baseURL+"/v1/users/:login/sessions", wrapper.GetUserSessions)
+	router.POST(baseURL+"/v1/users/:login/sessions", wrapper.Login)
 
 }
 
@@ -1543,33 +1583,6 @@ func (response GetUser500JSONResponse) VisitGetUserResponse(w http.ResponseWrite
 	return json.NewEncoder(w).Encode(response)
 }
 
-type LoginRequestObject struct {
-	Login string `json:"login"`
-	Body  *LoginJSONRequestBody
-}
-
-type LoginResponseObject interface {
-	VisitLoginResponse(w http.ResponseWriter) error
-}
-
-type Login200JSONResponse LoginResponse200
-
-func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type Login500JSONResponse LoginResponse500
-
-func (response Login500JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type UpdateUserRequestObject struct {
 	Login string `json:"login"`
 	Body  *UpdateUserJSONRequestBody
@@ -1649,6 +1662,59 @@ func (response GetUserRoles500JSONResponse) VisitGetUserRolesResponse(w http.Res
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserSessionsRequestObject struct {
+	Login string `json:"login"`
+}
+
+type GetUserSessionsResponseObject interface {
+	VisitGetUserSessionsResponse(w http.ResponseWriter) error
+}
+
+type GetUserSessions200JSONResponse GetUserSessionsResponse200
+
+func (response GetUserSessions200JSONResponse) VisitGetUserSessionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserSessions500JSONResponse GetUserSessionsResponse500
+
+func (response GetUserSessions500JSONResponse) VisitGetUserSessionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type LoginRequestObject struct {
+	Login string `json:"login"`
+	Body  *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse LoginResponse200
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login500JSONResponse LoginResponse500
+
+func (response Login500JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -1709,9 +1775,6 @@ type StrictServerInterface interface {
 	// (GET /v1/users/{login})
 	GetUser(ctx context.Context, request GetUserRequestObject) (GetUserResponseObject, error)
 
-	// (POST /v1/users/{login})
-	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
-
 	// (PUT /v1/users/{login})
 	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
 
@@ -1720,6 +1783,12 @@ type StrictServerInterface interface {
 
 	// (GET /v1/users/{login}/roles)
 	GetUserRoles(ctx context.Context, request GetUserRolesRequestObject) (GetUserRolesResponseObject, error)
+
+	// (GET /v1/users/{login}/sessions)
+	GetUserSessions(ctx context.Context, request GetUserSessionsRequestObject) (GetUserSessionsResponseObject, error)
+
+	// (POST /v1/users/{login}/sessions)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -2261,37 +2330,6 @@ func (sh *strictHandler) GetUser(ctx echo.Context, login string) error {
 	return nil
 }
 
-// Login operation middleware
-func (sh *strictHandler) Login(ctx echo.Context, login string) error {
-	var request LoginRequestObject
-
-	request.Login = login
-
-	var body LoginJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
-		return err
-	}
-	request.Body = &body
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.Login(ctx.Request().Context(), request.(LoginRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "Login")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(LoginResponseObject); ok {
-		return validResponse.VisitLoginResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // UpdateUser operation middleware
 func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 	var request UpdateUserRequestObject
@@ -2373,45 +2411,104 @@ func (sh *strictHandler) GetUserRoles(ctx echo.Context, login string) error {
 	return nil
 }
 
+// GetUserSessions operation middleware
+func (sh *strictHandler) GetUserSessions(ctx echo.Context, login string) error {
+	var request GetUserSessionsRequestObject
+
+	request.Login = login
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserSessions(ctx.Request().Context(), request.(GetUserSessionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserSessions")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetUserSessionsResponseObject); ok {
+		return validResponse.VisitGetUserSessionsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(ctx echo.Context, login string) error {
+	var request LoginRequestObject
+
+	request.Login = login
+
+	var body LoginJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx.Request().Context(), request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		return validResponse.VisitLoginResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"OoFwAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

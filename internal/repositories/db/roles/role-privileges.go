@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/tarantool/go-tarantool"
+	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
 )
 
 func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error) {

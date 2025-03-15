@@ -6,6 +6,7 @@ import (
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
+	sessionsvc "github.com/vtievsky/auth-id/internal/services/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -63,5 +64,6 @@ type RolePrivilegeService interface {
 }
 
 type SessionService interface {
-	Login(ctx context.Context, login, password string) ([]byte, error)
+	Login(ctx context.Context, login, password string) (*sessionsvc.Session, error)
+	GetUserSessions(ctx context.Context, login string) ([]*sessionsvc.Session, error)
 }

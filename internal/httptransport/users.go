@@ -189,28 +189,3 @@ func (t *Transport) ResetPass(
 		},
 	}, nil
 }
-
-func (t *Transport) Login(
-	ctx context.Context,
-	request serverhttp.LoginRequestObject,
-) (serverhttp.LoginResponseObject, error) {
-	session, err := t.services.SessionSvc.Login(ctx, request.Login, request.Body.Password)
-	if err != nil {
-		return serverhttp.Login500JSONResponse{ //nolint:nilerr
-			Status: serverhttp.ResponseStatusError{
-				Code:        serverhttp.Error,
-				Description: err.Error(),
-			},
-		}, nil
-	}
-
-	return serverhttp.Login200JSONResponse{
-		Data: serverhttp.Session{
-			Session: string(session),
-		},
-		Status: serverhttp.ResponseStatusOk{
-			Code:        serverhttp.Ok,
-			Description: "",
-		},
-	}, nil
-}

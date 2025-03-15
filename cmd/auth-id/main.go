@@ -12,12 +12,12 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
-	redisclient "github.com/vtievsky/auth-id/internal/repositories/redis/client"
-	redissessions "github.com/vtievsky/auth-id/internal/repositories/redis/sessions"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/tarantool/client"
-	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/tarantool/privileges"
-	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/tarantool/roles"
-	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/tarantool/users"
+	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/db/privileges"
+	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/db/roles"
+	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/db/users"
+	redisclient "github.com/vtievsky/auth-id/internal/repositories/sessions/client"
+	redissessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	"github.com/vtievsky/auth-id/internal/services"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
@@ -62,6 +62,7 @@ func main() {
 	})
 
 	sessionsRepo := redissessions.New(&redissessions.SessionsOpts{
+		Logger: logger.Named("session"),
 		Client: sessionClient,
 	})
 
@@ -108,10 +109,11 @@ func main() {
 	})
 
 	sessionService := sessionsvc.New(&sessionsvc.SessionSvcOpts{
-		Logger:           logger,
+		Logger:           logger.Named("session"),
 		Storage:          sessionsRepo,
 		UserSvc:          userService,
 		UserPrivilegeSvc: userPrivilegeService,
+		SessionTTL:       conf.Session.TTL,
 	})
 
 	ctx := context.Background()
