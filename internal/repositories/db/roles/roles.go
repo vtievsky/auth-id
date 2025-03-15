@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tarantool/go-tarantool"
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -19,11 +19,11 @@ const (
 )
 
 type RolesOpts struct {
-	Client *tarantoolclient.Client
+	Client *clienttarantool.Client
 }
 
 type Roles struct {
-	c *tarantoolclient.Client
+	c *clienttarantool.Client
 }
 
 func New(opts *RolesOpts) *Roles {
@@ -35,7 +35,7 @@ func New(opts *RolesOpts) *Roles {
 func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) {
 	const op = "DbRoles.GetRole"
 
-	resp, err := s.c.Connection.Select(spaceRole, "secondary", 0, 1, tarantool.IterEq, tarantoolclient.Tuple{code})
+	resp, err := s.c.Connection.Select(spaceRole, "secondary", 0, 1, tarantool.IterEq, clienttarantool.Tuple{code})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role | %s:%w", op, err)
 	}
@@ -58,12 +58,12 @@ func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) 
 func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 	const op = "DbRoles.GetRoles"
 
-	resp, err := s.c.Connection.Select(spaceRole, "pk", 0, limit, tarantool.IterAll, tarantoolclient.Tuple{})
+	resp, err := s.c.Connection.Select(spaceRole, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get roles | %s:%w", op, err)
 	}
 
-	var role tarantoolclient.Role
+	var role clienttarantool.Role
 
 	roles := make([]*models.Role, 0, len(resp.Tuples()))
 
@@ -85,7 +85,7 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 func (s *Roles) CreateRole(ctx context.Context, role models.RoleCreated) (*models.Role, error) {
 	const op = "DbRoles.CreateRole"
 
-	roleCreated := tarantoolclient.RoleCreated{
+	roleCreated := clienttarantool.RoleCreated{
 		Code:        uuid.NewString(),
 		Name:        role.Name,
 		Description: role.Description,
@@ -107,7 +107,7 @@ func (s *Roles) UpdateRole(ctx context.Context, role models.RoleUpdated) (*model
 		return nil, fmt.Errorf("failed to update role | %s:%w", op, err)
 	}
 
-	roleUpdated := tarantoolclient.RoleUpdated{
+	roleUpdated := clienttarantool.RoleUpdated{
 		ID:          u.ID,
 		Code:        u.Code,
 		Name:        role.Name,
@@ -129,15 +129,15 @@ func (s *Roles) DeleteRole(ctx context.Context, code string) error {
 		return fmt.Errorf("failed to delete role | %s:%w", op, err)
 	}
 
-	if _, err := s.c.Connection.Delete(spaceRole, "secondary", tarantoolclient.Tuple{code}); err != nil {
+	if _, err := s.c.Connection.Delete(spaceRole, "secondary", clienttarantool.Tuple{code}); err != nil {
 		return fmt.Errorf("failed to delete role | %s:%w", op, err)
 	}
 
 	return nil
 }
 
-func (s *Roles) tupleToRole(tuple tarantoolclient.Tuple) tarantoolclient.Role {
-	return tarantoolclient.Role{
+func (s *Roles) tupleToRole(tuple clienttarantool.Tuple) clienttarantool.Role {
+	return clienttarantool.Role{
 		ID:          tuple[0].(uint64), //nolint:forcetypeassert
 		Code:        tuple[1].(string), //nolint:forcetypeassert
 		Name:        tuple[2].(string), //nolint:forcetypeassert

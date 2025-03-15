@@ -12,7 +12,7 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/db/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/db/roles"
 	tarantoolusers "github.com/vtievsky/auth-id/internal/repositories/db/users"
@@ -36,7 +36,7 @@ func main() {
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
 
-	dbClient, err := tarantoolclient.New(&tarantoolclient.ClientOpts{
+	dbClient, err := clienttarantool.New(&clienttarantool.ClientOpts{
 		URL:       conf.DB.URL,
 		RateLimit: 25, //nolint:mnd
 	})

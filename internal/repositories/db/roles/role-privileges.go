@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/tarantool/go-tarantool"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -17,12 +17,12 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRolePrivilege, "primary", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRolePrivilege, "primary", 0, limit, tarantool.IterEq, clienttarantool.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}
 
-	var rolePrivilege tarantoolclient.RolePrivilege
+	var rolePrivilege clienttarantool.RolePrivilege
 
 	rolePrivileges := make([]*models.RolePrivilege, 0, len(resp.Tuples()))
 
@@ -42,7 +42,7 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 func (s *Roles) AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error {
 	const op = "DbRoles.AddRolePrivilege"
 
-	rolePrivilegeCreated := tarantoolclient.RolePrivilegeCreated{
+	rolePrivilegeCreated := clienttarantool.RolePrivilegeCreated{
 		RoleID:      rolePrivilege.RoleID,
 		PrivilegeID: rolePrivilege.PrivilegeID,
 		Allowed:     rolePrivilege.Allowed,
@@ -58,7 +58,7 @@ func (s *Roles) AddRolePrivilege(ctx context.Context, rolePrivilege models.RoleP
 func (s *Roles) UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error {
 	const op = "DbRoles.UpdateRolePrivilege"
 
-	rolePrivilegeUpdated := tarantoolclient.RolePrivilegeUpdated{
+	rolePrivilegeUpdated := clienttarantool.RolePrivilegeUpdated{
 		RoleID:      rolePrivilege.RoleID,
 		PrivilegeID: rolePrivilege.PrivilegeID,
 		Allowed:     rolePrivilege.Allowed,
@@ -74,7 +74,7 @@ func (s *Roles) UpdateRolePrivilege(ctx context.Context, rolePrivilege models.Ro
 func (s *Roles) DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error {
 	const op = "DbRoles.DeleteRolePrivilege"
 
-	rolePrivilegeDeleted := tarantoolclient.RolePrivilegeDeleted{
+	rolePrivilegeDeleted := clienttarantool.RolePrivilegeDeleted{
 		RoleID:      rolePrivilege.RoleID,
 		PrivilegeID: rolePrivilege.PrivilegeID,
 	}
@@ -86,8 +86,8 @@ func (s *Roles) DeleteRolePrivilege(ctx context.Context, rolePrivilege models.Ro
 	return nil
 }
 
-func (s *Roles) tupleToRolePrivilege(tuple tarantoolclient.Tuple) tarantoolclient.RolePrivilege {
-	return tarantoolclient.RolePrivilege{
+func (s *Roles) tupleToRolePrivilege(tuple clienttarantool.Tuple) clienttarantool.RolePrivilege {
+	return clienttarantool.RolePrivilege{
 		RoleID:      tuple[0].(uint64), //nolint:forcetypeassert
 		PrivilegeID: tuple[1].(uint64), //nolint:forcetypeassert
 		Allowed:     tuple[2].(bool),   //nolint:forcetypeassert

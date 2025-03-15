@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/tarantool/go-tarantool"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -18,12 +18,12 @@ func (s *Users) GetUserRoles(ctx context.Context, login string) ([]*models.UserR
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceUserRole, "secondary", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{user.ID})
+	resp, err := s.c.Connection.Select(spaceUserRole, "secondary", 0, limit, tarantool.IterEq, clienttarantool.Tuple{user.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user roles | %s:%w", op, err)
 	}
 
-	var roleUser tarantoolclient.UserRole
+	var roleUser clienttarantool.UserRole
 
 	roleUsers := make([]*models.UserRole, 0, len(resp.Tuples()))
 
@@ -41,8 +41,8 @@ func (s *Users) GetUserRoles(ctx context.Context, login string) ([]*models.UserR
 	return roleUsers, nil
 }
 
-func (s *Users) tupleToUserRole(tuple tarantoolclient.Tuple) tarantoolclient.UserRole {
-	return tarantoolclient.UserRole{
+func (s *Users) tupleToUserRole(tuple clienttarantool.Tuple) clienttarantool.UserRole {
+	return clienttarantool.UserRole{
 		RoleID:  tuple[0].(uint64),                      //nolint:forcetypeassert
 		UserID:  tuple[1].(uint64),                      //nolint:forcetypeassert
 		DateIn:  time.Unix(int64(tuple[2].(uint64)), 0), //nolint:forcetypeassert,gosec

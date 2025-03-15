@@ -1,4 +1,4 @@
-package tarantoolclient
+package clienttarantool
 
 type RolePrivilege struct {
 	RoleID      uint64 `json:"role_id"`

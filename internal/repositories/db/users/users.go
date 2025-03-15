@@ -7,7 +7,7 @@ import (
 
 	"github.com/tarantool/go-tarantool"
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -18,11 +18,11 @@ const (
 )
 
 type UsersOpts struct {
-	Client *tarantoolclient.Client
+	Client *clienttarantool.Client
 }
 
 type Users struct {
-	c *tarantoolclient.Client
+	c *clienttarantool.Client
 }
 
 func New(opts *UsersOpts) *Users {
@@ -34,7 +34,7 @@ func New(opts *UsersOpts) *Users {
 func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error) {
 	const op = "DbUsers.GetUser"
 
-	resp, err := s.c.Connection.Select(space, "secondary", 0, 1, tarantool.IterEq, tarantoolclient.Tuple{login})
+	resp, err := s.c.Connection.Select(space, "secondary", 0, 1, tarantool.IterEq, clienttarantool.Tuple{login})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
@@ -57,12 +57,12 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 	const op = "DbUsers.GetUsers"
 
-	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, tarantoolclient.Tuple{})
+	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
 	}
 
-	var user tarantoolclient.User
+	var user clienttarantool.User
 
 	users := make([]*models.User, 0, len(resp.Tuples()))
 
@@ -89,7 +89,7 @@ func (s *Users) CreateUser(ctx context.Context, user models.UserCreated) (*model
 			return nil, fmt.Errorf("failed to create user | %s:%w", op, err)
 		}
 
-		userCreated := tarantoolclient.UserCreated{
+		userCreated := clienttarantool.UserCreated{
 			Name:     user.Name,
 			Login:    user.Login,
 			Password: user.Password,
@@ -114,7 +114,7 @@ func (s *Users) UpdateUser(ctx context.Context, user models.UserUpdated) (*model
 		return nil, fmt.Errorf("failed to update user | %s:%w", op, err)
 	}
 
-	userUpdated := tarantoolclient.UserUpdated{
+	userUpdated := clienttarantool.UserUpdated{
 		ID:       u.ID,
 		Name:     user.Name,
 		Login:    user.Login,
@@ -136,15 +136,15 @@ func (s *Users) DeleteUser(ctx context.Context, login string) error {
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
 	}
 
-	if _, err := s.c.Connection.Delete(space, "secondary", tarantoolclient.Tuple{login}); err != nil {
+	if _, err := s.c.Connection.Delete(space, "secondary", clienttarantool.Tuple{login}); err != nil {
 		return fmt.Errorf("failed to delete user | %s:%w", op, err)
 	}
 
 	return nil
 }
 
-func (s *Users) tupleToUser(tuple tarantoolclient.Tuple) tarantoolclient.User {
-	return tarantoolclient.User{
+func (s *Users) tupleToUser(tuple clienttarantool.Tuple) clienttarantool.User {
+	return clienttarantool.User{
 		ID:       tuple[0].(uint64), //nolint:forcetypeassert
 		Name:     tuple[1].(string), //nolint:forcetypeassert
 		Login:    tuple[2].(string), //nolint:forcetypeassert

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/tarantool/go-tarantool"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -15,11 +15,11 @@ const (
 )
 
 type PrivilegesOpts struct {
-	Client *tarantoolclient.Client
+	Client *clienttarantool.Client
 }
 
 type Privileges struct {
-	c *tarantoolclient.Client
+	c *clienttarantool.Client
 }
 
 func New(opts *PrivilegesOpts) *Privileges {
@@ -31,12 +31,12 @@ func New(opts *PrivilegesOpts) *Privileges {
 func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, error) {
 	const op = "DbPrivileges.GetPrivileges"
 
-	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, tarantoolclient.Tuple{})
+	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get privileges | %s:%w", op, err)
 	}
 
-	var value tarantoolclient.Privilege
+	var value clienttarantool.Privilege
 
 	privileges := make([]*models.Privilege, 0, len(resp.Tuples()))
 
@@ -54,8 +54,8 @@ func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, er
 	return privileges, nil
 }
 
-func (s *Privileges) tupleToPrivilege(tuple tarantoolclient.Tuple) tarantoolclient.Privilege {
-	return tarantoolclient.Privilege{
+func (s *Privileges) tupleToPrivilege(tuple clienttarantool.Tuple) clienttarantool.Privilege {
+	return clienttarantool.Privilege{
 		ID:          tuple[0].(uint64), //nolint:forcetypeassert
 		Code:        tuple[1].(string), //nolint:forcetypeassert
 		Name:        tuple[2].(string), //nolint:forcetypeassert

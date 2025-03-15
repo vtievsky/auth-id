@@ -1,4 +1,4 @@
-package tarantoolclient
+package clienttarantool
 
 import (
 	"fmt"

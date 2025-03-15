@@ -1,5 +1,5 @@
 // Модели для обмена данными между хранилищем и приложением
-package tarantoolclient
+package clienttarantool
 
 type Role struct {
 	ID          uint64 `json:"id"`

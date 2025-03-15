@@ -1,4 +1,4 @@
-package tarantoolclient
+package clienttarantool
 
 type Privilege struct {
 	ID          uint64 `json:"id"`

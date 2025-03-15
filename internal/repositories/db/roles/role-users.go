@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/tarantool/go-tarantool"
-	tarantoolclient "github.com/vtievsky/auth-id/internal/repositories/db/client"
+	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
@@ -18,12 +18,12 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRoleUser, "primary", 0, limit, tarantool.IterEq, tarantoolclient.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRoleUser, "primary", 0, limit, tarantool.IterEq, clienttarantool.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role users | %s:%w", op, err)
 	}
 
-	var roleUser tarantoolclient.RoleUser
+	var roleUser clienttarantool.RoleUser
 
 	roleUsers := make([]*models.RoleUser, 0, len(resp.Tuples()))
 
@@ -44,7 +44,7 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 func (s *Roles) AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error {
 	const op = "DbRoles.AddRoleUser"
 
-	roleUserCreated := tarantoolclient.RoleUserCreated{
+	roleUserCreated := clienttarantool.RoleUserCreated{
 		RoleID:  roleUser.RoleID,
 		UserID:  roleUser.UserID,
 		DateIn:  roleUser.DateIn,
@@ -61,7 +61,7 @@ func (s *Roles) AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated
 func (s *Roles) UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error {
 	const op = "DbRoles.UpdateRoleUser"
 
-	roleUserUpdated := tarantoolclient.RoleUserUpdated{
+	roleUserUpdated := clienttarantool.RoleUserUpdated{
 		RoleID:  roleUser.RoleID,
 		UserID:  roleUser.UserID,
 		DateIn:  roleUser.DateIn,
@@ -78,7 +78,7 @@ func (s *Roles) UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpda
 func (s *Roles) DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDeleted) error {
 	const op = "DbRoles.DeleteRoleUser"
 
-	roleUserDeleted := tarantoolclient.RoleUserDeleted{
+	roleUserDeleted := clienttarantool.RoleUserDeleted{
 		RoleID: roleUser.RoleID,
 		UserID: roleUser.UserID,
 	}
@@ -90,8 +90,8 @@ func (s *Roles) DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDele
 	return nil
 }
 
-func (s *Roles) tupleToRoleUser(tuple tarantoolclient.Tuple) tarantoolclient.RoleUser {
-	return tarantoolclient.RoleUser{
+func (s *Roles) tupleToRoleUser(tuple clienttarantool.Tuple) clienttarantool.RoleUser {
+	return clienttarantool.RoleUser{
 		RoleID:  tuple[0].(uint64),                      //nolint:forcetypeassert
 		UserID:  tuple[1].(uint64),                      //nolint:forcetypeassert
 		DateIn:  time.Unix(int64(tuple[2].(uint64)), 0), //nolint:forcetypeassert,gosec
