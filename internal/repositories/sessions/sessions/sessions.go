@@ -3,7 +3,6 @@ package reposessions
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	clientredis "github.com/vtievsky/auth-id/internal/repositories/sessions/client/redis"
@@ -12,18 +11,22 @@ import (
 )
 
 const (
-	limit = 5
-	space = "omo:"
+	limit         = 5
+	space         = "uev:"
+	spaceCarts    = "pak:"
+	spaceSessions = "omo:"
 )
 
 type sessionStats struct {
-	ID  string
-	TTL time.Duration
+	ID        string
+	TTL       time.Duration
+	CreatedAt time.Time
 }
 
 type Session struct {
-	ID  string
-	TTL time.Duration
+	ID        string
+	TTL       time.Duration
+	CreatedAt time.Time
 }
 
 type SessionsOpts struct {
@@ -62,21 +65,68 @@ func (s *Sessions) Find(ctx context.Context, sessionID, privilege string) error 
 func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	const op = "Sessions.List"
 
-	fetchTTL := func(actx context.Context, acombine chan<- sessionStats, asessionID string) func() error {
+	fetchStats := func(actx context.Context, acombine chan<- sessionStats, aID string) func() error {
 		return func() error {
-			ttl, err := s.client.TTL(actx, asessionID).Result()
-			if err != nil {
-				s.logger.Error("failed to get session ttl",
-					zap.String("session_id", asessionID),
-					zap.Error(err),
-				)
+			var (
+				ttl  time.Duration
+				cart SessionCart
+			)
+
+			g, gCtx := errgroup.WithContext(actx)
+
+			g.Go(func() error {
+				var err error
+
+				ttl, err = s.client.TTL(gCtx, s.keySession(aID)).Result()
+				if err != nil {
+					s.logger.Error("failed to get session ttl",
+						zap.String("session_id", aID),
+						zap.Error(err),
+					)
+
+					return nil
+				}
 
 				return nil
+			})
+
+			g.Go(func() error {
+				cmd := s.client.HGetAll(gCtx, s.keyCart(aID))
+
+				switch {
+				case cmd.Err() != nil:
+					s.logger.Error("failed to get session cart",
+						zap.String("session_id", aID),
+						zap.Error(cmd.Err()),
+					)
+
+					return nil //nolint:nilerr
+				case len(cmd.Val()) == 0:
+					// Скорее всего истек ttl ключа
+					return nil
+				}
+
+				if err := cmd.Scan(&cart); err != nil {
+					s.logger.Error("failed to scan session cart",
+						zap.String("session_id", aID),
+						zap.Any("value", cmd.Val()),
+						zap.Error(err),
+					)
+
+					return nil
+				}
+
+				return nil
+			})
+
+			if err := g.Wait(); err != nil {
+				return err //nolint:wrapcheck
 			}
 
 			acombine <- sessionStats{
-				ID:  asessionID,
-				TTL: ttl,
+				ID:        aID,
+				TTL:       ttl,
+				CreatedAt: cart.CreatedAt,
 			}
 
 			return nil
@@ -95,7 +145,7 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 
 	g.Go(func() error {
 		for _, session := range ul {
-			g.Go(fetchTTL(gCtx, combine, session))
+			g.Go(fetchStats(gCtx, combine, session))
 		}
 
 		return nil
@@ -111,8 +161,9 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 
 	for v := range combine {
 		sessions = append(sessions, &Session{
-			ID:  s.sanitizeID(v.ID),
-			TTL: v.TTL,
+			ID:        v.ID,
+			TTL:       v.TTL,
+			CreatedAt: v.CreatedAt,
 		})
 	}
 
@@ -123,13 +174,13 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	return sessions, nil
 }
 
-func (s *Sessions) sanitizeID(sessionID string) string {
-	return strings.Replace(sessionID, space, "", 1)
+func (s *Sessions) keyCart(sessionID string) string {
+	return fmt.Sprintf("%s%s", spaceCarts, sessionID)
 }
 
 // Ключ сессии (с множеством привилегий)
 func (s *Sessions) keySession(sessionID string) string {
-	return fmt.Sprintf("%s%s", space, sessionID)
+	return fmt.Sprintf("%s%s", spaceSessions, sessionID)
 }
 
 // Ключ с сессиями пользователя

@@ -124,7 +124,7 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Sessio
 	return &Session{
 		ID:        []byte(sessionID),
 		CreatedAt: current,
-		ExpiredAt: expiredAt,
+		ExpiredAt: current.Add(sessionDuration),
 	}, nil
 }
 
@@ -153,7 +153,6 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 
 	var (
 		current   = time.Now()
-		createdAt time.Time
 		expiredAt time.Time
 	)
 
@@ -161,11 +160,10 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 
 	for _, session := range sessions {
 		expiredAt = current.Add(session.TTL)
-		createdAt = expiredAt.Add(-s.sessionTTL)
 
 		ul = append(ul, &Session{
 			ID:        []byte(session.ID),
-			CreatedAt: createdAt,
+			CreatedAt: session.CreatedAt,
 			ExpiredAt: expiredAt,
 		})
 	}
