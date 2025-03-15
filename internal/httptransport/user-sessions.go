@@ -65,3 +65,24 @@ func (t *Transport) GetUserSessions(
 		},
 	}, nil
 }
+
+func (t *Transport) DeleteUserSession(
+	ctx context.Context,
+	request serverhttp.DeleteUserSessionRequestObject,
+) (serverhttp.DeleteUserSessionResponseObject, error) {
+	if err := t.services.SessionSvc.Delete(ctx, request.Login, request.SessionId); err != nil {
+		return serverhttp.DeleteUserSession500JSONResponse{ //nolint:nilerr
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		}, nil
+	}
+
+	return serverhttp.DeleteUserSession200JSONResponse{
+		Status: serverhttp.ResponseStatusOk{
+			Code:        serverhttp.Ok,
+			Description: "",
+		},
+	}, nil
+}

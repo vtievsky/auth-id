@@ -22,7 +22,7 @@ type Storage interface {
 	List(ctx context.Context, login string) ([]*redissessions.Session, error)
 	Find(ctx context.Context, sessionID, privilege string) error
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
-	Delete(ctx context.Context, sessionID string) error
+	Delete(ctx context.Context, login, sessionID string) error
 }
 
 type UserSvc interface {
@@ -171,4 +171,20 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 	}
 
 	return ul, nil
+}
+
+func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error {
+	const op = "SessionSvc.Delete"
+
+	if err := s.storage.Delete(ctx, login, sessionID); err != nil {
+		s.logger.Error("failed to delete session",
+			zap.String("login", login),
+			zap.String("session_id", sessionID),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to delete session | %s:%w", op, err)
+	}
+
+	return nil
 }

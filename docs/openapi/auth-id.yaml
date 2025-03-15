@@ -334,7 +334,40 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
-
+  /v1/users/{login}/sessions/{session_id}:
+    delete:
+      tags:
+        - web
+      description: Удаление привилегии роли
+      operationId: DeleteUserSession
+      parameters:
+        - name: login
+          description: Логин пользователя
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: session_id
+          description: Ид. сессии
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteUserSessionResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteUserSessionResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
   /v1/roles:
     get:
       tags:
@@ -1501,6 +1534,22 @@ components:
         - status
         - data
     GetUserSessionsResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    DeleteUserSessionResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    DeleteUserSessionResponse500:
       type: object
       properties:
         status:
