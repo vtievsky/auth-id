@@ -174,7 +174,17 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error {
 	const op = "SessionSvc.Delete"
 
-	if err := s.storage.Delete(ctx, login, sessionID); err != nil {
+	u, err := s.userSvc.GetUser(ctx, login)
+	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to get user | %s:%w", op, err)
+	}
+
+	if err := s.storage.Delete(ctx, u.Login, sessionID); err != nil {
 		s.logger.Error("failed to delete session",
 			zap.String("login", login),
 			zap.String("session_id", sessionID),
