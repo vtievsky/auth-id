@@ -1,4 +1,4 @@
-package authsvc
+package sessionsvc
 
 import (
 	"context"
@@ -7,18 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
-	authtoken "github.com/vtievsky/auth-id/internal/services/auth/tokens"
+	authtoken "github.com/vtievsky/auth-id/internal/services/sessions/tokens"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
-
-type TokenOpts struct {
-	SessionID        string
-	AccessExpiredAt  time.Time
-	RefreshExpiredAt time.Time
-}
 
 type Tokens struct {
 	AccessToken  string
@@ -47,7 +41,7 @@ type UserPrivilegeSvc interface {
 	GetUserPrivileges(ctx context.Context, login string) ([]*userprivilegesvc.UserPrivilege, error)
 }
 
-type AuthSvcOpts struct {
+type SessionSvcOpts struct {
 	Logger           *zap.Logger
 	Storage          Storage
 	UserSvc          UserSvc
@@ -58,7 +52,7 @@ type AuthSvcOpts struct {
 	SigningKey       string
 }
 
-type AuthSvc struct {
+type SessionSvc struct {
 	logger           *zap.Logger
 	storage          Storage
 	userSvc          UserSvc
@@ -69,8 +63,8 @@ type AuthSvc struct {
 	signingKey       string
 }
 
-func New(opts *AuthSvcOpts) *AuthSvc {
-	return &AuthSvc{
+func New(opts *SessionSvcOpts) *SessionSvc {
+	return &SessionSvc{
 		logger:           opts.Logger,
 		storage:          opts.Storage,
 		userSvc:          opts.UserSvc,
@@ -82,7 +76,7 @@ func New(opts *AuthSvcOpts) *AuthSvc {
 	}
 }
 
-func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
+func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
 	const op = "AuthSvc.Login"
 
 	u, err := s.userSvc.GetUser(ctx, login)
@@ -141,11 +135,11 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 
 	// Сохранение сессии и ее привилегий
 	sessionDuration := time.Until(sessionPrivilegesExpiredAt)
-	sessionDuration = s.compareSessionAndPrivilegesTTL(s.sessionTTL, sessionDuration)
+	sessionDuration = s.compareSessionWithPrivilegesTTL(s.sessionTTL, sessionDuration)
 
 	// Длительность хранения списка привилегий не может быть дольше
 	// общей длительности сессии пользователя (refreshTokenTTL)
-	sessionDuration = s.compareSessionAndRefreshTokenTTL(sessionDuration, s.refreshTokenTTL)
+	sessionDuration = s.compareSessionWithRefreshTokenTTL(sessionDuration, s.refreshTokenTTL)
 
 	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
 		s.logger.Error("failed to store session",
@@ -159,7 +153,7 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 	return tokens, nil
 }
 
-func (s *AuthSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
+func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
 	const op = "AuthSvc.GetUserSessions"
 
 	u, err := s.userSvc.GetUser(ctx, login)
@@ -202,7 +196,7 @@ func (s *AuthSvc) GetUserSessions(ctx context.Context, login string) ([]*Session
 	return ul, nil
 }
 
-func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
+func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error {
 	const op = "AuthSvc.Delete"
 
 	u, err := s.userSvc.GetUser(ctx, login)
@@ -228,7 +222,7 @@ func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
 	return nil
 }
 
-func (s *AuthSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, error) {
+func (s *SessionSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, error) {
 	const op = "AuthSvc.generateTokens"
 
 	if s.refreshTokenTTL < s.accessTokenTTL {
@@ -282,7 +276,7 @@ func (s *AuthSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, 
 	}, nil
 }
 
-func (s *AuthSvc) compareSessionAndPrivilegesTTL(sessionTTL, sessionPrivilegesTTL time.Duration) time.Duration {
+func (s *SessionSvc) compareSessionWithPrivilegesTTL(sessionTTL, sessionPrivilegesTTL time.Duration) time.Duration {
 	if sessionTTL < sessionPrivilegesTTL {
 		s.logger.Debug("the duration of the session is less than the duration of the privileges. "+
 			"The duration of the session will be used",
@@ -296,7 +290,7 @@ func (s *AuthSvc) compareSessionAndPrivilegesTTL(sessionTTL, sessionPrivilegesTT
 	return sessionPrivilegesTTL
 }
 
-func (s *AuthSvc) compareSessionAndRefreshTokenTTL(sessionTTL, refreshTokenTTL time.Duration) time.Duration {
+func (s *SessionSvc) compareSessionWithRefreshTokenTTL(sessionTTL, refreshTokenTTL time.Duration) time.Duration {
 	if sessionTTL < refreshTokenTTL {
 		s.logger.Debug("the duration of the session is less than the duration of the refresh token. "+
 			"The duration of the session will be used",

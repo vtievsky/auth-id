@@ -10,7 +10,7 @@ func (t *Transport) Login(
 	ctx context.Context,
 	request serverhttp.LoginRequestObject,
 ) (serverhttp.LoginResponseObject, error) {
-	resp, err := t.services.AuthSvc.Login(ctx, request.Login, request.Body.Password)
+	resp, err := t.services.SessionSvc.Login(ctx, request.Login, request.Body.Password)
 	if err != nil {
 		return serverhttp.Login500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -36,7 +36,7 @@ func (t *Transport) GetUserSessions(
 	ctx context.Context,
 	request serverhttp.GetUserSessionsRequestObject,
 ) (serverhttp.GetUserSessionsResponseObject, error) {
-	sessions, err := t.services.AuthSvc.GetUserSessions(ctx, request.Login)
+	sessions, err := t.services.SessionSvc.GetUserSessions(ctx, request.Login)
 	if err != nil {
 		return serverhttp.GetUserSessions500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -69,7 +69,7 @@ func (t *Transport) DeleteUserSession(
 	ctx context.Context,
 	request serverhttp.DeleteUserSessionRequestObject,
 ) (serverhttp.DeleteUserSessionResponseObject, error) {
-	if err := t.services.AuthSvc.Delete(ctx, request.Login, request.SessionId); err != nil {
+	if err := t.services.SessionSvc.Delete(ctx, request.Login, request.SessionId); err != nil {
 		return serverhttp.DeleteUserSession500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
