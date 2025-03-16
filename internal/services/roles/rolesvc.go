@@ -149,6 +149,16 @@ func (s *RoleSvc) UpdateRole(ctx context.Context, role RoleUpdated) (*Role, erro
 func (s *RoleSvc) DeleteRole(ctx context.Context, code string) error {
 	const op = "RoleSvc.DeleteRole"
 
+	u, err := s.GetRoleByCode(ctx, code)
+	if err != nil {
+		s.logger.Error("failed to get role",
+			zap.String("role_code", code),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to get role | %s:%w", op, err)
+	}
+
 	if err := s.storage.DeleteRole(ctx, code); err != nil {
 		s.logger.Error("failed to delete role",
 			zap.String("role_code", code),
@@ -157,6 +167,10 @@ func (s *RoleSvc) DeleteRole(ctx context.Context, code string) error {
 
 		return fmt.Errorf("failed to delete role | %s:%w", op, err)
 	}
+
+	// Удалим данные роли из кеша
+	s.cacheByID.Del(u.ID)
+	s.cacheByCode.Del(u.Code)
 
 	return nil
 }
