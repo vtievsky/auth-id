@@ -19,11 +19,11 @@ import (
 	clientredis "github.com/vtievsky/auth-id/internal/repositories/sessions/client/redis"
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	"github.com/vtievsky/auth-id/internal/services"
+	authsvc "github.com/vtievsky/auth-id/internal/services/auth"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
-	sessionsvc "github.com/vtievsky/auth-id/internal/services/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -108,8 +108,8 @@ func main() {
 		RolePrivilegeSvc: rolePrivilegeService,
 	})
 
-	sessionService := sessionsvc.New(&sessionsvc.SessionSvcOpts{
-		Logger:           logger.Named("session"),
+	authService := authsvc.New(&authsvc.AuthSvcOpts{
+		Logger:           logger.Named("auth"),
 		Storage:          sessionsRepo,
 		UserSvc:          userService,
 		UserPrivilegeSvc: userPrivilegeService,
@@ -125,7 +125,7 @@ func main() {
 		RoleSvc:          roleService,
 		RoleUserSvc:      roleUserService,
 		RolePrivilegeSvc: rolePrivilegeService,
-		SessionSvc:       sessionService,
+		AuthSvc:          authService,
 	}
 
 	signalChannel := make(chan os.Signal, 1)

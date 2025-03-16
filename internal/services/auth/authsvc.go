@@ -1,4 +1,4 @@
-package sessionsvc
+package authsvc
 
 import (
 	"context"
@@ -34,7 +34,7 @@ type UserPrivilegeSvc interface {
 	GetUserPrivileges(ctx context.Context, login string) ([]*userprivilegesvc.UserPrivilege, error)
 }
 
-type SessionSvcOpts struct {
+type AuthSvcOpts struct {
 	Logger           *zap.Logger
 	Storage          Storage
 	UserSvc          UserSvc
@@ -42,7 +42,7 @@ type SessionSvcOpts struct {
 	SessionTTL       time.Duration
 }
 
-type SessionSvc struct {
+type AuthSvc struct {
 	logger           *zap.Logger
 	storage          Storage
 	userSvc          UserSvc
@@ -50,8 +50,8 @@ type SessionSvc struct {
 	sessionTTL       time.Duration
 }
 
-func New(opts *SessionSvcOpts) *SessionSvc {
-	return &SessionSvc{
+func New(opts *AuthSvcOpts) *AuthSvc {
+	return &AuthSvc{
 		logger:           opts.Logger,
 		storage:          opts.Storage,
 		userSvc:          opts.UserSvc,
@@ -60,8 +60,8 @@ func New(opts *SessionSvcOpts) *SessionSvc {
 	}
 }
 
-func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Session, error) {
-	const op = "SessionSvc.Login"
+func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Session, error) {
+	const op = "AuthSvc.Login"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
@@ -128,8 +128,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Sessio
 	}, nil
 }
 
-func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
-	const op = "SessionSvc.GetUserSessions"
+func (s *AuthSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
+	const op = "AuthSvc.GetUserSessions"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
@@ -171,8 +171,8 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 	return ul, nil
 }
 
-func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error {
-	const op = "SessionSvc.Delete"
+func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
+	const op = "AuthSvc.Delete"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {

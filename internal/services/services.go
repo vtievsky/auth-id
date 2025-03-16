@@ -3,10 +3,10 @@ package services
 import (
 	"context"
 
+	authsvc "github.com/vtievsky/auth-id/internal/services/auth"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
-	sessionsvc "github.com/vtievsky/auth-id/internal/services/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
@@ -19,7 +19,7 @@ type SvcLayer struct {
 	RoleSvc          RoleService
 	RoleUserSvc      RoleUserService
 	RolePrivilegeSvc RolePrivilegeService
-	SessionSvc       SessionService
+	AuthSvc          AuthService
 }
 
 type UserService interface {
@@ -63,8 +63,8 @@ type RolePrivilegeService interface {
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege roleprivilegesvc.RolePrivilegeDeleted) error
 }
 
-type SessionService interface {
-	Login(ctx context.Context, login, password string) (*sessionsvc.Session, error)
-	GetUserSessions(ctx context.Context, login string) ([]*sessionsvc.Session, error)
+type AuthService interface {
+	Login(ctx context.Context, login, password string) (*authsvc.Session, error)
+	GetUserSessions(ctx context.Context, login string) ([]*authsvc.Session, error)
 	Delete(ctx context.Context, login, sessionID string) error
 }
