@@ -43,7 +43,7 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, dberrors.ErrUserNotFound)
 	}
 
-	user := s.tupleToUser(resp.Tuples()[0])
+	user := clienttarantool.Tuple(resp.Tuples()[0]).ToUser()
 
 	return &models.User{
 		ID:       user.ID,
@@ -67,7 +67,7 @@ func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
 	users := make([]*models.User, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		user = s.tupleToUser(tuple)
+		user = clienttarantool.Tuple(tuple).ToUser()
 
 		users = append(users, &models.User{
 			ID:       user.ID,
@@ -141,14 +141,4 @@ func (s *Users) DeleteUser(ctx context.Context, login string) error {
 	}
 
 	return nil
-}
-
-func (s *Users) tupleToUser(tuple clienttarantool.Tuple) clienttarantool.User {
-	return clienttarantool.User{
-		ID:       tuple[0].(uint64), //nolint:forcetypeassert
-		Name:     tuple[1].(string), //nolint:forcetypeassert
-		Login:    tuple[2].(string), //nolint:forcetypeassert
-		Password: tuple[3].(string), //nolint:forcetypeassert
-		Blocked:  tuple[4].(bool),   //nolint:forcetypeassert
-	}
 }

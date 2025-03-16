@@ -9,6 +9,16 @@ type Role struct {
 	Blocked     bool   `json:"blocked"`
 }
 
+func (s Tuple) ToRole() Role {
+	return Role{
+		ID:          s[0].(uint64), //nolint:forcetypeassert
+		Code:        s[1].(string), //nolint:forcetypeassert
+		Name:        s[2].(string), //nolint:forcetypeassert
+		Description: s[3].(string), //nolint:forcetypeassert
+		Blocked:     s[4].(bool),   //nolint:forcetypeassert
+	}
+}
+
 type RoleCreated struct {
 	Code        string `json:"code"`
 	Name        string `json:"name"`

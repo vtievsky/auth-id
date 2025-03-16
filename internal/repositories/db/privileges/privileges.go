@@ -41,7 +41,7 @@ func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, er
 	privileges := make([]*models.Privilege, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		value = s.tupleToPrivilege(tuple)
+		value = clienttarantool.Tuple(tuple).ToPrivilege()
 
 		privileges = append(privileges, &models.Privilege{
 			ID:          value.ID,
@@ -52,13 +52,4 @@ func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, er
 	}
 
 	return privileges, nil
-}
-
-func (s *Privileges) tupleToPrivilege(tuple clienttarantool.Tuple) clienttarantool.Privilege {
-	return clienttarantool.Privilege{
-		ID:          tuple[0].(uint64), //nolint:forcetypeassert
-		Code:        tuple[1].(string), //nolint:forcetypeassert
-		Name:        tuple[2].(string), //nolint:forcetypeassert
-		Description: tuple[3].(string), //nolint:forcetypeassert
-	}
 }

@@ -44,7 +44,7 @@ func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) 
 		return nil, fmt.Errorf("failed to get role | %s:%w", op, dberrors.ErrRoleNotFound)
 	}
 
-	role := s.tupleToRole(resp.Tuples()[0])
+	role := clienttarantool.Tuple(resp.Tuples()[0]).ToRole()
 
 	return &models.Role{
 		ID:          role.ID,
@@ -68,7 +68,7 @@ func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
 	roles := make([]*models.Role, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		role = s.tupleToRole(tuple)
+		role = clienttarantool.Tuple(tuple).ToRole()
 
 		roles = append(roles, &models.Role{
 			ID:          role.ID,
@@ -134,14 +134,4 @@ func (s *Roles) DeleteRole(ctx context.Context, code string) error {
 	}
 
 	return nil
-}
-
-func (s *Roles) tupleToRole(tuple clienttarantool.Tuple) clienttarantool.Role {
-	return clienttarantool.Role{
-		ID:          tuple[0].(uint64), //nolint:forcetypeassert
-		Code:        tuple[1].(string), //nolint:forcetypeassert
-		Name:        tuple[2].(string), //nolint:forcetypeassert
-		Description: tuple[3].(string), //nolint:forcetypeassert
-		Blocked:     tuple[4].(bool),   //nolint:forcetypeassert
-	}
 }
