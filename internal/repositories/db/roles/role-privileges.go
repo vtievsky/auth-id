@@ -27,7 +27,7 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 	rolePrivileges := make([]*models.RolePrivilege, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		rolePrivilege = s.tupleToRolePrivilege(tuple)
+		rolePrivilege = clienttarantool.Tuple(tuple).ToRolePrivilege()
 
 		rolePrivileges = append(rolePrivileges, &models.RolePrivilege{
 			RoleID:      rolePrivilege.RoleID,
@@ -84,12 +84,4 @@ func (s *Roles) DeleteRolePrivilege(ctx context.Context, rolePrivilege models.Ro
 	}
 
 	return nil
-}
-
-func (s *Roles) tupleToRolePrivilege(tuple clienttarantool.Tuple) clienttarantool.RolePrivilege {
-	return clienttarantool.RolePrivilege{
-		RoleID:      tuple[0].(uint64), //nolint:forcetypeassert
-		PrivilegeID: tuple[1].(uint64), //nolint:forcetypeassert
-		Allowed:     tuple[2].(bool),   //nolint:forcetypeassert
-	}
 }

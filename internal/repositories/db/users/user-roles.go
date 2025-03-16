@@ -22,20 +22,20 @@ func (s *Users) GetUserRoles(ctx context.Context, login string) ([]*models.UserR
 		return nil, fmt.Errorf("failed to get user roles | %s:%w", op, err)
 	}
 
-	var roleUser clienttarantool.UserRole
+	var userRole clienttarantool.UserRole
 
-	roleUsers := make([]*models.UserRole, 0, len(resp.Tuples()))
+	userRoles := make([]*models.UserRole, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		roleUser = clienttarantool.Tuple(tuple).ToUserRole()
+		userRole = clienttarantool.Tuple(tuple).ToUserRole()
 
-		roleUsers = append(roleUsers, &models.UserRole{
-			RoleID:  roleUser.RoleID,
-			UserID:  roleUser.UserID,
-			DateIn:  roleUser.DateIn,
-			DateOut: roleUser.DateOut,
+		userRoles = append(userRoles, &models.UserRole{
+			RoleID:  userRole.RoleID,
+			UserID:  userRole.UserID,
+			DateIn:  userRole.DateIn,
+			DateOut: userRole.DateOut,
 		})
 	}
 
-	return roleUsers, nil
+	return userRoles, nil
 }
