@@ -129,14 +129,6 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 		}
 	}
 
-	// Сохранение сессии и ее привилегий
-	sessionDuration := time.Until(expiredAt)
-	sessionDuration = min(s.sessionTTL, sessionDuration)
-
-	// Длительность хранения списка привилегий не может быть дольше
-	// общей длительности сессии пользователя (refreshTokenTTL)
-	sessionDuration = min(sessionDuration, s.refreshTokenTTL)
-
 	tokens, err := s.generateTokens(ctx, sessionID)
 	if err != nil {
 		s.logger.Error("failed to generate tokens",
@@ -146,6 +138,14 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 
 		return nil, fmt.Errorf("failed to generate tokens | %s:%w", op, err)
 	}
+
+	// Сохранение сессии и ее привилегий
+	sessionDuration := time.Until(expiredAt)
+	sessionDuration = min(s.sessionTTL, sessionDuration)
+
+	// Длительность хранения списка привилегий не может быть дольше
+	// общей длительности сессии пользователя (refreshTokenTTL)
+	sessionDuration = min(sessionDuration, s.refreshTokenTTL)
 
 	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
 		s.logger.Error("failed to store session",
