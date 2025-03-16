@@ -13,9 +13,11 @@ type DBConfig struct {
 }
 
 type SessionConfig struct {
-	URL        string        `envconfig:"AUTH_SESSION_URL" required:"true"`
-	SigningKey string        `envconfig:"AUTH_SESSION_SIGNING_KEY" required:"true"`
-	TTL        time.Duration `envconfig:"AUTH_SESSION_TTL" default:"24h"`
+	URL             string        `envconfig:"AUTH_SESSION_URL" required:"true"`
+	SigningKey      string        `envconfig:"AUTH_SESSION_SIGNING_KEY" required:"true"`
+	SessionTTL      time.Duration `envconfig:"AUTH_SESSION_TTL" default:"24h"`
+	AccessTokenTTL  time.Duration `envconfig:"AUTH_ACCESS_TOKEN_TTL" default:"15m"`
+	RefreshTokenTTL time.Duration `envconfig:"AUTH_REFRESH_TOKEN_TTL" default:"24h"`
 }
 
 type LogConfig struct {

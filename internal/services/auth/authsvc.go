@@ -14,6 +14,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type TokenOpts struct {
+	SessionID        string
+	AccessExpiredAt  time.Time
+	RefreshExpiredAt time.Time
+}
+
 type Tokens struct {
 	AccessToken  string
 	RefreshToken string
@@ -47,6 +53,8 @@ type AuthSvcOpts struct {
 	UserSvc          UserSvc
 	UserPrivilegeSvc UserPrivilegeSvc
 	SessionTTL       time.Duration
+	AccessTokenTTL   time.Duration
+	RefreshTokenTTL  time.Duration
 	SigningKey       string
 }
 
@@ -56,6 +64,8 @@ type AuthSvc struct {
 	userSvc          UserSvc
 	userPrivilegeSvc UserPrivilegeSvc
 	sessionTTL       time.Duration
+	accessTokenTTL   time.Duration
+	refreshTokenTTL  time.Duration
 	signingKey       string
 }
 
@@ -65,6 +75,8 @@ func New(opts *AuthSvcOpts) *AuthSvc {
 		storage:          opts.Storage,
 		userSvc:          opts.UserSvc,
 		userPrivilegeSvc: opts.UserPrivilegeSvc,
+		accessTokenTTL:   opts.AccessTokenTTL,
+		refreshTokenTTL:  opts.RefreshTokenTTL,
 		sessionTTL:       opts.SessionTTL,
 		signingKey:       opts.SigningKey,
 	}
@@ -131,10 +143,7 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 	}
 
 	// Генерация токенов
-	tokens, err := s.generateTokens(ctx, &authtoken.TokenOpts{
-		SessionID: sessionID,
-		ExpiredAt: expiredAt,
-	})
+	tokens, err := s.generateTokens(ctx, sessionID)
 	if err != nil {
 		s.logger.Error("failed to generate tokens",
 			zap.String("login", login),
@@ -216,13 +225,14 @@ func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
 	return nil
 }
 
-func (s *AuthSvc) generateTokens(_ context.Context, tokenOpts *authtoken.TokenOpts) (*Tokens, error) {
+func (s *AuthSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, error) {
 	const op = "AuthSvc.generateTokens"
 
 	var (
 		accessToken  []byte
 		refreshToken []byte
 		signingKey   = []byte(s.signingKey)
+		current      = time.Now()
 	)
 
 	g := errgroup.Group{}
@@ -230,7 +240,10 @@ func (s *AuthSvc) generateTokens(_ context.Context, tokenOpts *authtoken.TokenOp
 	g.Go(func() error {
 		var err error
 
-		accessToken, err = authtoken.NewAccessToken(signingKey, tokenOpts)
+		accessToken, err = authtoken.NewAccessToken(signingKey, &authtoken.TokenOpts{
+			SessionID: sessionID,
+			ExpiredAt: current.Add(s.accessTokenTTL),
+		})
 		if err != nil {
 			return fmt.Errorf("failed to generate access token | %s:%w", op, err)
 		}
@@ -241,7 +254,10 @@ func (s *AuthSvc) generateTokens(_ context.Context, tokenOpts *authtoken.TokenOp
 	g.Go(func() error {
 		var err error
 
-		refreshToken, err = authtoken.NewRefreshToken(signingKey, tokenOpts)
+		refreshToken, err = authtoken.NewRefreshToken(signingKey, &authtoken.TokenOpts{
+			SessionID: sessionID,
+			ExpiredAt: current.Add(s.refreshTokenTTL),
+		})
 		if err != nil {
 			return fmt.Errorf("failed to generate refresh token | %s:%w", op, err)
 		}

@@ -113,7 +113,9 @@ func main() {
 		Storage:          sessionsRepo,
 		UserSvc:          userService,
 		UserPrivilegeSvc: userPrivilegeService,
-		SessionTTL:       conf.Session.TTL,
+		SessionTTL:       conf.Session.SessionTTL,
+		AccessTokenTTL:   conf.Session.AccessTokenTTL,
+		RefreshTokenTTL:  conf.Session.RefreshTokenTTL,
 		SigningKey:       conf.Session.SigningKey,
 	})
 
