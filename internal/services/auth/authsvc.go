@@ -119,13 +119,13 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 	sessionID := uuid.NewString()
 	sessionPrivileges := make([]string, 0, len(privileges))
 
-	var expiredAt time.Time // Дата окончания срока действия всех привилегий
+	var sessionPrivilegesExpiredAt time.Time // Дата окончания срока действия всех привилегий
 
 	for _, privilege := range privileges {
 		sessionPrivileges = append(sessionPrivileges, privilege.Code)
 
-		if expiredAt.Before(privilege.DateOut) {
-			expiredAt = privilege.DateOut
+		if sessionPrivilegesExpiredAt.Before(privilege.DateOut) {
+			sessionPrivilegesExpiredAt = privilege.DateOut
 		}
 	}
 
@@ -140,12 +140,12 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 	}
 
 	// Сохранение сессии и ее привилегий
-	sessionDuration := time.Until(expiredAt)
-	sessionDuration = min(s.sessionTTL, sessionDuration)
+	sessionDuration := time.Until(sessionPrivilegesExpiredAt)
+	sessionDuration = s.compareSessionAndPrivilegesTTL(s.sessionTTL, sessionDuration)
 
 	// Длительность хранения списка привилегий не может быть дольше
 	// общей длительности сессии пользователя (refreshTokenTTL)
-	sessionDuration = min(sessionDuration, s.refreshTokenTTL)
+	sessionDuration = s.compareSessionAndRefreshTokenTTL(sessionDuration, s.refreshTokenTTL)
 
 	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
 		s.logger.Error("failed to store session",
@@ -280,4 +280,32 @@ func (s *AuthSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, 
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil
+}
+
+func (s *AuthSvc) compareSessionAndPrivilegesTTL(sessionTTL, sessionPrivilegesTTL time.Duration) time.Duration {
+	if sessionTTL < sessionPrivilegesTTL {
+		s.logger.Debug("the duration of the session is less than the duration of the privileges. "+
+			"The duration of the session will be used",
+			zap.String("session_ttl", sessionTTL.String()),
+			zap.String("session_privileges_ttl", sessionPrivilegesTTL.String()),
+		)
+
+		return sessionTTL
+	}
+
+	return sessionPrivilegesTTL
+}
+
+func (s *AuthSvc) compareSessionAndRefreshTokenTTL(sessionTTL, refreshTokenTTL time.Duration) time.Duration {
+	if sessionTTL < refreshTokenTTL {
+		s.logger.Debug("the duration of the session is less than the duration of the refresh token. "+
+			"The duration of the session will be used",
+			zap.String("session_ttl", sessionTTL.String()),
+			zap.String("refresh_token_ttl", refreshTokenTTL.String()),
+		)
+
+		return sessionTTL
+	}
+
+	return refreshTokenTTL
 }
