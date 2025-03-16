@@ -20,7 +20,6 @@ import (
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	"github.com/vtievsky/auth-id/internal/services"
 	authsvc "github.com/vtievsky/auth-id/internal/services/auth"
-	"github.com/vtievsky/auth-id/internal/services/auth/jwt"
 	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
@@ -33,29 +32,6 @@ import (
 )
 
 func main() {
-	sigKey := "abc"
-	source := ".access_token.jwt"
-	// dataA, err := jwt.NewAccessToken(sigKey, &jwt.TokenOpts{
-	// 	SessionID: "111222333",
-	// 	ExpiredAt: time.Now().Add(time.Minute * 3),
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// err = os.WriteFile(source, dataA, os.ModePerm)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	dataB, err := os.ReadFile(source)
-	if err != nil {
-		log.Fatal(err)
-	}
-	token, err := jwt.ParseToken(sigKey, dataB)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%+v\n", token)
-	return
 	conf := conf.New()
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
