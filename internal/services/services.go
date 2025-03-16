@@ -64,7 +64,7 @@ type RolePrivilegeService interface {
 }
 
 type AuthService interface {
-	Login(ctx context.Context, login, password string) (*authsvc.Session, error)
+	Login(ctx context.Context, login, password string) (*authsvc.Tokens, error)
 	GetUserSessions(ctx context.Context, login string) ([]*authsvc.Session, error)
 	Delete(ctx context.Context, login, sessionID string) error
 }

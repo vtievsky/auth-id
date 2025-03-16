@@ -114,6 +114,7 @@ func main() {
 		UserSvc:          userService,
 		UserPrivilegeSvc: userPrivilegeService,
 		SessionTTL:       conf.Session.TTL,
+		SigningKey:       conf.Session.SigningKey,
 	})
 
 	ctx := context.Background()

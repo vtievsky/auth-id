@@ -10,7 +10,7 @@ func (t *Transport) Login(
 	ctx context.Context,
 	request serverhttp.LoginRequestObject,
 ) (serverhttp.LoginResponseObject, error) {
-	session, err := t.services.AuthSvc.Login(ctx, request.Login, request.Body.Password)
+	resp, err := t.services.AuthSvc.Login(ctx, request.Login, request.Body.Password)
 	if err != nil {
 		return serverhttp.Login500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -21,10 +21,9 @@ func (t *Transport) Login(
 	}
 
 	return serverhttp.Login200JSONResponse{
-		Data: serverhttp.Session{
-			Id:        string(session.ID),
-			CreatedAt: session.CreatedAt,
-			ExpiredAt: session.ExpiredAt,
+		Data: serverhttp.ResponseAccess{
+			AccessToken:  resp.AccessToken,
+			RefreshToken: resp.RefreshToken,
 		},
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,

@@ -7,10 +7,17 @@ import (
 
 	"github.com/google/uuid"
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
+	authtoken "github.com/vtievsky/auth-id/internal/services/auth/tokens"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
+
+type Tokens struct {
+	AccessToken  string
+	RefreshToken string
+}
 
 type Session struct {
 	ID        []byte
@@ -40,6 +47,7 @@ type AuthSvcOpts struct {
 	UserSvc          UserSvc
 	UserPrivilegeSvc UserPrivilegeSvc
 	SessionTTL       time.Duration
+	SigningKey       string
 }
 
 type AuthSvc struct {
@@ -48,6 +56,7 @@ type AuthSvc struct {
 	userSvc          UserSvc
 	userPrivilegeSvc UserPrivilegeSvc
 	sessionTTL       time.Duration
+	signingKey       string
 }
 
 func New(opts *AuthSvcOpts) *AuthSvc {
@@ -57,10 +66,11 @@ func New(opts *AuthSvcOpts) *AuthSvc {
 		userSvc:          opts.UserSvc,
 		userPrivilegeSvc: opts.UserPrivilegeSvc,
 		sessionTTL:       opts.SessionTTL,
+		signingKey:       opts.SigningKey,
 	}
 }
 
-func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Session, error) {
+func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
 	const op = "AuthSvc.Login"
 
 	u, err := s.userSvc.GetUser(ctx, login)
@@ -108,7 +118,6 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Session, 
 	}
 
 	// Сохранение сессии и ее привилегий
-	current := time.Now()
 	sessionDuration := time.Until(expiredAt)
 	sessionDuration = min(s.sessionTTL, sessionDuration)
 
@@ -121,11 +130,21 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Session, 
 		return nil, fmt.Errorf("failed to store session | %s:%w", op, err)
 	}
 
-	return &Session{
-		ID:        []byte(sessionID),
-		CreatedAt: current,
-		ExpiredAt: current.Add(sessionDuration),
-	}, nil
+	// Генерация токенов
+	tokens, err := s.generateTokens(ctx, &authtoken.TokenOpts{
+		SessionID: sessionID,
+		ExpiredAt: expiredAt,
+	})
+	if err != nil {
+		s.logger.Error("failed to generate tokens",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to generate tokens | %s:%w", op, err)
+	}
+
+	return tokens, nil
 }
 
 func (s *AuthSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
@@ -195,4 +214,47 @@ func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
 	}
 
 	return nil
+}
+
+func (s *AuthSvc) generateTokens(_ context.Context, tokenOpts *authtoken.TokenOpts) (*Tokens, error) {
+	const op = "AuthSvc.generateTokens"
+
+	var (
+		accessToken  []byte
+		refreshToken []byte
+		signingKey   = []byte(s.signingKey)
+	)
+
+	g := errgroup.Group{}
+
+	g.Go(func() error {
+		var err error
+
+		accessToken, err = authtoken.NewAccessToken(signingKey, tokenOpts)
+		if err != nil {
+			return fmt.Errorf("failed to generate access token | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+
+		refreshToken, err = authtoken.NewRefreshToken(signingKey, tokenOpts)
+		if err != nil {
+			return fmt.Errorf("failed to generate refresh token | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err //nolint:wrapcheck
+	}
+
+	return &Tokens{
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
+	}, nil
 }

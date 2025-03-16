@@ -1500,6 +1500,16 @@ components:
           format: password
       required:
         - password
+    ResponseAccess:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+        - accessToken
+        - refreshToken
     LoginResponse200:
       type: object
       properties:
@@ -1508,7 +1518,7 @@ components:
           $ref: "#/components/schemas/ResponseStatusOk"
         data:
           type: object
-          $ref: "#/components/schemas/Session"
+          $ref: "#/components/schemas/ResponseAccess"
       required:
         - status
         - data
