@@ -231,6 +231,10 @@ func (s *AuthSvc) Delete(ctx context.Context, login, sessionID string) error {
 func (s *AuthSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, error) {
 	const op = "AuthSvc.generateTokens"
 
+	if s.refreshTokenTTL < s.accessTokenTTL {
+		return nil, ErrInvalidAccessTokenTTL
+	}
+
 	var (
 		accessToken  []byte
 		refreshToken []byte
