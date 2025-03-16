@@ -39,7 +39,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 
 	// Синхронизация кеша с истекшим сроком годности
 	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RLocker().Unlock()
+		s.mu.RUnlock()
 
 		if err := syncFunc(ctx); err != nil {
 			return value, err
@@ -50,7 +50,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 
 	// Поиск значения в актуальном кеше
 	if value, ok = s.m[key]; ok {
-		s.mu.RLocker().Unlock()
+		s.mu.RUnlock()
 
 		return value, nil
 	}
@@ -58,7 +58,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 	// Синхронизация кеша в случае, когда кеш еще актуален,
 	// а значение могло быть добавлено в хранилище другим экземпляром приложения
 	{
-		s.mu.RLocker().Unlock()
+		s.mu.RUnlock()
 
 		if err := syncFunc(ctx); err != nil {
 			return value, err
@@ -67,7 +67,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 		s.mu.RLock()
 	}
 
-	defer s.mu.RLocker().Unlock()
+	defer s.mu.RUnlock()
 
 	if value, ok = s.m[key]; ok {
 		return value, nil
