@@ -129,28 +129,43 @@ func (s *AuthSvc) Login(ctx context.Context, login, password string) (*Tokens, e
 		}
 	}
 
+	g, gCtx := errgroup.WithContext(ctx)
+
 	// Сохранение сессии и ее привилегий
 	sessionDuration := time.Until(expiredAt)
 	sessionDuration = min(s.sessionTTL, sessionDuration)
 
-	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
-		s.logger.Error("failed to store session",
-			zap.String("login", login),
-			zap.Error(err),
-		)
+	g.Go(func() error {
+		var err error
 
-		return nil, fmt.Errorf("failed to store session | %s:%w", op, err)
-	}
+		if err = s.storage.Store(gCtx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
+			return fmt.Errorf("failed to store session | %s:%w", op, err)
+		}
+
+		return nil
+	})
 
 	// Генерация токенов
-	tokens, err := s.generateTokens(ctx, sessionID)
-	if err != nil {
-		s.logger.Error("failed to generate tokens",
+	var tokens *Tokens
+
+	g.Go(func() error {
+		var err error
+
+		tokens, err = s.generateTokens(ctx, sessionID)
+		if err != nil {
+			return fmt.Errorf("failed to generate tokens | %s:%w", op, err)
+		}
+
+		return nil
+	})
+
+	if err = g.Wait(); err != nil {
+		s.logger.Error("failed to login user",
 			zap.String("login", login),
 			zap.Error(err),
 		)
 
-		return nil, fmt.Errorf("failed to generate tokens | %s:%w", op, err)
+		return nil, fmt.Errorf("failed to login user | %s:%w", op, err)
 	}
 
 	return tokens, nil
