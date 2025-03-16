@@ -3,7 +3,6 @@ package tarantoolroles
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/tarantool/go-tarantool"
 	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
@@ -28,7 +27,7 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 	roleUsers := make([]*models.RoleUser, 0, len(resp.Tuples()))
 
 	for _, tuple := range resp.Tuples() {
-		roleUser = s.tupleToRoleUser(tuple)
+		roleUser = clienttarantool.Tuple(tuple).ToRoleUser()
 
 		roleUsers = append(roleUsers, &models.RoleUser{
 			RoleID:  roleUser.RoleID,
@@ -88,13 +87,4 @@ func (s *Roles) DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDele
 	}
 
 	return nil
-}
-
-func (s *Roles) tupleToRoleUser(tuple clienttarantool.Tuple) clienttarantool.RoleUser {
-	return clienttarantool.RoleUser{
-		RoleID:  tuple[0].(uint64),                      //nolint:forcetypeassert
-		UserID:  tuple[1].(uint64),                      //nolint:forcetypeassert
-		DateIn:  time.Unix(int64(tuple[2].(uint64)), 0), //nolint:forcetypeassert,gosec
-		DateOut: time.Unix(int64(tuple[3].(uint64)), 0), //nolint:forcetypeassert,gosec
-	}
 }
