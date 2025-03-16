@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/getkin/kin-openapi v0.129.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.5.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.13.3
