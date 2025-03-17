@@ -27,9 +27,9 @@ type Session struct {
 
 type Storage interface {
 	List(ctx context.Context, login string) ([]*reposessions.Session, error)
-	Find(ctx context.Context, sessionID, privilege string) error
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
 	Delete(ctx context.Context, login, sessionID string) error
+	Find(ctx context.Context, sessionID, privilegeCode string) error
 }
 
 type UserSvc interface {
@@ -74,6 +74,22 @@ func New(opts *SessionSvcOpts) *SessionSvc {
 		sessionTTL:       opts.SessionTTL,
 		signingKey:       opts.SigningKey,
 	}
+}
+
+func (s *SessionSvc) Find(ctx context.Context, sessionID, privilegeCode string) error {
+	const op = "AuthSvc.Find"
+
+	if err := s.storage.Find(ctx, sessionID, privilegeCode); err != nil {
+		s.logger.Error("failed to search session privilege",
+			zap.String("session_id", sessionID),
+			zap.String("privilege_code", privilegeCode),
+			zap.Error(err),
+		)
+
+		return fmt.Errorf("failed to search session privilege | %s:%w", op, err)
+	}
+
+	return nil
 }
 
 func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
@@ -149,6 +165,11 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 		return nil, fmt.Errorf("failed to store session | %s:%w", op, err)
 	}
+
+	s.logger.Debug("Registration was successful",
+		zap.String("login", login),
+		zap.String("session_id", sessionID),
+	)
 
 	return tokens, nil
 }

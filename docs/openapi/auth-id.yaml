@@ -368,6 +368,40 @@ paths:
           description: Internal Server Error
       security:
         - bearer: []
+  /v1/sessions/{session_id}/privileges/{privilege_code}:
+    get:
+      tags:
+        - web
+      description: Проверка наличия привилегии сессии
+      operationId: SearchSessionPrivilege
+      parameters:
+        - name: session_id
+          description: Ид. сессии
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: privilege_code
+          description: Код привилегии
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSessionPrivilegeResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSessionPrivilegeResponse500"
+          description: Internal Server Error
+      security:
+        - bearer: []
   /v1/roles:
     get:
       tags:
@@ -1560,6 +1594,22 @@ components:
       required:
         - status
     DeleteUserSessionResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    GetSessionPrivilegeResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+      required:
+        - status
+    GetSessionPrivilegeResponse500:
       type: object
       properties:
         status:
