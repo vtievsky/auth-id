@@ -17,20 +17,21 @@ var (
 
 type Cache[K comparable, V any] struct {
 	m        map[K]V
-	mu       sync.RWMutex
+	mu       sync.Mutex
 	lastTime time.Time
 }
 
 func New[K comparable, V any]() Cache[K, V] {
 	return Cache[K, V]{
 		m:        map[K]V{},
-		mu:       sync.RWMutex{},
+		mu:       sync.Mutex{},
 		lastTime: time.Time{},
 	}
 }
 
-func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.Context) error) (V, error) {
-	s.mu.RLock()
+func (s *Cache[K, V]) Get(ctx context.Context, key K, cacheSyncFunc func(ctx context.Context) (map[K]V, error)) (V, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	var (
 		ok    bool
@@ -39,35 +40,27 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, syncFunc func(ctx context.
 
 	// Синхронизация кеша с истекшим сроком годности
 	if cacheTTL < time.Since(s.lastTime) {
-		s.mu.RUnlock()
-
-		if err := syncFunc(ctx); err != nil {
+		values, err := cacheSyncFunc(ctx)
+		if err != nil {
 			return value, err
 		}
 
-		s.mu.RLock()
+		s.copyValues(values)
 	}
 
 	// Поиск значения в актуальном кеше
 	if value, ok = s.m[key]; ok {
-		s.mu.RUnlock()
-
 		return value, nil
 	}
 
 	// Синхронизация кеша в случае, когда кеш еще актуален,
 	// а значение могло быть добавлено в хранилище другим экземпляром приложения
-	{
-		s.mu.RUnlock()
-
-		if err := syncFunc(ctx); err != nil {
-			return value, err
-		}
-
-		s.mu.RLock()
+	values, err := cacheSyncFunc(ctx)
+	if err != nil {
+		return value, err
 	}
 
-	defer s.mu.RUnlock()
+	s.copyValues(values)
 
 	if value, ok = s.m[key]; ok {
 		return value, nil
@@ -90,4 +83,12 @@ func (s *Cache[K, V]) Del(key K) {
 	defer s.mu.Unlock()
 
 	delete(s.m, key)
+}
+
+func (s *Cache[K, V]) copyValues(values map[K]V) {
+	for key, values := range values {
+		s.m[key] = values
+	}
+
+	s.lastTime = time.Now()
 }

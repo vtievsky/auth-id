@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
+	"github.com/vtievsky/auth-id/internal/repositories/models"
 	"go.uber.org/zap"
 )
 
 func (s *UserSvc) GetUserByID(ctx context.Context, id uint64) (*User, error) {
 	const op = "UserSvc.GetUserByID"
 
-	val, err := s.cacheByID.Get(ctx, id, s.syncUsers)
+	val, err := s.cacheByID.Get(ctx, id, s.syncUsersByID)
 	if err != nil {
 		return nil, fmt.Errorf("%s:%w | %v", op, dberrors.ErrUserNotFound, err)
 	}
@@ -28,7 +29,7 @@ func (s *UserSvc) GetUserByID(ctx context.Context, id uint64) (*User, error) {
 func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, error) {
 	const op = "UserSvc.GetUserByLogin"
 
-	val, err := s.cacheByLogin.Get(ctx, login, s.syncUsers)
+	val, err := s.cacheByLogin.Get(ctx, login, s.syncUsersByLogin)
 	if err != nil {
 		return nil, fmt.Errorf("%s:%w | %v", op, dberrors.ErrUserNotFound, err)
 	}
@@ -42,26 +43,52 @@ func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, erro
 	}, nil
 }
 
-func (s *UserSvc) syncUsers(ctx context.Context) error {
-	const op = "UserSvc.syncUsers"
+func (s *UserSvc) syncUsersByID(ctx context.Context) (map[uint64]*models.User, error) {
+	const op = "UserSvc.syncUsersByID"
 
-	resp, err := s.storage.GetUsers(ctx)
+	users, err := s.storage.GetUsers(ctx)
 	if err != nil {
 		s.logger.Error("failed to sync users",
 			zap.Error(err),
 		)
 
-		return fmt.Errorf("failed to sync users | %s:%w", op, err)
+		return nil, fmt.Errorf("failed to sync users | %s:%w", op, err)
 	}
 
-	for _, user := range resp {
-		s.cacheByID.Add(user.ID, user)
-		s.cacheByLogin.Add(user.Login, user)
+	resp := make(map[uint64]*models.User, len(users))
+
+	for _, user := range users {
+		resp[user.ID] = user
 	}
 
 	s.logger.Debug("users has been synchronized",
-		zap.Int("num", len(resp)),
+		zap.Int("num", len(users)),
 	)
 
-	return nil
+	return resp, nil
+}
+
+func (s *UserSvc) syncUsersByLogin(ctx context.Context) (map[string]*models.User, error) {
+	const op = "UserSvc.syncUsersByLogin"
+
+	users, err := s.storage.GetUsers(ctx)
+	if err != nil {
+		s.logger.Error("failed to sync users",
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to sync users | %s:%w", op, err)
+	}
+
+	resp := make(map[string]*models.User, len(users))
+
+	for _, user := range users {
+		resp[user.Login] = user
+	}
+
+	s.logger.Debug("users has been synchronized",
+		zap.Int("num", len(users)),
+	)
+
+	return resp, nil
 }
