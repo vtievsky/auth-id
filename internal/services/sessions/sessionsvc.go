@@ -77,7 +77,7 @@ func New(opts *SessionSvcOpts) *SessionSvc {
 }
 
 func (s *SessionSvc) Find(ctx context.Context, sessionID, privilegeCode string) error {
-	const op = "AuthSvc.Find"
+	const op = "SessionSvc.Find"
 
 	if err := s.storage.Find(ctx, sessionID, privilegeCode); err != nil {
 		s.logger.Error("failed to search session privilege",
@@ -93,7 +93,7 @@ func (s *SessionSvc) Find(ctx context.Context, sessionID, privilegeCode string) 
 }
 
 func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
-	const op = "AuthSvc.Login"
+	const op = "SessionSvc.Login"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
@@ -175,7 +175,7 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 }
 
 func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
-	const op = "AuthSvc.GetUserSessions"
+	const op = "SessionSvc.GetUserSessions"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
@@ -218,7 +218,7 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 }
 
 func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error {
-	const op = "AuthSvc.Delete"
+	const op = "SessionSvc.Delete"
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
@@ -244,7 +244,7 @@ func (s *SessionSvc) Delete(ctx context.Context, login, sessionID string) error 
 }
 
 func (s *SessionSvc) generateTokens(_ context.Context, sessionID string) (*Tokens, error) {
-	const op = "AuthSvc.generateTokens"
+	const op = "SessionSvc.generateTokens"
 
 	if s.refreshTokenTTL < s.accessTokenTTL {
 		return nil, ErrInvalidAccessTokenTTL
