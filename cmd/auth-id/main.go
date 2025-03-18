@@ -34,11 +34,6 @@ import (
 func main() {
 	conf := conf.New()
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
-	httpSrv := echo.New()
-
-	httpSrv.Use(
-		httptransport.LoggerMiddleware(logger),
-	)
 
 	dbClient, err := clienttarantool.New(&clienttarantool.ClientOpts{
 		URL:       conf.DB.URL,
@@ -135,6 +130,12 @@ func main() {
 		SessionSvc:       sessionService,
 	}
 
+	httpSrv := echo.New()
+	httpSrv.Use(
+		httptransport.AuthorizationMiddleware(logger),
+		httptransport.LoggerMiddleware(logger),
+	)
+
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
@@ -187,11 +188,6 @@ func startApp(
 ) {
 	defer cancel()
 
-	// httpSrv.Use(
-	// 	loggerMiddleware1(logger),
-	// 	loggerMiddleware2(logger),
-	// )
-
 	serverhttp.RegisterHandlers(httpSrv, serverhttp.NewStrictHandler(
 		handlers,
 		[]serverhttp.StrictMiddlewareFunc{
@@ -229,26 +225,6 @@ func startApp(
 // 			)
 
 // 			return f(ctx, request)
-// 		}
-// 	}
-// }
-
-// func loggerMiddleware1(l *zap.Logger) echo.MiddlewareFunc {
-// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-// 		return func(c echo.Context) error {
-// 			l.Info("loggerMiddleware1")
-
-// 			return next(c)
-// 		}
-// 	}
-// }
-
-// func loggerMiddleware2(l *zap.Logger) echo.MiddlewareFunc {
-// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-// 		return func(c echo.Context) error {
-// 			l.Info("loggerMiddleware2")
-
-// 			return next(c)
 // 		}
 // 	}
 // }

@@ -50,3 +50,11 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 		}
 	}
 }
+
+func AuthorizationMiddleware(l *zap.Logger) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			return nil
+		}
+	}
+}
