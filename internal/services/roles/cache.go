@@ -31,6 +31,10 @@ func (s *RoleSvc) GetRoleByCode(ctx context.Context, code string) (*Role, error)
 
 	val, err := s.cacheByCode.Get(ctx, code, s.syncRolesByCode)
 	if err != nil {
+		s.logger.Error("failed to get role",
+			zap.Error(err),
+		)
+
 		return nil, fmt.Errorf("%s:%w | %v", op, dberrors.ErrRoleNotFound, err)
 	}
 

@@ -31,6 +31,10 @@ func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, erro
 
 	val, err := s.cacheByLogin.Get(ctx, login, s.syncUsersByLogin)
 	if err != nil {
+		s.logger.Error("failed to get user",
+			zap.Error(err),
+		)
+
 		return nil, fmt.Errorf("%s:%w | %v", op, dberrors.ErrUserNotFound, err)
 	}
 

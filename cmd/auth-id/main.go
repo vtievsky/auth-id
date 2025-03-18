@@ -36,6 +36,10 @@ func main() {
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
 	httpSrv := echo.New()
 
+	httpSrv.Use(
+		httptransport.LoggerMiddleware(logger),
+	)
+
 	dbClient, err := clienttarantool.New(&clienttarantool.ClientOpts{
 		URL:       conf.DB.URL,
 		RateLimit: 25, //nolint:mnd
@@ -183,9 +187,17 @@ func startApp(
 ) {
 	defer cancel()
 
+	// httpSrv.Use(
+	// 	loggerMiddleware1(logger),
+	// 	loggerMiddleware2(logger),
+	// )
+
 	serverhttp.RegisterHandlers(httpSrv, serverhttp.NewStrictHandler(
 		handlers,
-		[]serverhttp.StrictMiddlewareFunc{},
+		[]serverhttp.StrictMiddlewareFunc{
+			// abc(logger),
+			// def(logger),
+		},
 	))
 
 	address := fmt.Sprintf(":%d", port)
@@ -196,3 +208,47 @@ func startApp(
 		)
 	}
 }
+
+// func abc(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
+// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
+// 		return func(ctx echo.Context, request any) (any, error) {
+// 			l.Info("StrictEchoMiddlewareFunc ABC",
+// 				zap.String("operationID", operationID),
+// 			)
+
+// 			return f(ctx, request)
+// 		}
+// 	}
+// }
+
+// func def(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
+// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
+// 		return func(ctx echo.Context, request any) (any, error) {
+// 			l.Info("StrictEchoMiddlewareFunc DEF",
+// 				zap.String("operationID", operationID),
+// 			)
+
+// 			return f(ctx, request)
+// 		}
+// 	}
+// }
+
+// func loggerMiddleware1(l *zap.Logger) echo.MiddlewareFunc {
+// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c echo.Context) error {
+// 			l.Info("loggerMiddleware1")
+
+// 			return next(c)
+// 		}
+// 	}
+// }
+
+// func loggerMiddleware2(l *zap.Logger) echo.MiddlewareFunc {
+// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c echo.Context) error {
+// 			l.Info("loggerMiddleware2")
+
+// 			return next(c)
+// 		}
+// 	}
+// }
