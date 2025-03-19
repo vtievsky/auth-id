@@ -54,27 +54,6 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	}
 }
 
-// func TokenMiddleware(signingKey string) echo.MiddlewareFunc {
-// 	return echojwt.WithConfig(echojwt.Config{
-// 		Skipper: func(c echo.Context) bool {
-// 			if c.Request().Method == http.MethodPost &&
-// 				strings.HasSuffix(c.Request().URL.Path, "sessions") {
-// 				return true
-// 			}
-
-// 			return false
-// 		},
-// 		SuccessHandler: func(c echo.Context) {
-// 			user := c.Get("user").(*jwt.Token)
-// 			claims := user.Claims
-// 			fmt.Printf("%+v\n", claims)
-// 			// fmt.Printf("session_id: %s\n", claims.Session)
-// 			// fmt.Printf("access_only: %v\n", claims.AccessOnly)
-// 		},
-// 		SigningKey: []byte(signingKey),
-// 	})
-// }
-
 func AuthorizationMiddleware(
 	l *zap.Logger,
 	signingKey string,

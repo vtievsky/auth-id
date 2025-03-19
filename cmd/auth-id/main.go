@@ -139,7 +139,6 @@ func main() {
 			conf.Session.SigningKey,
 			sessionService.Find,
 		),
-		// httptransport.TokenMiddleware(conf.Session.SigningKey),
 	)
 
 	signalChannel := make(chan os.Signal, 1)
@@ -196,10 +195,7 @@ func startApp(
 
 	serverhttp.RegisterHandlers(httpSrv, serverhttp.NewStrictHandler(
 		handlers,
-		[]serverhttp.StrictMiddlewareFunc{
-			// abc(logger),
-			// def(logger),
-		},
+		[]serverhttp.StrictMiddlewareFunc{},
 	))
 
 	address := fmt.Sprintf(":%d", port)
@@ -210,27 +206,3 @@ func startApp(
 		)
 	}
 }
-
-// func abc(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
-// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
-// 		return func(ctx echo.Context, request any) (any, error) {
-// 			l.Info("StrictEchoMiddlewareFunc ABC",
-// 				zap.String("operationID", operationID),
-// 			)
-
-// 			return f(ctx, request)
-// 		}
-// 	}
-// }
-
-// func def(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
-// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
-// 		return func(ctx echo.Context, request any) (any, error) {
-// 			l.Info("StrictEchoMiddlewareFunc DEF",
-// 				zap.String("operationID", operationID),
-// 			)
-
-// 			return f(ctx, request)
-// 		}
-// 	}
-// }
