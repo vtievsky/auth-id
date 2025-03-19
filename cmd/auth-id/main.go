@@ -135,7 +135,6 @@ func main() {
 	httpSrv.Use(
 		httptransport.LoggerMiddleware(logger),
 		httptransport.AuthorizationMiddleware(
-			logger,
 			conf.Session.SigningKey,
 			sessionService.Find,
 		),

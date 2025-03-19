@@ -55,7 +55,6 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 }
 
 func AuthorizationMiddleware(
-	l *zap.Logger,
 	signingKey string,
 	searchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error,
 ) echo.MiddlewareFunc {
@@ -86,38 +85,20 @@ func AuthorizationMiddleware(
 
 			value, err := extractTokenValue(c.Request().Header)
 			if err != nil {
-				l.Error("token",
-					zap.Error(err),
-				)
-
 				return err
 			}
 
 			token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
 			if err != nil {
-				l.Error("token",
-					zap.Error(fmt.Errorf("failed to parse token")),
-				)
-
 				return err //nolint:wrapcheck
 			}
 
 			if !token.Valid {
-				err := fmt.Errorf("token not valid")
-
-				l.Error("token",
-					zap.Error(err),
-				)
-
-				return err
+				return fmt.Errorf("token not valid")
 			}
 
 			err = searchPrivilegeFunc(c.Request().Context(), token.SessionID, "user_read")
 			if err != nil {
-				l.Error("privilege",
-					zap.Error(err),
-				)
-
 				return err
 			}
 
