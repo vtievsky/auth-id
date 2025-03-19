@@ -3,10 +3,13 @@ package httptransport
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
 	"go.uber.org/zap"
 )
 
@@ -51,10 +54,95 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	}
 }
 
-func AuthorizationMiddleware(l *zap.Logger) echo.MiddlewareFunc {
+// func TokenMiddleware(signingKey string) echo.MiddlewareFunc {
+// 	return echojwt.WithConfig(echojwt.Config{
+// 		Skipper: func(c echo.Context) bool {
+// 			if c.Request().Method == http.MethodPost &&
+// 				strings.HasSuffix(c.Request().URL.Path, "sessions") {
+// 				return true
+// 			}
+
+// 			return false
+// 		},
+// 		SuccessHandler: func(c echo.Context) {
+// 			user := c.Get("user").(*jwt.Token)
+// 			claims := user.Claims
+// 			fmt.Printf("%+v\n", claims)
+// 			// fmt.Printf("session_id: %s\n", claims.Session)
+// 			// fmt.Printf("access_only: %v\n", claims.AccessOnly)
+// 		},
+// 		SigningKey: []byte(signingKey),
+// 	})
+// }
+
+func AuthorizationMiddleware(
+	l *zap.Logger,
+	signingKey string,
+	searchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error,
+) echo.MiddlewareFunc {
+	extractTokenValue := func(header http.Header) (string, error) {
+		values, ok := header["Authorization"]
+		if !ok {
+			return "", fmt.Errorf("token not found")
+		}
+
+		if len(values) < 1 {
+			return "", fmt.Errorf("token not found")
+		}
+
+		ul := strings.Split(values[0], " ")
+
+		if len(ul) < 2 { //nolint:mnd
+			return "", fmt.Errorf("invalid token")
+		}
+
+		return ul[1], nil
+	}
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			return nil
+			if c.Request().RequestURI == "/v1/users/slaventius/sessions" {
+				return next(c)
+			}
+
+			value, err := extractTokenValue(c.Request().Header)
+			if err != nil {
+				l.Error("token",
+					zap.Error(err),
+				)
+
+				return err
+			}
+
+			token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
+			if err != nil {
+				l.Error("token",
+					zap.Error(fmt.Errorf("failed to parse token")),
+				)
+
+				return err //nolint:wrapcheck
+			}
+
+			if !token.Valid {
+				err := fmt.Errorf("token not valid")
+
+				l.Error("token",
+					zap.Error(err),
+				)
+
+				return err
+			}
+
+			err = searchPrivilegeFunc(c.Request().Context(), token.SessionID, "user_read")
+			if err != nil {
+				l.Error("privilege",
+					zap.Error(err),
+				)
+
+				return err
+			}
+
+			return next(c)
 		}
 	}
 }

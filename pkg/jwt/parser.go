@@ -1,4 +1,4 @@
-package authtoken
+package authidjwt
 
 import (
 	"fmt"

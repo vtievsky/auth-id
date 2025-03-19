@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	BearerScopes = "bearer.Scopes"
+	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
 // Defines values for ResponseStatusErrorCode.
@@ -614,7 +614,7 @@ func (w *ServerInterfaceWrapper) ChangePass(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ChangePass(ctx, login)
@@ -632,7 +632,7 @@ func (w *ServerInterfaceWrapper) ResetPass(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ResetPass(ctx, login)
@@ -643,7 +643,7 @@ func (w *ServerInterfaceWrapper) ResetPass(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetRoles(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetRoles(ctx)
@@ -654,7 +654,7 @@ func (w *ServerInterfaceWrapper) GetRoles(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) CreateRole(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateRole(ctx)
@@ -672,7 +672,7 @@ func (w *ServerInterfaceWrapper) DeleteRole(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteRole(ctx, code)
@@ -690,7 +690,7 @@ func (w *ServerInterfaceWrapper) GetRole(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetRole(ctx, code)
@@ -708,7 +708,7 @@ func (w *ServerInterfaceWrapper) UpdateRole(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateRole(ctx, code)
@@ -726,7 +726,7 @@ func (w *ServerInterfaceWrapper) GetRolePrivileges(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetRolePrivileges(ctx, code)
@@ -744,7 +744,7 @@ func (w *ServerInterfaceWrapper) GetRoleUsers(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetRoleUsers(ctx, code)
@@ -770,7 +770,7 @@ func (w *ServerInterfaceWrapper) DeleteRolePrivilege(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteRolePrivilege(ctx, roleCode, privilegeCode)
@@ -796,7 +796,7 @@ func (w *ServerInterfaceWrapper) AddRolePrivilege(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddRolePrivilege(ctx, roleCode, privilegeCode)
@@ -822,7 +822,7 @@ func (w *ServerInterfaceWrapper) UpdateRolePrivilege(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateRolePrivilege(ctx, roleCode, privilegeCode)
@@ -848,7 +848,7 @@ func (w *ServerInterfaceWrapper) DeleteRoleUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteRoleUser(ctx, roleCode, login)
@@ -874,7 +874,7 @@ func (w *ServerInterfaceWrapper) AddRoleUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddRoleUser(ctx, roleCode, login)
@@ -900,7 +900,7 @@ func (w *ServerInterfaceWrapper) UpdateRoleUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateRoleUser(ctx, roleCode, login)
@@ -926,7 +926,7 @@ func (w *ServerInterfaceWrapper) SearchSessionPrivilege(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.SearchSessionPrivilege(ctx, sessionId, privilegeCode)
@@ -937,7 +937,7 @@ func (w *ServerInterfaceWrapper) SearchSessionPrivilege(ctx echo.Context) error 
 func (w *ServerInterfaceWrapper) GetUsers(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetUsers(ctx)
@@ -948,7 +948,7 @@ func (w *ServerInterfaceWrapper) GetUsers(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) CreateUser(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateUser(ctx)
@@ -966,7 +966,7 @@ func (w *ServerInterfaceWrapper) DeleteUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteUser(ctx, login)
@@ -984,7 +984,7 @@ func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetUser(ctx, login)
@@ -1002,7 +1002,7 @@ func (w *ServerInterfaceWrapper) UpdateUser(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateUser(ctx, login)
@@ -1020,7 +1020,7 @@ func (w *ServerInterfaceWrapper) GetUserPrivileges(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetUserPrivileges(ctx, login)
@@ -1038,7 +1038,7 @@ func (w *ServerInterfaceWrapper) GetUserRoles(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetUserRoles(ctx, login)
@@ -1056,8 +1056,6 @@ func (w *ServerInterfaceWrapper) GetUserSessions(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetUserSessions(ctx, login)
 	return err
@@ -1074,7 +1072,7 @@ func (w *ServerInterfaceWrapper) Login(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Login(ctx, login)
@@ -1100,7 +1098,7 @@ func (w *ServerInterfaceWrapper) DeleteUserSession(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter session_id: %s", err))
 	}
 
-	ctx.Set(BearerScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.DeleteUserSession(ctx, login, sessionId)
@@ -2668,47 +2666,48 @@ func (sh *strictHandler) DeleteUserSession(ctx echo.Context, login string, sessi
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"//+irHSDvXkAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

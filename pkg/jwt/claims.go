@@ -1,4 +1,4 @@
-package authtoken
+package authidjwt
 
 import "github.com/golang-jwt/jwt/v5"
 

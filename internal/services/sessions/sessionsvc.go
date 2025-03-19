@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
-	authtoken "github.com/vtievsky/auth-id/internal/services/sessions/tokens"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
+	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -262,7 +262,7 @@ func (s *SessionSvc) generateTokens(_ context.Context, sessionID string) (*Token
 	g.Go(func() error {
 		var err error
 
-		accessToken, err = authtoken.NewAccessToken(signingKey, &authtoken.TokenOpts{
+		accessToken, err = authidjwt.NewAccessToken(signingKey, &authidjwt.TokenOpts{
 			SessionID: sessionID,
 			ExpiredAt: current.Add(s.accessTokenTTL),
 		})
@@ -276,7 +276,7 @@ func (s *SessionSvc) generateTokens(_ context.Context, sessionID string) (*Token
 	g.Go(func() error {
 		var err error
 
-		refreshToken, err = authtoken.NewRefreshToken(signingKey, &authtoken.TokenOpts{
+		refreshToken, err = authidjwt.NewRefreshToken(signingKey, &authidjwt.TokenOpts{
 			SessionID: sessionID,
 			ExpiredAt: current.Add(s.refreshTokenTTL),
 		})
