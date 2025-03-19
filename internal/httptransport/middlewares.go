@@ -14,6 +14,20 @@ import (
 
 type SearchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error
 type EndpointPrivilegesMiddlewareFunc func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc
+type SessionService interface {
+	Find(ctx context.Context, sessionID, privilegeCode string) error
+}
+
+func EndpointPrivilegesMiddlewareFuncs(
+	signingKey string,
+	sessionService SessionService,
+) map[string]EndpointPrivilegesMiddlewareFunc {
+	return map[string]EndpointPrivilegesMiddlewareFunc{
+		"Login":    without(),
+		"GetUsers": withPrivilege(signingKey, sessionService.Find, "user_read"),
+		"GetRoles": withPrivilege(signingKey, sessionService.Find, "role_read"),
+	}
+}
 
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -58,13 +72,9 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 
 func AuthorizationMiddleware(
 	signingKey string,
-	searchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error,
+	sessionService SessionService,
 ) strictecho.StrictEchoMiddlewareFunc {
-	var endpointPrivileges = map[string]EndpointPrivilegesMiddlewareFunc{
-		"Login":    without(),
-		"GetUsers": withPrivilege(signingKey, searchPrivilegeFunc, "user_read"),
-		"GetRoles": withPrivilege(signingKey, searchPrivilegeFunc, "role_read"),
-	}
+	var endpointPrivileges = EndpointPrivilegesMiddlewareFuncs(signingKey, sessionService)
 
 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
 		if op, ok := endpointPrivileges[operationID]; ok {

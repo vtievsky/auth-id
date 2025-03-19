@@ -154,7 +154,7 @@ func main() {
 			[]serverhttp.StrictMiddlewareFunc{
 				httptransport.AuthorizationMiddleware(
 					conf.Session.SigningKey,
-					sessionService.Find,
+					sessionService,
 				),
 			},
 		),
