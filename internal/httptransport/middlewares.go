@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
+	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 	"go.uber.org/zap"
 )
+
+type SearchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error
+type EndpointPrivilegesMiddlewareFunc func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc
 
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -57,52 +59,32 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 func AuthorizationMiddleware(
 	signingKey string,
 	searchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error,
-) echo.MiddlewareFunc {
-	extractTokenValue := func(header http.Header) (string, error) {
-		values, ok := header["Authorization"]
-		if !ok {
-			return "", fmt.Errorf("token not found")
-		}
-
-		if len(values) < 1 {
-			return "", fmt.Errorf("token not found")
-		}
-
-		ul := strings.Split(values[0], " ")
-
-		if len(ul) < 2 { //nolint:mnd
-			return "", fmt.Errorf("invalid token")
-		}
-
-		return ul[1], nil
+) strictecho.StrictEchoMiddlewareFunc {
+	var endpointPrivileges = map[string]EndpointPrivilegesMiddlewareFunc{
+		"Login":    without(),
+		"GetUsers": withPrivilege(signingKey, searchPrivilegeFunc, "user_read"),
+		"GetRoles": withPrivilege(signingKey, searchPrivilegeFunc, "role_read"),
 	}
 
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if c.Request().RequestURI == "/v1/users/slaventius/sessions" {
-				return next(c)
-			}
+	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
+		if op, ok := endpointPrivileges[operationID]; ok {
+			return op(f)
+		}
 
-			value, err := extractTokenValue(c.Request().Header)
-			if err != nil {
-				return err
-			}
-
-			token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
-			if err != nil {
-				return err //nolint:wrapcheck
-			}
-
-			if !token.Valid {
-				return fmt.Errorf("token not valid")
-			}
-
-			err = searchPrivilegeFunc(c.Request().Context(), token.SessionID, "user_read")
-			if err != nil {
-				return err
-			}
-
-			return next(c)
+		return func(ctx echo.Context, request any) (any, error) {
+			return nil, fmt.Errorf("not found")
 		}
 	}
 }
+
+// func abc(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
+// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
+// 		return func(ctx echo.Context, request any) (any, error) {
+// 			l.Info("StrictEchoMiddlewareFunc ABC",
+// 				zap.String("operationID", operationID),
+// 			)
+
+// 			return f(ctx, request)
+// 		}
+// 	}
+// }

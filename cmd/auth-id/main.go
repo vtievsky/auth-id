@@ -134,10 +134,6 @@ func main() {
 	httpSrv.HideBanner = true
 	httpSrv.Use(
 		httptransport.LoggerMiddleware(logger),
-		httptransport.AuthorizationMiddleware(
-			conf.Session.SigningKey,
-			sessionService.Find,
-		),
 	)
 
 	signalChannel := make(chan os.Signal, 1)
@@ -150,9 +146,17 @@ func main() {
 		cancel,
 		logger,
 		httpSrv,
-		httptransport.New(
-			conf,
-			services,
+		serverhttp.NewStrictHandler(
+			httptransport.New(
+				conf,
+				services,
+			),
+			[]serverhttp.StrictMiddlewareFunc{
+				httptransport.AuthorizationMiddleware(
+					conf.Session.SigningKey,
+					sessionService.Find,
+				),
+			},
 		),
 		conf.Port,
 	)
@@ -187,19 +191,14 @@ func startApp(
 	cancel context.CancelFunc,
 	logger *zap.Logger,
 	httpSrv *echo.Echo,
-	handlers serverhttp.StrictServerInterface,
+	handler serverhttp.ServerInterface,
 	port int,
 ) {
 	defer cancel()
 
-	serverhttp.RegisterHandlers(httpSrv, serverhttp.NewStrictHandler(
-		handlers,
-		[]serverhttp.StrictMiddlewareFunc{},
-	))
+	serverhttp.RegisterHandlers(httpSrv, handler)
 
-	address := fmt.Sprintf(":%d", port)
-
-	if err := httpSrv.Start(address); err != nil {
+	if err := httpSrv.Start(fmt.Sprintf(":%d", port)); err != nil {
 		logger.Error("error while serve http server",
 			zap.Error(err),
 		)
