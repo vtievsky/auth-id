@@ -1,14 +1,6 @@
 #!/usr/bin/tarantool
 
-box.cfg {
-    listen = '0.0.0.0:33011',
-    log_level = 4 -- warn
-}
-
-box.schema.user.passwd('admin', 'password')
-
---- init database
-box.once('init', function()
+function add_spaces()
     -- users
     if not box.space.user then
         if not box.sequence.user_seq then
@@ -190,43 +182,4 @@ box.once('init', function()
             parts = {'privilege_id'}
         })
     end
-end)
-
---- 
-box.once('init-1', function()
-    local s = box.space.privilege
-    --
-    s:insert{nil, 'user_read', 'Чтение справочника пользователей', ''}
-    s:insert{nil, 'user_create', 'Создание пользователя', ''}
-    s:insert{nil, 'user_update', 'Изменение пользователя', ''}
-    s:insert{nil, 'user_delete', 'Удаление пользователя', ''}
-    --
-    s:insert{nil, 'role_read', 'Чтение справочника ролей', ''}
-    s:insert{nil, 'role_create', 'Создание роли', ''}
-    s:insert{nil, 'role_update', 'Изменение роли', ''}
-    s:insert{nil, 'role_delete', 'Удаление роли', ''}
-    --
-    s:insert{nil, 'role2privilege_read', 'Чтение привилегий роли', ''}
-    s:insert{nil, 'role2privilege_create', 'Добавление привилегии роли', ''}
-    s:insert{nil, 'role2privilege_update', 'Изменение привилегии роли', ''}
-    s:insert{nil, 'role2privilege_delete', 'Удаление привилегии роли', ''}
-    --
-    s:insert{nil, 'role2user_read', 'Чтение ролей пользователя', ''}
-    s:insert{nil, 'role2user_create', 'Добавление роли пользователю', ''}
-    s:insert{nil, 'role2user_update', 'Изменение роли пользователя', ''}
-    s:insert{nil, 'role2user_delete', 'Удаление роли пользователя', ''}
-end)
-
--- Роли
-box.once('init-2', function()
-    local s = box.space.role
-    --
-    s:insert{nil, 'admin', 'Администраторы казино', '', false}
-end)
-
--- Пользователи
-box.once('init-3', function()
-    local s = box.space.user
-    --
-    s:insert{nil, 'Администратор', 'admin', '12345', false}
-end)
+end

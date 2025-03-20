@@ -23,7 +23,7 @@ services:
       - ${TARANTOOL_PORT}:33011
     volumes:
       - auth-id-tarantool:/var/lib/tarantool
-      - ./init.lua:/opt/tarantool/init.lua:ro
+      - ./scripts/:/opt/tarantool/:ro
     networks:
       - auth-id
 
