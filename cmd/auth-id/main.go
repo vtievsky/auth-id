@@ -152,10 +152,10 @@ func main() {
 				services,
 			),
 			[]serverhttp.StrictMiddlewareFunc{
-				// httptransport.AuthorizationMiddleware(
-				// 	conf.Session.SigningKey,
-				// 	sessionService,
-				// ),
+				httptransport.AuthorizationMiddleware(
+					conf.Session.SigningKey,
+					sessionService,
+				),
 			},
 		),
 		conf.Port,

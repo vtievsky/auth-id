@@ -23,9 +23,10 @@ func EndpointPrivilegesMiddlewareFuncs(
 	sessionService SessionService,
 ) map[string]EndpointPrivilegesMiddlewareFunc {
 	return map[string]EndpointPrivilegesMiddlewareFunc{
-		"Login":    without(),
-		"GetUsers": withPrivilege(signingKey, sessionService.Find, "user_read"),
-		"GetRoles": withPrivilege(signingKey, sessionService.Find, "role_read"),
+		"Login":      without(),
+		"GetUsers":   withPrivilege(signingKey, sessionService.Find, "user_read"),
+		"CreateUser": withPrivilege(signingKey, sessionService.Find, "user_create"),
+		"GetRoles":   withPrivilege(signingKey, sessionService.Find, "role_read"),
 	}
 }
 
