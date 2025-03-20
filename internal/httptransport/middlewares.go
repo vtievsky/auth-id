@@ -18,18 +18,6 @@ type SessionService interface {
 	Find(ctx context.Context, sessionID, privilegeCode string) error
 }
 
-func EndpointPrivilegesMiddlewareFuncs(
-	signingKey string,
-	sessionService SessionService,
-) map[string]EndpointPrivilegesMiddlewareFunc {
-	return map[string]EndpointPrivilegesMiddlewareFunc{
-		"Login":      without(),
-		"GetUsers":   withPrivilege(signingKey, sessionService.Find, "user_read"),
-		"CreateUser": withPrivilege(signingKey, sessionService.Find, "user_create"),
-		"GetRoles":   withPrivilege(signingKey, sessionService.Find, "role_read"),
-	}
-}
-
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
