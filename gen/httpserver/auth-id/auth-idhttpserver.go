@@ -228,16 +228,6 @@ type GetRolesResponse500 struct {
 	Status ResponseStatusError `json:"status"`
 }
 
-// GetSessionPrivilegeResponse200 defines model for GetSessionPrivilegeResponse200.
-type GetSessionPrivilegeResponse200 struct {
-	Status ResponseStatusOk `json:"status"`
-}
-
-// GetSessionPrivilegeResponse500 defines model for GetSessionPrivilegeResponse500.
-type GetSessionPrivilegeResponse500 struct {
-	Status ResponseStatusError `json:"status"`
-}
-
 // GetUserPrivilegesResponse200 defines model for GetUserPrivilegesResponse200.
 type GetUserPrivilegesResponse200 struct {
 	Data   []UserPrivilege  `json:"data"`
@@ -563,9 +553,6 @@ type ServerInterface interface {
 
 	// (PUT /v1/roles/{role_code}/users/{login})
 	UpdateRoleUser(ctx echo.Context, roleCode string, login string) error
-
-	// (GET /v1/sessions/{session_id}/privileges/{privilege_code})
-	SearchSessionPrivilege(ctx echo.Context, sessionId string, privilegeCode string) error
 
 	// (GET /v1/users)
 	GetUsers(ctx echo.Context) error
@@ -907,32 +894,6 @@ func (w *ServerInterfaceWrapper) UpdateRoleUser(ctx echo.Context) error {
 	return err
 }
 
-// SearchSessionPrivilege converts echo context to params.
-func (w *ServerInterfaceWrapper) SearchSessionPrivilege(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "session_id" -------------
-	var sessionId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "session_id", ctx.Param("session_id"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter session_id: %s", err))
-	}
-
-	// ------------- Path parameter "privilege_code" -------------
-	var privilegeCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
-	}
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.SearchSessionPrivilege(ctx, sessionId, privilegeCode)
-	return err
-}
-
 // GetUsers converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUsers(ctx echo.Context) error {
 	var err error
@@ -1148,7 +1109,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/v1/roles/:role_code/users/:login", wrapper.DeleteRoleUser)
 	router.POST(baseURL+"/v1/roles/:role_code/users/:login", wrapper.AddRoleUser)
 	router.PUT(baseURL+"/v1/roles/:role_code/users/:login", wrapper.UpdateRoleUser)
-	router.GET(baseURL+"/v1/sessions/:session_id/privileges/:privilege_code", wrapper.SearchSessionPrivilege)
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
@@ -1564,33 +1524,6 @@ func (response UpdateRoleUser500JSONResponse) VisitUpdateRoleUserResponse(w http
 	return json.NewEncoder(w).Encode(response)
 }
 
-type SearchSessionPrivilegeRequestObject struct {
-	SessionId     string `json:"session_id"`
-	PrivilegeCode string `json:"privilege_code"`
-}
-
-type SearchSessionPrivilegeResponseObject interface {
-	VisitSearchSessionPrivilegeResponse(w http.ResponseWriter) error
-}
-
-type SearchSessionPrivilege200JSONResponse GetSessionPrivilegeResponse200
-
-func (response SearchSessionPrivilege200JSONResponse) VisitSearchSessionPrivilegeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type SearchSessionPrivilege500JSONResponse GetSessionPrivilegeResponse500
-
-func (response SearchSessionPrivilege500JSONResponse) VisitSearchSessionPrivilegeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type GetUsersRequestObject struct {
 }
 
@@ -1900,9 +1833,6 @@ type StrictServerInterface interface {
 
 	// (PUT /v1/roles/{role_code}/users/{login})
 	UpdateRoleUser(ctx context.Context, request UpdateRoleUserRequestObject) (UpdateRoleUserResponseObject, error)
-
-	// (GET /v1/sessions/{session_id}/privileges/{privilege_code})
-	SearchSessionPrivilege(ctx context.Context, request SearchSessionPrivilegeRequestObject) (SearchSessionPrivilegeResponseObject, error)
 
 	// (GET /v1/users)
 	GetUsers(ctx context.Context, request GetUsersRequestObject) (GetUsersResponseObject, error)
@@ -2372,32 +2302,6 @@ func (sh *strictHandler) UpdateRoleUser(ctx echo.Context, roleCode string, login
 	return nil
 }
 
-// SearchSessionPrivilege operation middleware
-func (sh *strictHandler) SearchSessionPrivilege(ctx echo.Context, sessionId string, privilegeCode string) error {
-	var request SearchSessionPrivilegeRequestObject
-
-	request.SessionId = sessionId
-	request.PrivilegeCode = privilegeCode
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.SearchSessionPrivilege(ctx.Request().Context(), request.(SearchSessionPrivilegeRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "SearchSessionPrivilege")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(SearchSessionPrivilegeResponseObject); ok {
-		return validResponse.VisitSearchSessionPrivilegeResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // GetUsers operation middleware
 func (sh *strictHandler) GetUsers(ctx echo.Context) error {
 	var request GetUsersRequestObject
@@ -2666,48 +2570,46 @@ func (sh *strictHandler) DeleteUserSession(ctx echo.Context, login string, sessi
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"//+irHSDvXkAAA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

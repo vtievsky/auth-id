@@ -85,24 +85,3 @@ func (t *Transport) DeleteUserSession(
 		},
 	}, nil
 }
-
-func (t *Transport) SearchSessionPrivilege(
-	ctx context.Context,
-	request serverhttp.SearchSessionPrivilegeRequestObject,
-) (serverhttp.SearchSessionPrivilegeResponseObject, error) {
-	if err := t.services.SessionSvc.Find(ctx, request.SessionId, request.PrivilegeCode); err != nil {
-		return serverhttp.SearchSessionPrivilege500JSONResponse{ //nolint:nilerr
-			Status: serverhttp.ResponseStatusError{
-				Code:        serverhttp.Error,
-				Description: err.Error(),
-			},
-		}, nil
-	}
-
-	return serverhttp.SearchSessionPrivilege200JSONResponse{
-		Status: serverhttp.ResponseStatusOk{
-			Code:        serverhttp.Ok,
-			Description: "",
-		},
-	}, nil
-}
