@@ -1,11 +1,11 @@
 #!/usr/bin/tarantool
 
 require "0-add-spaces"
-require "1-add-privileges"
 require "2-add-roles"
 require "3-add-users"
-require "4-add-role-privileges"
+require "1-add-privileges"
 require "5-add-role-users"
+require "4-add-role-privileges"
 
 box.cfg {
     listen = '0.0.0.0:33011',
