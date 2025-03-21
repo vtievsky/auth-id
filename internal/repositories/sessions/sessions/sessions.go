@@ -65,7 +65,7 @@ func (s *Sessions) Find(ctx context.Context, sessionID, privilege string) error 
 func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	const op = "Sessions.List"
 
-	fetchStats := func(actx context.Context, acombine chan<- sessionStats, aID string) func() error {
+	fetchStats := func(actx context.Context, acombine chan<- sessionStats, asessionID string) func() error {
 		return func() error {
 			var (
 				ttl  time.Duration
@@ -77,10 +77,10 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 			g.Go(func() error {
 				var err error
 
-				ttl, err = s.client.TTL(gCtx, s.keySession(aID)).Result()
+				ttl, err = s.client.TTL(gCtx, s.keySession(asessionID)).Result()
 				if err != nil {
 					s.logger.Error("failed to get session ttl",
-						zap.String("session_id", aID),
+						zap.String("session_id", asessionID),
 						zap.Error(err),
 					)
 
@@ -91,12 +91,12 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 			})
 
 			g.Go(func() error {
-				cmd := s.client.HGetAll(gCtx, s.keyCart(aID))
+				cmd := s.client.HGetAll(gCtx, s.keyCart(asessionID))
 
 				switch {
 				case cmd.Err() != nil:
 					s.logger.Error("failed to get session cart",
-						zap.String("session_id", aID),
+						zap.String("session_id", asessionID),
 						zap.Error(cmd.Err()),
 					)
 
@@ -108,7 +108,7 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 
 				if err := cmd.Scan(&cart); err != nil {
 					s.logger.Error("failed to scan session cart",
-						zap.String("session_id", aID),
+						zap.String("session_id", asessionID),
 						zap.Any("value", cmd.Val()),
 						zap.Error(err),
 					)
@@ -124,7 +124,7 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 			}
 
 			acombine <- sessionStats{
-				ID:        aID,
+				ID:        asessionID,
 				TTL:       ttl,
 				CreatedAt: cart.CreatedAt,
 			}
