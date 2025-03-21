@@ -67,5 +67,5 @@ type SessionService interface {
 	Login(ctx context.Context, login, password string) (*sessionsvc.Tokens, error)
 	GetUserSessions(ctx context.Context, login string) ([]*sessionsvc.Session, error)
 	Delete(ctx context.Context, login, sessionID string) error
-	Find(ctx context.Context, sessionID, privilege string) error
+	Search(ctx context.Context, sessionID, privilege string) error
 }

@@ -174,6 +174,17 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	return sessions, nil
 }
 
+func (s *Sessions) ListSessionPrivileges(ctx context.Context, sessionID string) ([]string, error) {
+	const op = "Sessions.ListSessionPrivileges"
+
+	ul, err := s.client.SMembers(ctx, s.keySession(sessionID)).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session privileges | %s:%w", op, err)
+	}
+
+	return ul, nil
+}
+
 func (s *Sessions) keyCart(sessionID string) string {
 	return fmt.Sprintf("%s%s", spaceCarts, sessionID)
 }

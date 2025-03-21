@@ -15,7 +15,7 @@ import (
 type SearchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error
 type EndpointPrivilegesMiddlewareFunc func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc
 type SessionService interface {
-	Find(ctx context.Context, sessionID, privilegeCode string) error
+	Search(ctx context.Context, sessionID, privilegeCode string) error
 }
 
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {

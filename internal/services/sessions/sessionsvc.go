@@ -28,9 +28,10 @@ type Session struct {
 
 type Storage interface {
 	List(ctx context.Context, login string) ([]*reposessions.Session, error)
+	ListSessionPrivileges(ctx context.Context, sessionID string) ([]string, error)
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
 	Delete(ctx context.Context, login, sessionID string) error
-	Find(ctx context.Context, sessionID, privilegeCode string) error
+	// Find(ctx context.Context, sessionID, privilegeCode string) error
 }
 
 type UserSvc interface {
