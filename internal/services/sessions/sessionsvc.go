@@ -9,6 +9,7 @@ import (
 	reposessions "github.com/vtievsky/auth-id/internal/repositories/sessions/sessions"
 	userprivilegesvc "github.com/vtievsky/auth-id/internal/services/user-privileges"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
+	"github.com/vtievsky/auth-id/pkg/cache"
 	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -61,6 +62,7 @@ type SessionSvc struct {
 	accessTokenTTL   time.Duration
 	refreshTokenTTL  time.Duration
 	signingKey       string
+	cacheByID        cache.Cache[string, []string]
 }
 
 func New(opts *SessionSvcOpts) *SessionSvc {
@@ -73,23 +75,8 @@ func New(opts *SessionSvcOpts) *SessionSvc {
 		refreshTokenTTL:  opts.RefreshTokenTTL,
 		sessionTTL:       opts.SessionTTL,
 		signingKey:       opts.SigningKey,
+		cacheByID:        cache.New[string, []string](),
 	}
-}
-
-func (s *SessionSvc) Find(ctx context.Context, sessionID, privilegeCode string) error {
-	const op = "SessionSvc.Find"
-
-	if err := s.storage.Find(ctx, sessionID, privilegeCode); err != nil {
-		s.logger.Error("failed to search session privilege",
-			zap.String("session_id", sessionID),
-			zap.String("privilege_code", privilegeCode),
-			zap.Error(err),
-		)
-
-		return fmt.Errorf("failed to search session privilege | %s:%w", op, err)
-	}
-
-	return nil
 }
 
 func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
