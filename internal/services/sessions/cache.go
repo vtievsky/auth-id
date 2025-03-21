@@ -44,5 +44,11 @@ func (s *SessionSvc) Search(ctx context.Context, sessionID, privilegeCode string
 		return nil
 	}
 
+	s.logger.Error("failed to search session privilege",
+		zap.String("session_id", sessionID),
+		zap.String("privilege_code", privilegeCode),
+		zap.Error(ErrSessionPrivilegeNotFound),
+	)
+
 	return ErrSessionPrivilegeNotFound
 }

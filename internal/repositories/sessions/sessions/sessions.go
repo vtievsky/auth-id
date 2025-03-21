@@ -46,22 +46,6 @@ func New(opts *SessionsOpts) *Sessions {
 	}
 }
 
-func (s *Sessions) Find(ctx context.Context, sessionID, privilege string) error {
-	const op = "Sessions.Find"
-
-	key := s.keySession(sessionID)
-	command := s.client.SIsMember(ctx, key, privilege)
-
-	switch {
-	case command.Err() != nil:
-		return fmt.Errorf("failed to search session privilege | %s:%w", op, command.Err())
-	case command.Val():
-		return nil
-	}
-
-	return fmt.Errorf("%s:%w", op, ErrSessionPrivilegeNotFound)
-}
-
 func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	const op = "Sessions.List"
 
