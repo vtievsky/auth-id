@@ -30,6 +30,14 @@ func New[K comparable, V any]() Cache[K, V] {
 }
 
 func (s *Cache[K, V]) Get(ctx context.Context, key K, cacheSyncFunc func(ctx context.Context) (map[K]V, error)) (V, error) {
+	copyValues := func(values map[K]V) {
+		for key, value := range values {
+			s.m[key] = value
+		}
+
+		s.lastTime = time.Now()
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -45,7 +53,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, cacheSyncFunc func(ctx con
 			return value, err
 		}
 
-		s.copyValues(values)
+		copyValues(values)
 	}
 
 	// Поиск значения в актуальном кеше
@@ -60,7 +68,7 @@ func (s *Cache[K, V]) Get(ctx context.Context, key K, cacheSyncFunc func(ctx con
 		return value, err
 	}
 
-	s.copyValues(values)
+	copyValues(values)
 
 	if value, ok = s.m[key]; ok {
 		return value, nil
@@ -83,12 +91,4 @@ func (s *Cache[K, V]) Del(key K) {
 	defer s.mu.Unlock()
 
 	delete(s.m, key)
-}
-
-func (s *Cache[K, V]) copyValues(values map[K]V) {
-	for key, values := range values {
-		s.m[key] = values
-	}
-
-	s.lastTime = time.Now()
 }
