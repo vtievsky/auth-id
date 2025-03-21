@@ -32,7 +32,7 @@ func (s *SessionSvc) Find(ctx context.Context, sessionID, privilegeCode string) 
 				return nil, err //nolint:wrapcheck
 			}
 
-			s.logger.Debug("privileges has been synchronized",
+			s.logger.Debug("session privileges has been synchronized",
 				zap.String("session_id", sessionID),
 				zap.String("privilege_code", privilegeCode),
 			)
