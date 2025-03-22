@@ -14,7 +14,6 @@ import (
 const (
 	space         = "user"
 	spaceUserRole = "role_user"
-	limit         = 25
 )
 
 type UsersOpts struct {
@@ -54,10 +53,10 @@ func (s *Users) GetUser(ctx context.Context, login string) (*models.User, error)
 	}, nil
 }
 
-func (s *Users) GetUsers(ctx context.Context) ([]*models.User, error) {
+func (s *Users) GetUsers(ctx context.Context, pageSize, offset uint32) ([]*models.User, error) {
 	const op = "DbUsers.GetUsers"
 
-	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
+	resp, err := s.c.Connection.Select(space, "pk", offset, pageSize, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users | %s:%w", op, err)
 	}

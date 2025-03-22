@@ -3,6 +3,7 @@ package rolesvc
 import (
 	"context"
 	"fmt"
+	"math"
 
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -50,7 +51,7 @@ func (s *RoleSvc) GetRoleByCode(ctx context.Context, code string) (*Role, error)
 func (s *RoleSvc) syncRolesByID(ctx context.Context) (map[uint64]*models.Role, error) {
 	const op = "RoleSvc.syncRolesByID"
 
-	roles, err := s.storage.GetRoles(ctx)
+	roles, err := s.storage.GetRoles(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync roles",
 			zap.Error(err),
@@ -75,7 +76,7 @@ func (s *RoleSvc) syncRolesByID(ctx context.Context) (map[uint64]*models.Role, e
 func (s *RoleSvc) syncRolesByCode(ctx context.Context) (map[string]*models.Role, error) {
 	const op = "RoleSvc.syncRolesByCode"
 
-	roles, err := s.storage.GetRoles(ctx)
+	roles, err := s.storage.GetRoles(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync roles",
 			zap.Error(err),

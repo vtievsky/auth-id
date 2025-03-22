@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 
 	"go.uber.org/zap"
@@ -14,7 +15,7 @@ func (s *SessionSvc) Search(ctx context.Context, sessionID, privilegeCode string
 
 	privileges, err := s.cacheByID.Get(ctx, sessionID,
 		func(ctx context.Context) (map[string][]string, error) {
-			privileges, err := s.storage.ListSessionPrivileges(ctx, sessionID)
+			privileges, err := s.storage.ListSessionPrivileges(ctx, sessionID, math.MaxUint32, 0)
 
 			switch {
 			case errors.Is(err, nil):

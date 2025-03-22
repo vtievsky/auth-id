@@ -11,7 +11,12 @@ func (t *Transport) GetRolePrivileges(
 	ctx context.Context,
 	request serverhttp.GetRolePrivilegesRequestObject,
 ) (serverhttp.GetRolePrivilegesResponseObject, error) {
-	privileges, err := t.services.RolePrivilegeSvc.GetRolePrivileges(ctx, request.Code)
+	privileges, err := t.services.RolePrivilegeSvc.GetRolePrivileges(
+		ctx,
+		request.Code,
+		request.Params.PageSize,
+		request.Params.Offset,
+	)
 	if err != nil {
 		return serverhttp.GetRolePrivileges500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{

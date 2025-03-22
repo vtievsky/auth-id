@@ -3,6 +3,7 @@ package sessionsvc
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,8 +28,8 @@ type Session struct {
 }
 
 type Storage interface {
-	List(ctx context.Context, login string) ([]*reposessions.Session, error)
-	ListSessionPrivileges(ctx context.Context, sessionID string) ([]string, error)
+	List(ctx context.Context, login string, pageSize, offset uint32) ([]*reposessions.Session, error)
+	ListSessionPrivileges(ctx context.Context, sessionID string, pageSize, offset uint32) ([]string, error)
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
 	Delete(ctx context.Context, login, sessionID string) error
 }
@@ -39,7 +40,7 @@ type UserSvc interface {
 }
 
 type UserPrivilegeSvc interface {
-	GetUserPrivileges(ctx context.Context, login string) ([]*userprivilegesvc.UserPrivilege, error)
+	GetUserPrivileges(ctx context.Context, login string, pageSize, offset uint32) ([]*userprivilegesvc.UserPrivilege, error)
 }
 
 type SessionSvcOpts struct {
@@ -103,7 +104,7 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	}
 
 	// Получение привилегий пользователя и создание сессии
-	privileges, err := s.userPrivilegeSvc.GetUserPrivileges(ctx, u.Login)
+	privileges, err := s.userPrivilegeSvc.GetUserPrivileges(ctx, u.Login, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to fetch user privileges",
 			zap.String("login", login),
@@ -161,7 +162,7 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	return tokens, nil
 }
 
-func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Session, error) {
+func (s *SessionSvc) GetUserSessions(ctx context.Context, login string, pageSize, offset uint32) ([]*Session, error) {
 	const op = "SessionSvc.GetUserSessions"
 
 	u, err := s.userSvc.GetUser(ctx, login)
@@ -174,7 +175,7 @@ func (s *SessionSvc) GetUserSessions(ctx context.Context, login string) ([]*Sess
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
 
-	sessions, err := s.storage.List(ctx, u.Login)
+	sessions, err := s.storage.List(ctx, u.Login, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get user sessions",
 			zap.String("login", login),

@@ -3,6 +3,7 @@ package userprivilegesvc
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
@@ -12,7 +13,7 @@ import (
 )
 
 const (
-	Limit = 10
+	threadsLimit = 10
 )
 
 type userPrivilegeStats struct {
@@ -33,11 +34,11 @@ type UserPrivilege struct {
 }
 
 type UserRoleSvc interface {
-	GetUserRoles(ctx context.Context, login string) ([]*userrolesvc.UserRole, error)
+	GetUserRoles(ctx context.Context, login string, pageSize, offset uint32) ([]*userrolesvc.UserRole, error)
 }
 
 type RolePrivilegeSvc interface {
-	GetRolePrivileges(ctx context.Context, code string) ([]*roleprivilegesvc.RolePrivilege, error)
+	GetRolePrivileges(ctx context.Context, code string, pageSize, offset uint32) ([]*roleprivilegesvc.RolePrivilege, error)
 }
 
 type UserPrivilegeSvcOpts struct {
@@ -60,13 +61,13 @@ func New(opts *UserPrivilegeSvcOpts) *UserPrivilegeSvc {
 	}
 }
 
-func (s *UserPrivilegeSvc) GetUserPrivileges(ctx context.Context, login string) ([]*UserPrivilege, error) {
+func (s *UserPrivilegeSvc) GetUserPrivileges(ctx context.Context, login string, pageSize, offset uint32) ([]*UserPrivilege, error) {
 	const op = "UserPrivilegeSvc.GetUserPrivileges"
 
 	fetchRolePrivileges := func(actx context.Context, acombine chan<- userPrivilegeStats,
 		aroleCode string, adateIn, adateOut time.Time) func() error {
 		return func() error {
-			rolePrivileges, err := s.rolePrivilegeSvc.GetRolePrivileges(actx, aroleCode)
+			rolePrivileges, err := s.rolePrivilegeSvc.GetRolePrivileges(actx, aroleCode, math.MaxUint32, 0)
 			if err != nil {
 				return fmt.Errorf("failed to fetch role privileges %s:%w", op, err)
 			}
@@ -86,7 +87,7 @@ func (s *UserPrivilegeSvc) GetUserPrivileges(ctx context.Context, login string) 
 		}
 	}
 
-	userRoles, err := s.userRoleSvc.GetUserRoles(ctx, login)
+	userRoles, err := s.userRoleSvc.GetUserRoles(ctx, login, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get user roles",
 			zap.String("login", login),
@@ -99,7 +100,7 @@ func (s *UserPrivilegeSvc) GetUserPrivileges(ctx context.Context, login string) 
 	combineStats := make(chan userPrivilegeStats)
 
 	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(Limit + 1)
+	g.SetLimit(threadsLimit + 1)
 
 	g.Go(func() error {
 		for _, role := range userRoles {

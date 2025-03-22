@@ -36,7 +36,7 @@ type RolePrivilegeDeleted struct {
 }
 
 type Storage interface {
-	GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error)
+	GetRolePrivileges(ctx context.Context, code string, pageSize, offset uint32) ([]*models.RolePrivilege, error)
 	AddRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeCreated) error
 	UpdateRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeUpdated) error
 	DeleteRolePrivilege(ctx context.Context, rolePrivilege models.RolePrivilegeDeleted) error
@@ -75,10 +75,10 @@ func New(opts *RolePrivilegeSvcOpts) *RolePrivilegeSvc {
 	}
 }
 
-func (s *RolePrivilegeSvc) GetRolePrivileges(ctx context.Context, code string) ([]*RolePrivilege, error) {
+func (s *RolePrivilegeSvc) GetRolePrivileges(ctx context.Context, code string, pageSize, offset uint32) ([]*RolePrivilege, error) {
 	const op = "RolePrivilegeSvc.GetRolePrivileges"
 
-	ul, err := s.storage.GetRolePrivileges(ctx, code)
+	ul, err := s.storage.GetRolePrivileges(ctx, code, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get role privileges",
 			zap.String("role_code", code),

@@ -10,7 +10,7 @@ func (t *Transport) GetPrivileges(
 	ctx context.Context,
 	request serverhttp.GetPrivilegesRequestObject,
 ) (serverhttp.GetPrivilegesResponseObject, error) {
-	roles, err := t.services.PrivilegeSvc.GetPrivileges(ctx)
+	privileges, err := t.services.PrivilegeSvc.GetPrivileges(ctx, request.Params.PageSize, request.Params.Offset)
 	if err != nil {
 		return serverhttp.GetPrivileges500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{
@@ -20,13 +20,13 @@ func (t *Transport) GetPrivileges(
 		}, nil
 	}
 
-	resp := make([]serverhttp.Privilege, 0, len(roles))
+	resp := make([]serverhttp.Privilege, 0, len(privileges))
 
-	for _, role := range roles {
+	for _, privilege := range privileges {
 		resp = append(resp, serverhttp.Privilege{
-			Code:        role.Code,
-			Name:        role.Name,
-			Description: role.Description,
+			Code:        privilege.Code,
+			Name:        privilege.Name,
+			Description: privilege.Description,
 		})
 	}
 

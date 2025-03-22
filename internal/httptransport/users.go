@@ -35,7 +35,11 @@ func (t *Transport) GetUser(
 }
 
 func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
-	users, err := t.services.UserSvc.GetUsers(ctx)
+	users, err := t.services.UserSvc.GetUsers(
+		ctx,
+		request.Params.PageSize,
+		request.Params.Offset,
+	)
 	if err != nil {
 		return serverhttp.GetUsers500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{

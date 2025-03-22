@@ -12,7 +12,12 @@ func (t *Transport) GetRoleUsers(
 	ctx context.Context,
 	request serverhttp.GetRoleUsersRequestObject,
 ) (serverhttp.GetRoleUsersResponseObject, error) {
-	users, err := t.services.RoleUserSvc.GetRoleUsers(ctx, request.Code)
+	users, err := t.services.RoleUserSvc.GetRoleUsers(
+		ctx,
+		request.Code,
+		request.Params.PageSize,
+		request.Params.Offset,
+	)
 	if err != nil {
 		return serverhttp.GetRoleUsers500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{

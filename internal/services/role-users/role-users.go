@@ -39,7 +39,7 @@ type RoleUserDeleted struct {
 }
 
 type Storage interface {
-	GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error)
+	GetRoleUsers(ctx context.Context, code string, pageSize, offset uint32) ([]*models.RoleUser, error)
 	AddRoleUser(ctx context.Context, roleUser models.RoleUserCreated) error
 	UpdateRoleUser(ctx context.Context, roleUser models.RoleUserUpdated) error
 	DeleteRoleUser(ctx context.Context, roleUser models.RoleUserDeleted) error
@@ -78,10 +78,10 @@ func New(opts *RoleUserSvcOpts) *RoleUserSvc {
 	}
 }
 
-func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string) ([]*RoleUser, error) {
+func (s *RoleUserSvc) GetRoleUsers(ctx context.Context, code string, pageSize, offset uint32) ([]*RoleUser, error) {
 	const op = "RoleUserSvc.GetRoleUsers"
 
-	ul, err := s.storage.GetRoleUsers(ctx, code)
+	ul, err := s.storage.GetRoleUsers(ctx, code, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get role users",
 			zap.String("role_code", code),

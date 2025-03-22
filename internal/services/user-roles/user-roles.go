@@ -19,7 +19,7 @@ type UserRole struct {
 }
 
 type Storage interface {
-	GetUserRoles(ctx context.Context, login string) ([]*models.UserRole, error)
+	GetUserRoles(ctx context.Context, login string, pageSize, offset uint32) ([]*models.UserRole, error)
 }
 
 type RoleSvc interface {
@@ -47,10 +47,10 @@ func New(opts *UserRoleSvcOpts) *UserRoleSvc {
 	}
 }
 
-func (s *UserRoleSvc) GetUserRoles(ctx context.Context, login string) ([]*UserRole, error) {
+func (s *UserRoleSvc) GetUserRoles(ctx context.Context, login string, pageSize, offset uint32) ([]*UserRole, error) {
 	const op = "UserRoleSvc.GetUserRoles"
 
-	ul, err := s.storage.GetUserRoles(ctx, login)
+	ul, err := s.storage.GetUserRoles(ctx, login, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get user roles",
 			zap.String("login", login),

@@ -11,7 +11,6 @@ import (
 
 const (
 	space = "privilege"
-	limit = 25
 )
 
 type PrivilegesOpts struct {
@@ -28,10 +27,10 @@ func New(opts *PrivilegesOpts) *Privileges {
 	}
 }
 
-func (s *Privileges) GetPrivileges(ctx context.Context) ([]*models.Privilege, error) {
+func (s *Privileges) GetPrivileges(ctx context.Context, pageSize, offset uint32) ([]*models.Privilege, error) {
 	const op = "DbPrivileges.GetPrivileges"
 
-	resp, err := s.c.Connection.Select(space, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
+	resp, err := s.c.Connection.Select(space, "pk", offset, pageSize, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get privileges | %s:%w", op, err)
 	}

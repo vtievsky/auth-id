@@ -9,7 +9,7 @@ import (
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
-func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.RolePrivilege, error) {
+func (s *Roles) GetRolePrivileges(ctx context.Context, code string, pageSize, offset uint32) ([]*models.RolePrivilege, error) {
 	const op = "DbRoles.GetRolePrivileges"
 
 	role, err := s.GetRole(ctx, code)
@@ -17,7 +17,7 @@ func (s *Roles) GetRolePrivileges(ctx context.Context, code string) ([]*models.R
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRolePrivilege, "primary", 0, limit, tarantool.IterEq, clienttarantool.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRolePrivilege, "primary", offset, pageSize, tarantool.IterEq, clienttarantool.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role privileges | %s:%w", op, err)
 	}

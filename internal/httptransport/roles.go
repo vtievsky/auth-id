@@ -36,7 +36,11 @@ func (t *Transport) GetRole(
 }
 
 func (t *Transport) GetRoles(ctx context.Context, request serverhttp.GetRolesRequestObject) (serverhttp.GetRolesResponseObject, error) {
-	roles, err := t.services.RoleSvc.GetRoles(ctx)
+	roles, err := t.services.RoleSvc.GetRoles(
+		ctx,
+		request.Params.PageSize,
+		request.Params.Offset,
+	)
 	if err != nil {
 		return serverhttp.GetRoles500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{

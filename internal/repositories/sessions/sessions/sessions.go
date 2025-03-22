@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	limit         = 5
 	space         = "uev:"
 	spaceCarts    = "pak:"
 	spaceSessions = "omo:"
+	threadsLimit  = 5
 )
 
 type sessionStats struct {
@@ -46,7 +46,7 @@ func New(opts *SessionsOpts) *Sessions {
 	}
 }
 
-func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
+func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint32) ([]*Session, error) {
 	const op = "Sessions.List"
 
 	fetchStats := func(actx context.Context, acombine chan<- sessionStats, asessionID string) func() error {
@@ -125,7 +125,7 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	combine := make(chan sessionStats)
 
 	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(limit + 1)
+	g.SetLimit(threadsLimit + 1)
 
 	g.Go(func() error {
 		for _, session := range ul {
@@ -158,7 +158,7 @@ func (s *Sessions) List(ctx context.Context, login string) ([]*Session, error) {
 	return sessions, nil
 }
 
-func (s *Sessions) ListSessionPrivileges(ctx context.Context, sessionID string) ([]string, error) {
+func (s *Sessions) ListSessionPrivileges(ctx context.Context, sessionID string, pageSize, offset uint32) ([]string, error) {
 	const op = "Sessions.ListSessionPrivileges"
 
 	ul, err := s.client.SMembers(ctx, s.keySession(sessionID)).Result()

@@ -491,6 +491,78 @@ type UserRole struct {
 	Name        string             `json:"name"`
 }
 
+// GetPrivilegesParams defines parameters for GetPrivileges.
+type GetPrivilegesParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetRolesParams defines parameters for GetRoles.
+type GetRolesParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetRolePrivilegesParams defines parameters for GetRolePrivileges.
+type GetRolePrivilegesParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetRoleUsersParams defines parameters for GetRoleUsers.
+type GetRoleUsersParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetUsersParams defines parameters for GetUsers.
+type GetUsersParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetUserPrivilegesParams defines parameters for GetUserPrivileges.
+type GetUserPrivilegesParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetUserRolesParams defines parameters for GetUserRoles.
+type GetUserRolesParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
+// GetUserSessionsParams defines parameters for GetUserSessions.
+type GetUserSessionsParams struct {
+	// PageSize Размер страницы
+	PageSize uint32 `form:"pageSize" json:"pageSize"`
+
+	// Offset Смещение страницы
+	Offset uint32 `form:"offset" json:"offset"`
+}
+
 // ChangePassJSONRequestBody defines body for ChangePass for application/json ContentType.
 type ChangePassJSONRequestBody = ChangePassRequest
 
@@ -534,10 +606,10 @@ type ServerInterface interface {
 	ResetPass(ctx echo.Context, login string) error
 
 	// (GET /v1/privileges)
-	GetPrivileges(ctx echo.Context) error
+	GetPrivileges(ctx echo.Context, params GetPrivilegesParams) error
 
 	// (GET /v1/roles)
-	GetRoles(ctx echo.Context) error
+	GetRoles(ctx echo.Context, params GetRolesParams) error
 
 	// (POST /v1/roles)
 	CreateRole(ctx echo.Context) error
@@ -552,10 +624,10 @@ type ServerInterface interface {
 	UpdateRole(ctx echo.Context, code string) error
 
 	// (GET /v1/roles/{code}/privileges)
-	GetRolePrivileges(ctx echo.Context, code string) error
+	GetRolePrivileges(ctx echo.Context, code string, params GetRolePrivilegesParams) error
 
 	// (GET /v1/roles/{code}/users)
-	GetRoleUsers(ctx echo.Context, code string) error
+	GetRoleUsers(ctx echo.Context, code string, params GetRoleUsersParams) error
 
 	// (DELETE /v1/roles/{role_code}/privileges/{privilege_code})
 	DeleteRolePrivilege(ctx echo.Context, roleCode string, privilegeCode string) error
@@ -576,7 +648,7 @@ type ServerInterface interface {
 	UpdateRoleUser(ctx echo.Context, roleCode string, login string) error
 
 	// (GET /v1/users)
-	GetUsers(ctx echo.Context) error
+	GetUsers(ctx echo.Context, params GetUsersParams) error
 
 	// (POST /v1/users)
 	CreateUser(ctx echo.Context) error
@@ -591,13 +663,13 @@ type ServerInterface interface {
 	UpdateUser(ctx echo.Context, login string) error
 
 	// (GET /v1/users/{login}/privileges)
-	GetUserPrivileges(ctx echo.Context, login string) error
+	GetUserPrivileges(ctx echo.Context, login string, params GetUserPrivilegesParams) error
 
 	// (GET /v1/users/{login}/roles)
-	GetUserRoles(ctx echo.Context, login string) error
+	GetUserRoles(ctx echo.Context, login string, params GetUserRolesParams) error
 
 	// (GET /v1/users/{login}/sessions)
-	GetUserSessions(ctx echo.Context, login string) error
+	GetUserSessions(ctx echo.Context, login string, params GetUserSessionsParams) error
 
 	// (POST /v1/users/{login}/sessions)
 	Login(ctx echo.Context, login string) error
@@ -653,8 +725,24 @@ func (w *ServerInterfaceWrapper) GetPrivileges(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPrivilegesParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPrivileges(ctx)
+	err = w.Handler.GetPrivileges(ctx, params)
 	return err
 }
 
@@ -664,8 +752,24 @@ func (w *ServerInterfaceWrapper) GetRoles(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRolesParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRoles(ctx)
+	err = w.Handler.GetRoles(ctx, params)
 	return err
 }
 
@@ -747,8 +851,24 @@ func (w *ServerInterfaceWrapper) GetRolePrivileges(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRolePrivilegesParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRolePrivileges(ctx, code)
+	err = w.Handler.GetRolePrivileges(ctx, code, params)
 	return err
 }
 
@@ -765,8 +885,24 @@ func (w *ServerInterfaceWrapper) GetRoleUsers(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRoleUsersParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRoleUsers(ctx, code)
+	err = w.Handler.GetRoleUsers(ctx, code, params)
 	return err
 }
 
@@ -932,8 +1068,24 @@ func (w *ServerInterfaceWrapper) GetUsers(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUsersParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUsers(ctx)
+	err = w.Handler.GetUsers(ctx, params)
 	return err
 }
 
@@ -1015,8 +1167,24 @@ func (w *ServerInterfaceWrapper) GetUserPrivileges(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserPrivilegesParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPrivileges(ctx, login)
+	err = w.Handler.GetUserPrivileges(ctx, login, params)
 	return err
 }
 
@@ -1033,8 +1201,24 @@ func (w *ServerInterfaceWrapper) GetUserRoles(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserRolesParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserRoles(ctx, login)
+	err = w.Handler.GetUserRoles(ctx, login, params)
 	return err
 }
 
@@ -1049,8 +1233,24 @@ func (w *ServerInterfaceWrapper) GetUserSessions(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserSessionsParams
+	// ------------- Required query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "pageSize", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSize: %s", err))
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserSessions(ctx, login)
+	err = w.Handler.GetUserSessions(ctx, login, params)
 	return err
 }
 
@@ -1210,6 +1410,7 @@ func (response ResetPass500JSONResponse) VisitResetPassResponse(w http.ResponseW
 }
 
 type GetPrivilegesRequestObject struct {
+	Params GetPrivilegesParams
 }
 
 type GetPrivilegesResponseObject interface {
@@ -1235,6 +1436,7 @@ func (response GetPrivileges500JSONResponse) VisitGetPrivilegesResponse(w http.R
 }
 
 type GetRolesRequestObject struct {
+	Params GetRolesParams
 }
 
 type GetRolesResponseObject interface {
@@ -1365,7 +1567,8 @@ func (response UpdateRole500JSONResponse) VisitUpdateRoleResponse(w http.Respons
 }
 
 type GetRolePrivilegesRequestObject struct {
-	Code string `json:"code"`
+	Code   string `json:"code"`
+	Params GetRolePrivilegesParams
 }
 
 type GetRolePrivilegesResponseObject interface {
@@ -1391,7 +1594,8 @@ func (response GetRolePrivileges500JSONResponse) VisitGetRolePrivilegesResponse(
 }
 
 type GetRoleUsersRequestObject struct {
-	Code string `json:"code"`
+	Code   string `json:"code"`
+	Params GetRoleUsersParams
 }
 
 type GetRoleUsersResponseObject interface {
@@ -1583,6 +1787,7 @@ func (response UpdateRoleUser500JSONResponse) VisitUpdateRoleUserResponse(w http
 }
 
 type GetUsersRequestObject struct {
+	Params GetUsersParams
 }
 
 type GetUsersResponseObject interface {
@@ -1713,7 +1918,8 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(w http.Respons
 }
 
 type GetUserPrivilegesRequestObject struct {
-	Login string `json:"login"`
+	Login  string `json:"login"`
+	Params GetUserPrivilegesParams
 }
 
 type GetUserPrivilegesResponseObject interface {
@@ -1739,7 +1945,8 @@ func (response GetUserPrivileges500JSONResponse) VisitGetUserPrivilegesResponse(
 }
 
 type GetUserRolesRequestObject struct {
-	Login string `json:"login"`
+	Login  string `json:"login"`
+	Params GetUserRolesParams
 }
 
 type GetUserRolesResponseObject interface {
@@ -1765,7 +1972,8 @@ func (response GetUserRoles500JSONResponse) VisitGetUserRolesResponse(w http.Res
 }
 
 type GetUserSessionsRequestObject struct {
-	Login string `json:"login"`
+	Login  string `json:"login"`
+	Params GetUserSessionsParams
 }
 
 type GetUserSessionsResponseObject interface {
@@ -2001,8 +2209,10 @@ func (sh *strictHandler) ResetPass(ctx echo.Context, login string) error {
 }
 
 // GetPrivileges operation middleware
-func (sh *strictHandler) GetPrivileges(ctx echo.Context) error {
+func (sh *strictHandler) GetPrivileges(ctx echo.Context, params GetPrivilegesParams) error {
 	var request GetPrivilegesRequestObject
+
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetPrivileges(ctx.Request().Context(), request.(GetPrivilegesRequestObject))
@@ -2024,8 +2234,10 @@ func (sh *strictHandler) GetPrivileges(ctx echo.Context) error {
 }
 
 // GetRoles operation middleware
-func (sh *strictHandler) GetRoles(ctx echo.Context) error {
+func (sh *strictHandler) GetRoles(ctx echo.Context, params GetRolesParams) error {
 	var request GetRolesRequestObject
+
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetRoles(ctx.Request().Context(), request.(GetRolesRequestObject))
@@ -2157,10 +2369,11 @@ func (sh *strictHandler) UpdateRole(ctx echo.Context, code string) error {
 }
 
 // GetRolePrivileges operation middleware
-func (sh *strictHandler) GetRolePrivileges(ctx echo.Context, code string) error {
+func (sh *strictHandler) GetRolePrivileges(ctx echo.Context, code string, params GetRolePrivilegesParams) error {
 	var request GetRolePrivilegesRequestObject
 
 	request.Code = code
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetRolePrivileges(ctx.Request().Context(), request.(GetRolePrivilegesRequestObject))
@@ -2182,10 +2395,11 @@ func (sh *strictHandler) GetRolePrivileges(ctx echo.Context, code string) error 
 }
 
 // GetRoleUsers operation middleware
-func (sh *strictHandler) GetRoleUsers(ctx echo.Context, code string) error {
+func (sh *strictHandler) GetRoleUsers(ctx echo.Context, code string, params GetRoleUsersParams) error {
 	var request GetRoleUsersRequestObject
 
 	request.Code = code
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetRoleUsers(ctx.Request().Context(), request.(GetRoleUsersRequestObject))
@@ -2387,8 +2601,10 @@ func (sh *strictHandler) UpdateRoleUser(ctx echo.Context, roleCode string, login
 }
 
 // GetUsers operation middleware
-func (sh *strictHandler) GetUsers(ctx echo.Context) error {
+func (sh *strictHandler) GetUsers(ctx echo.Context, params GetUsersParams) error {
 	var request GetUsersRequestObject
+
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetUsers(ctx.Request().Context(), request.(GetUsersRequestObject))
@@ -2520,10 +2736,11 @@ func (sh *strictHandler) UpdateUser(ctx echo.Context, login string) error {
 }
 
 // GetUserPrivileges operation middleware
-func (sh *strictHandler) GetUserPrivileges(ctx echo.Context, login string) error {
+func (sh *strictHandler) GetUserPrivileges(ctx echo.Context, login string, params GetUserPrivilegesParams) error {
 	var request GetUserPrivilegesRequestObject
 
 	request.Login = login
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetUserPrivileges(ctx.Request().Context(), request.(GetUserPrivilegesRequestObject))
@@ -2545,10 +2762,11 @@ func (sh *strictHandler) GetUserPrivileges(ctx echo.Context, login string) error
 }
 
 // GetUserRoles operation middleware
-func (sh *strictHandler) GetUserRoles(ctx echo.Context, login string) error {
+func (sh *strictHandler) GetUserRoles(ctx echo.Context, login string, params GetUserRolesParams) error {
 	var request GetUserRolesRequestObject
 
 	request.Login = login
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetUserRoles(ctx.Request().Context(), request.(GetUserRolesRequestObject))
@@ -2570,10 +2788,11 @@ func (sh *strictHandler) GetUserRoles(ctx echo.Context, login string) error {
 }
 
 // GetUserSessions operation middleware
-func (sh *strictHandler) GetUserSessions(ctx echo.Context, login string) error {
+func (sh *strictHandler) GetUserSessions(ctx echo.Context, login string, params GetUserSessionsParams) error {
 	var request GetUserSessionsRequestObject
 
 	request.Login = login
+	request.Params = params
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetUserSessions(ctx.Request().Context(), request.(GetUserSessionsRequestObject))
@@ -2654,47 +2873,49 @@ func (sh *strictHandler) DeleteUserSession(ctx echo.Context, login string, sessi
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -17,7 +17,7 @@ type Privilege struct {
 }
 
 type Storage interface {
-	GetPrivileges(ctx context.Context) ([]*models.Privilege, error)
+	GetPrivileges(ctx context.Context, pageSize, offset uint32) ([]*models.Privilege, error)
 }
 
 type PrivilegeSvcOpts struct {
@@ -41,10 +41,10 @@ func New(opts *PrivilegeSvcOpts) *PrivilegeSvc {
 	}
 }
 
-func (s *PrivilegeSvc) GetPrivileges(ctx context.Context) ([]*Privilege, error) {
+func (s *PrivilegeSvc) GetPrivileges(ctx context.Context, pageSize, offset uint32) ([]*Privilege, error) {
 	const op = "PrivilegeSvc.GetPrivileges"
 
-	privileges, err := s.storage.GetPrivileges(ctx)
+	privileges, err := s.storage.GetPrivileges(ctx, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get privileges",
 			zap.Error(err),

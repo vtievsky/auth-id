@@ -41,7 +41,7 @@ type UserUpdatedWithPass struct {
 
 type Storage interface {
 	GetUser(ctx context.Context, login string) (*models.User, error)
-	GetUsers(ctx context.Context) ([]*models.User, error)
+	GetUsers(ctx context.Context, pageSize, offset uint32) ([]*models.User, error)
 	CreateUser(ctx context.Context, user models.UserCreated) (*models.User, error)
 	UpdateUser(ctx context.Context, user models.UserUpdated) (*models.User, error)
 	DeleteUser(ctx context.Context, login string) error
@@ -72,10 +72,10 @@ func (s *UserSvc) GetUser(ctx context.Context, login string) (*User, error) {
 	return s.GetUserByLogin(ctx, login)
 }
 
-func (s *UserSvc) GetUsers(ctx context.Context) ([]*User, error) {
+func (s *UserSvc) GetUsers(ctx context.Context, pageSize, offset uint32) ([]*User, error) {
 	const op = "UserSvc.GetUsers"
 
-	ul, err := s.storage.GetUsers(ctx)
+	ul, err := s.storage.GetUsers(ctx, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get users",
 			zap.Error(err),

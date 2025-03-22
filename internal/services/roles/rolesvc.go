@@ -32,7 +32,7 @@ type RoleUpdated struct {
 
 type Storage interface {
 	GetRole(ctx context.Context, code string) (*models.Role, error)
-	GetRoles(ctx context.Context) ([]*models.Role, error)
+	GetRoles(ctx context.Context, pageSize, offset uint32) ([]*models.Role, error)
 	CreateRole(ctx context.Context, user models.RoleCreated) (*models.Role, error)
 	UpdateRole(ctx context.Context, user models.RoleUpdated) (*models.Role, error)
 	DeleteRole(ctx context.Context, code string) error
@@ -63,10 +63,10 @@ func (s *RoleSvc) GetRole(ctx context.Context, code string) (*Role, error) {
 	return s.GetRoleByCode(ctx, code)
 }
 
-func (s *RoleSvc) GetRoles(ctx context.Context) ([]*Role, error) {
+func (s *RoleSvc) GetRoles(ctx context.Context, pageSize, offset uint32) ([]*Role, error) {
 	const op = "RoleSvc.GetRoles"
 
-	ul, err := s.storage.GetRoles(ctx)
+	ul, err := s.storage.GetRoles(ctx, pageSize, offset)
 	if err != nil {
 		s.logger.Error("failed to get roles",
 			zap.Error(err),

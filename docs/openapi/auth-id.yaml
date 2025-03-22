@@ -15,6 +15,25 @@ paths:
         - web
       description: Получение списка пользователей
       operationId: GetUsers
+      parameters:
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:
@@ -229,6 +248,24 @@ paths:
           schema:
             type: string
           required: true
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:
@@ -257,6 +294,24 @@ paths:
           schema:
             type: string
           required: true
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:
@@ -284,6 +339,24 @@ paths:
           in: path
           schema:
             type: string
+          required: true
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
           required: true
       responses:
         "200":
@@ -372,6 +445,25 @@ paths:
         - web
       description: Получение списка ролей
       operationId: GetRoles
+      parameters:
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:
@@ -516,6 +608,24 @@ paths:
           schema:
             type: string
           required: true
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:
@@ -543,6 +653,24 @@ paths:
           in: path
           schema:
             type: string
+          required: true
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
           required: true
       responses:
         "200":
@@ -793,6 +921,25 @@ paths:
         - web
       description: Получение списка привилегий
       operationId: GetPrivileges
+      parameters:
+        - name: pageSize
+          description: Размер страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 25
+          required: true
+        - name: offset
+          description: Смещение страницы
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            default: 0
+          required: true
       responses:
         "200":
           content:

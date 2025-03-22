@@ -9,7 +9,7 @@ import (
 	"github.com/vtievsky/auth-id/internal/repositories/models"
 )
 
-func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUser, error) {
+func (s *Roles) GetRoleUsers(ctx context.Context, code string, pageSize, offset uint32) ([]*models.RoleUser, error) {
 	const op = "DbRoles.GetRoleUsers"
 
 	role, err := s.GetRole(ctx, code)
@@ -17,7 +17,7 @@ func (s *Roles) GetRoleUsers(ctx context.Context, code string) ([]*models.RoleUs
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	resp, err := s.c.Connection.Select(spaceRoleUser, "primary", 0, limit, tarantool.IterEq, clienttarantool.Tuple{role.ID})
+	resp, err := s.c.Connection.Select(spaceRoleUser, "primary", offset, pageSize, tarantool.IterEq, clienttarantool.Tuple{role.ID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role users | %s:%w", op, err)
 	}

@@ -3,6 +3,7 @@ package usersvc
 import (
 	"context"
 	"fmt"
+	"math"
 
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -50,7 +51,7 @@ func (s *UserSvc) GetUserByLogin(ctx context.Context, login string) (*User, erro
 func (s *UserSvc) syncUsersByID(ctx context.Context) (map[uint64]*models.User, error) {
 	const op = "UserSvc.syncUsersByID"
 
-	users, err := s.storage.GetUsers(ctx)
+	users, err := s.storage.GetUsers(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync users",
 			zap.Error(err),
@@ -75,7 +76,7 @@ func (s *UserSvc) syncUsersByID(ctx context.Context) (map[uint64]*models.User, e
 func (s *UserSvc) syncUsersByLogin(ctx context.Context) (map[string]*models.User, error) {
 	const op = "UserSvc.syncUsersByLogin"
 
-	users, err := s.storage.GetUsers(ctx)
+	users, err := s.storage.GetUsers(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync users",
 			zap.Error(err),

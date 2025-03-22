@@ -15,7 +15,6 @@ const (
 	spaceRole          = "role"
 	spaceRolePrivilege = "role_privilege"
 	spaceRoleUser      = "role_user"
-	limit              = 25
 )
 
 type RolesOpts struct {
@@ -55,10 +54,10 @@ func (s *Roles) GetRole(ctx context.Context, code string) (*models.Role, error) 
 	}, nil
 }
 
-func (s *Roles) GetRoles(ctx context.Context) ([]*models.Role, error) {
+func (s *Roles) GetRoles(ctx context.Context, pageSize, offset uint32) ([]*models.Role, error) {
 	const op = "DbRoles.GetRoles"
 
-	resp, err := s.c.Connection.Select(spaceRole, "pk", 0, limit, tarantool.IterAll, clienttarantool.Tuple{})
+	resp, err := s.c.Connection.Select(spaceRole, "pk", offset, pageSize, tarantool.IterAll, clienttarantool.Tuple{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get roles | %s:%w", op, err)
 	}

@@ -36,7 +36,12 @@ func (t *Transport) GetUserSessions(
 	ctx context.Context,
 	request serverhttp.GetUserSessionsRequestObject,
 ) (serverhttp.GetUserSessionsResponseObject, error) {
-	sessions, err := t.services.SessionSvc.GetUserSessions(ctx, request.Login)
+	sessions, err := t.services.SessionSvc.GetUserSessions(
+		ctx,
+		request.Login,
+		request.Params.PageSize,
+		request.Params.Offset,
+	)
 	if err != nil {
 		return serverhttp.GetUserSessions500JSONResponse{ //nolint:nilerr
 			Status: serverhttp.ResponseStatusError{

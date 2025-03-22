@@ -3,6 +3,7 @@ package privilegesvc
 import (
 	"context"
 	"fmt"
+	"math"
 
 	dberrors "github.com/vtievsky/auth-id/internal/repositories"
 	"github.com/vtievsky/auth-id/internal/repositories/models"
@@ -44,7 +45,7 @@ func (s *PrivilegeSvc) GetPrivilegeByCode(ctx context.Context, code string) (*Pr
 func (s *PrivilegeSvc) syncPrivilegesByID(ctx context.Context) (map[uint64]*models.Privilege, error) {
 	const op = "PrivilegeSvc.syncPrivilegesByID"
 
-	privileges, err := s.storage.GetPrivileges(ctx)
+	privileges, err := s.storage.GetPrivileges(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync privileges",
 			zap.Error(err),
@@ -69,7 +70,7 @@ func (s *PrivilegeSvc) syncPrivilegesByID(ctx context.Context) (map[uint64]*mode
 func (s *PrivilegeSvc) syncPrivilegesByCode(ctx context.Context) (map[string]*models.Privilege, error) {
 	const op = "PrivilegeSvc.syncPrivilegesByCode"
 
-	privileges, err := s.storage.GetPrivileges(ctx)
+	privileges, err := s.storage.GetPrivileges(ctx, math.MaxUint32, 0)
 	if err != nil {
 		s.logger.Error("failed to sync privileges",
 			zap.Error(err),
