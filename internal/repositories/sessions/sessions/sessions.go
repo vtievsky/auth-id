@@ -3,6 +3,7 @@ package reposessions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	clientredis "github.com/vtievsky/auth-id/internal/repositories/sessions/client/redis"
@@ -120,6 +121,27 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 	ul, err := s.client.SMembers(ctx, s.keySessions(login)).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sessions list | %s:%w", op, err)
+	}
+
+	// Реализация пагинации
+	{
+		_len := len(ul)
+		_offset := int(offset)
+		_pageSize := int(pageSize)
+		_bucketSize := _offset + _pageSize
+
+		switch {
+		case _len < _offset:
+			return []*Session{}, nil
+		case _len < _bucketSize:
+			_bucketSize = _len
+		}
+
+		// Имитация чтения по primary key
+		slices.Sort(ul)
+
+		// "Постраничный" вывод
+		ul = ul[_offset:_bucketSize]
 	}
 
 	combine := make(chan sessionStats)
