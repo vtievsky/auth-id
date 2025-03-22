@@ -787,6 +787,27 @@ paths:
           description: Internal Server Error
       security:
         - bearerAuth: []
+  /v1/privileges:
+    get:
+      tags:
+        - web
+      description: Получение списка привилегий
+      operationId: GetPrivileges
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetPrivilegesResponse200"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetPrivilegesResponse500"
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
 components:
   schemas:
     ResponseStatusOk:
@@ -1565,6 +1586,40 @@ components:
           $ref: "#/components/schemas/ResponseStatusError"
       required:
         - status
+    GetPrivilegesResponse200:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusOk"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Privilege"
+      required:
+        - status
+        - data
+    GetPrivilegesResponse500:
+      type: object
+      properties:
+        status:
+          type: object
+          $ref: "#/components/schemas/ResponseStatusError"
+      required:
+        - status
+    Privilege:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - code
+        - name
+        - description
   securitySchemes:
     bearerAuth:
       type: http

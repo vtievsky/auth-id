@@ -127,6 +127,7 @@ func main() {
 		RoleSvc:          roleService,
 		RoleUserSvc:      roleUserService,
 		RolePrivilegeSvc: rolePrivilegeService,
+		PrivilegeSvc:     privilegeService,
 		SessionSvc:       sessionService,
 	}
 

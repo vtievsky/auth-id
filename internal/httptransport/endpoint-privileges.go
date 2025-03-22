@@ -38,5 +38,7 @@ func EndpointPrivilegesMiddlewareFuncs(
 		"AddRolePrivilege":    withPrivilege(signingKey, sessionService.Search, "role2privilege_create"),
 		"UpdateRolePrivilege": withPrivilege(signingKey, sessionService.Search, "role2privilege_update"),
 		"DeleteRolePrivilege": withPrivilege(signingKey, sessionService.Search, "role2privilege_delete"),
+		// Справочник привилегий
+		"GetPrivileges": withPrivilege(signingKey, sessionService.Search, "privilege_read"),
 	}
 }

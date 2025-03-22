@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	privilegesvc "github.com/vtievsky/auth-id/internal/services/privileges"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 	roleusersvc "github.com/vtievsky/auth-id/internal/services/role-users"
 	rolesvc "github.com/vtievsky/auth-id/internal/services/roles"
@@ -19,6 +20,7 @@ type SvcLayer struct {
 	RoleSvc          RoleService
 	RoleUserSvc      RoleUserService
 	RolePrivilegeSvc RolePrivilegeService
+	PrivilegeSvc     PrivilegeService
 	SessionSvc       SessionService
 }
 
@@ -68,4 +70,8 @@ type SessionService interface {
 	GetUserSessions(ctx context.Context, login string) ([]*sessionsvc.Session, error)
 	Delete(ctx context.Context, login, sessionID string) error
 	Search(ctx context.Context, sessionID, privilege string) error
+}
+
+type PrivilegeService interface {
+	GetPrivileges(ctx context.Context) ([]*privilegesvc.Privilege, error)
 }

@@ -18,6 +18,7 @@ function add_privileges()
     --
     s:insert{nil, 'user2role_read', 'Чтение ролей пользователя', ''}
     s:insert{nil, 'user2privilege_read', 'Чтение привилегий пользователя', ''}
+    --
     s:insert{nil, 'user2session_read', 'Чтение сессий пользователя', ''}
     s:insert{nil, 'user2session_delete', 'Удаление сессии пользователя', ''}
     --
@@ -31,5 +32,5 @@ function add_privileges()
     s:insert{nil, 'role2privilege_update', 'Изменение привилегии роли', ''}
     s:insert{nil, 'role2privilege_delete', 'Удаление привилегии роли', ''}
     --
-    -- s:insert{nil, 'search_session_privilege', 'Проверка наличия привилегии у сессии', ''}
+    s:insert{nil, 'privilege_read', 'Чтение справочника привилегий', ''}
 end
