@@ -123,27 +123,6 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 		return nil, fmt.Errorf("failed to get sessions list | %s:%w", op, err)
 	}
 
-	// Реализация пагинации
-	{
-		_len := len(ul)
-		_offset := int(offset)
-		_pageSize := int(pageSize)
-		_bucketSize := _offset + _pageSize
-
-		switch {
-		case _len < _offset:
-			return []*Session{}, nil
-		case _len < _bucketSize:
-			_bucketSize = _len
-		}
-
-		// Имитация чтения по primary key
-		slices.Sort(ul)
-
-		// "Постраничный" вывод
-		ul = ul[_offset:_bucketSize]
-	}
-
 	combine := make(chan sessionStats)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -175,6 +154,33 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 
 	if err != nil {
 		return nil, err //nolint:wrapcheck
+	}
+
+	// Реализация пагинации
+	{
+		_len := len(sessions)
+		_offset := int(offset)
+		_pageSize := int(pageSize)
+		_bucketSize := _offset + _pageSize
+
+		switch {
+		case _len < _offset:
+			return []*Session{}, nil
+		case _len < _bucketSize:
+			_bucketSize = _len
+		}
+
+		// Имитация чтения по primary key
+		slices.SortStableFunc(sessions, func(a, b *Session) int {
+			if a.CreatedAt.Before(b.CreatedAt) {
+				return -1
+			}
+
+			return 1
+		})
+
+		// "Постраничный" вывод
+		sessions = sessions[_offset:_bucketSize]
 	}
 
 	return sessions, nil
