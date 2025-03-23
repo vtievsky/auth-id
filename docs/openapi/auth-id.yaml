@@ -1011,6 +1011,7 @@ components:
           type: string
         blocked:
           type: boolean
+          default: true
       required:
         - name
         - login
@@ -1230,6 +1231,7 @@ components:
           type: string
         blocked:
           type: boolean
+          default: true
       required:
         - code
         - name
