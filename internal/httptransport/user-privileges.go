@@ -1,29 +1,31 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime/types"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 )
 
 func (t *Transport) GetUserPrivileges(
-	ctx context.Context,
-	request serverhttp.GetUserPrivilegesRequestObject,
-) (serverhttp.GetUserPrivilegesResponseObject, error) {
+	ctx echo.Context,
+	login string,
+	params serverhttp.GetUserPrivilegesParams,
+) error {
 	privileges, err := t.services.UserPrivilegeSvc.GetUserPrivileges(
-		ctx,
-		request.Login,
-		request.Params.PageSize,
-		request.Params.Offset,
+		ctx.Request().Context(),
+		login,
+		params.PageSize,
+		params.Offset,
 	)
 	if err != nil {
-		return serverhttp.GetUserPrivileges500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserPrivilegesResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.UserPrivilege, 0, len(privileges))
@@ -38,11 +40,11 @@ func (t *Transport) GetUserPrivileges(
 		})
 	}
 
-	return serverhttp.GetUserPrivileges200JSONResponse{
+	return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserPrivilegesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }

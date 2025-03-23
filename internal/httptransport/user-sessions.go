@@ -1,26 +1,38 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 )
 
 func (t *Transport) Login(
-	ctx context.Context,
-	request serverhttp.LoginRequestObject,
-) (serverhttp.LoginResponseObject, error) {
-	resp, err := t.services.SessionSvc.Login(ctx, request.Login, request.Body.Password)
-	if err != nil {
-		return serverhttp.Login500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login string,
+) error {
+	var request serverhttp.LoginJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.LoginResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.Login200JSONResponse{
+	resp, err := t.services.SessionSvc.Login(ctx.Request().Context(), login, request.Password)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.LoginResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.LoginResponse200{ //nolint:wrapcheck
 		Data: serverhttp.ResponseAccess{
 			AccessToken:  resp.AccessToken,
 			RefreshToken: resp.RefreshToken,
@@ -29,26 +41,27 @@ func (t *Transport) Login(
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) GetUserSessions(
-	ctx context.Context,
-	request serverhttp.GetUserSessionsRequestObject,
-) (serverhttp.GetUserSessionsResponseObject, error) {
+	ctx echo.Context,
+	login string,
+	params serverhttp.GetUserSessionsParams,
+) error {
 	sessions, err := t.services.SessionSvc.GetUserSessions(
-		ctx,
-		request.Login,
-		request.Params.PageSize,
-		request.Params.Offset,
+		ctx.Request().Context(),
+		login,
+		params.PageSize,
+		params.Offset,
 	)
 	if err != nil {
-		return serverhttp.GetUserSessions500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserSessionsResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.Session, 0, len(sessions))
@@ -61,32 +74,32 @@ func (t *Transport) GetUserSessions(
 		})
 	}
 
-	return serverhttp.GetUserSessions200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.GetUserSessionsResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) DeleteUserSession(
-	ctx context.Context,
-	request serverhttp.DeleteUserSessionRequestObject,
-) (serverhttp.DeleteUserSessionResponseObject, error) {
-	if err := t.services.SessionSvc.Delete(ctx, request.Login, request.SessionId); err != nil {
-		return serverhttp.DeleteUserSession500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login, sessionID string,
+) error {
+	if err := t.services.SessionSvc.Delete(ctx.Request().Context(), login, sessionID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserSessionResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.DeleteUserSession200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.DeleteUserSessionResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }

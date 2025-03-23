@@ -147,17 +147,9 @@ func main() {
 		cancel,
 		logger,
 		httpSrv,
-		serverhttp.NewStrictHandler(
-			httptransport.New(
-				conf,
-				services,
-			),
-			[]serverhttp.StrictMiddlewareFunc{
-				httptransport.AuthorizationMiddleware(
-					conf.Session.SigningKey,
-					sessionService,
-				),
-			},
+		httptransport.New(
+			conf,
+			services,
 		),
 		conf.Port,
 	)

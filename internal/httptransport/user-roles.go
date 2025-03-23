@@ -1,29 +1,31 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime/types"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 )
 
 func (t *Transport) GetUserRoles(
-	ctx context.Context,
-	request serverhttp.GetUserRolesRequestObject,
-) (serverhttp.GetUserRolesResponseObject, error) {
+	ctx echo.Context,
+	login string,
+	params serverhttp.GetUserRolesParams,
+) error {
 	roles, err := t.services.UserRoleSvc.GetUserRoles(
-		ctx,
-		request.Login,
-		request.Params.PageSize,
-		request.Params.Offset,
+		ctx.Request().Context(),
+		login,
+		params.PageSize,
+		params.Offset,
 	)
 	if err != nil {
-		return serverhttp.GetUserRoles500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserRolesResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.UserRole, 0, len(roles))
@@ -38,11 +40,11 @@ func (t *Transport) GetUserRoles(
 		})
 	}
 
-	return serverhttp.GetUserRoles200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.GetUserRolesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }

@@ -1,23 +1,25 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 )
 
-func (t *Transport) GetPrivileges(
-	ctx context.Context,
-	request serverhttp.GetPrivilegesRequestObject,
-) (serverhttp.GetPrivilegesResponseObject, error) {
-	privileges, err := t.services.PrivilegeSvc.GetPrivileges(ctx, request.Params.PageSize, request.Params.Offset)
+func (t *Transport) GetPrivileges(ctx echo.Context, params serverhttp.GetPrivilegesParams) error {
+	privileges, err := t.services.PrivilegeSvc.GetPrivileges(
+		ctx.Request().Context(),
+		params.PageSize,
+		params.Offset,
+	)
 	if err != nil {
-		return serverhttp.GetPrivileges500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetPrivilegesResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.Privilege, 0, len(privileges))
@@ -30,11 +32,11 @@ func (t *Transport) GetPrivileges(
 		})
 	}
 
-	return serverhttp.GetPrivileges200JSONResponse{
+	return ctx.JSON(http.StatusInternalServerError, serverhttp.GetPrivilegesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }

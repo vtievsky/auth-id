@@ -1,27 +1,28 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 )
 
 func (t *Transport) GetUser(
-	ctx context.Context,
-	request serverhttp.GetUserRequestObject,
-) (serverhttp.GetUserResponseObject, error) {
-	user, err := t.services.UserSvc.GetUser(ctx, request.Login)
+	ctx echo.Context,
+	login string,
+) error {
+	user, err := t.services.UserSvc.GetUser(ctx.Request().Context(), login)
 	if err != nil {
-		return serverhttp.GetUser500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.GetUser200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.GetUserResponse200{ //nolint:wrapcheck
 		Data: serverhttp.User{
 			Name:    user.Name,
 			Login:   user.Login,
@@ -31,22 +32,22 @@ func (t *Transport) GetUser(
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
-func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersRequestObject) (serverhttp.GetUsersResponseObject, error) {
+func (t *Transport) GetUsers(ctx echo.Context, params serverhttp.GetUsersParams) error {
 	users, err := t.services.UserSvc.GetUsers(
-		ctx,
-		request.Params.PageSize,
-		request.Params.Offset,
+		ctx.Request().Context(),
+		params.PageSize,
+		params.Offset,
 	)
 	if err != nil {
-		return serverhttp.GetUsers500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUsersResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.User, 0, len(users))
@@ -59,35 +60,43 @@ func (t *Transport) GetUsers(ctx context.Context, request serverhttp.GetUsersReq
 		})
 	}
 
-	return serverhttp.GetUsers200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.GetUsersResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
-func (t *Transport) CreateUser(
-	ctx context.Context,
-	request serverhttp.CreateUserRequestObject,
-) (serverhttp.CreateUserResponseObject, error) {
-	user, err := t.services.UserSvc.CreateUser(ctx, usersvc.UserCreated{
-		Name:     request.Body.Name,
-		Login:    request.Body.Login,
-		Password: request.Body.Password,
-		Blocked:  request.Body.Blocked,
-	})
-	if err != nil {
-		return serverhttp.CreateUser500JSONResponse{ //nolint:nilerr
+func (t *Transport) CreateUser(ctx echo.Context) error {
+	var request serverhttp.CreateUserJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.CreateUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.CreateUser200JSONResponse{
+	user, err := t.services.UserSvc.CreateUser(ctx.Request().Context(), usersvc.UserCreated{
+		Name:     request.Name,
+		Login:    request.Login,
+		Password: request.Password,
+		Blocked:  request.Blocked,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.CreateUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.CreateUserResponse200{ //nolint:wrapcheck
 		Data: serverhttp.User{
 			Name:    user.Name,
 			Login:   user.Login,
@@ -97,28 +106,39 @@ func (t *Transport) CreateUser(
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) UpdateUser(
-	ctx context.Context,
-	request serverhttp.UpdateUserRequestObject,
-) (serverhttp.UpdateUserResponseObject, error) {
-	user, err := t.services.UserSvc.UpdateUser(ctx, usersvc.UserUpdated{
-		Name:    request.Body.Name,
-		Login:   request.Login,
-		Blocked: request.Body.Blocked,
-	})
-	if err != nil {
-		return serverhttp.UpdateUser500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login string,
+) error {
+	var request serverhttp.UpdateUserJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.UpdateUser200JSONResponse{
+	user, err := t.services.UserSvc.UpdateUser(ctx.Request().Context(), usersvc.UserUpdated{
+		Name:    request.Name,
+		Login:   login,
+		Blocked: request.Blocked,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.UpdateUserResponse200{ //nolint:wrapcheck
 		Data: serverhttp.User{
 			Name:    user.Name,
 			Login:   user.Login,
@@ -128,68 +148,90 @@ func (t *Transport) UpdateUser(
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) DeleteUser(
-	ctx context.Context,
-	request serverhttp.DeleteUserRequestObject,
-) (serverhttp.DeleteUserResponseObject, error) {
-	if err := t.services.UserSvc.DeleteUser(ctx, request.Login); err != nil {
-		return serverhttp.DeleteUser500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login string,
+) error {
+	if err := t.services.UserSvc.DeleteUser(ctx.Request().Context(), login); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.DeleteUser200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.DeleteUserResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) ChangePass(
-	ctx context.Context,
-	request serverhttp.ChangePassRequestObject,
-) (serverhttp.ChangePassResponseObject, error) {
-	if err := t.services.UserSvc.ChangePass(ctx, request.Login, request.Body.Current, request.Body.Changed); err != nil {
-		return serverhttp.ChangePass500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login string,
+) error {
+	var request serverhttp.ChangePassJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.ChangePassResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.ChangePass200JSONResponse{
+	if err := t.services.UserSvc.ChangePass(ctx.Request().Context(), login, request.Current, request.Changed); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.ChangePassResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.ChangePassResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) ResetPass(
-	ctx context.Context,
-	request serverhttp.ResetPassRequestObject,
-) (serverhttp.ResetPassResponseObject, error) {
-	if err := t.services.UserSvc.ResetPass(ctx, request.Login, request.Body.Changed); err != nil {
-		return serverhttp.ResetPass500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	login string,
+) error {
+	var request serverhttp.ResetPassJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.ResetPassResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.ResetPass200JSONResponse{
+	if err := t.services.UserSvc.ResetPass(ctx.Request().Context(), login, request.Changed); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.ResetPassResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.ResetPassResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }

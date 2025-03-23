@@ -1,29 +1,31 @@
 package httptransport
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	roleprivilegesvc "github.com/vtievsky/auth-id/internal/services/role-privileges"
 )
 
 func (t *Transport) GetRolePrivileges(
-	ctx context.Context,
-	request serverhttp.GetRolePrivilegesRequestObject,
-) (serverhttp.GetRolePrivilegesResponseObject, error) {
+	ctx echo.Context,
+	code string,
+	params serverhttp.GetRolePrivilegesParams,
+) error {
 	privileges, err := t.services.RolePrivilegeSvc.GetRolePrivileges(
-		ctx,
-		request.Code,
-		request.Params.PageSize,
-		request.Params.Offset,
+		ctx.Request().Context(),
+		code,
+		params.PageSize,
+		params.Offset,
 	)
 	if err != nil {
-		return serverhttp.GetRolePrivileges500JSONResponse{ //nolint:nilerr
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.GetRolePrivilegesResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
 	resp := make([]serverhttp.RolePrivilege, 0, len(privileges))
@@ -37,85 +39,113 @@ func (t *Transport) GetRolePrivileges(
 		})
 	}
 
-	return serverhttp.GetRolePrivileges200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.GetRolePrivilegesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) AddRolePrivilege(
-	ctx context.Context,
-	request serverhttp.AddRolePrivilegeRequestObject,
-) (serverhttp.AddRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.AddRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeCreated{
-		RoleCode:      request.RoleCode,
-		PrivilegeCode: request.PrivilegeCode,
-		Allowed:       request.Body.Allowed,
-	}); err != nil {
-		return serverhttp.AddRolePrivilege500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	roleCode, privilegeCode string,
+) error {
+	var request serverhttp.AddRolePrivilegeJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRolePrivilegeResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.AddRolePrivilege200JSONResponse{
+	if err := t.services.RolePrivilegeSvc.AddRolePrivilege(ctx.Request().Context(),
+		roleprivilegesvc.RolePrivilegeCreated{
+			RoleCode:      roleCode,
+			PrivilegeCode: privilegeCode,
+			Allowed:       request.Allowed,
+		},
+	); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRolePrivilegeResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.AddRolePrivilegeResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) UpdateRolePrivilege(
-	ctx context.Context,
-	request serverhttp.UpdateRolePrivilegeRequestObject,
-) (serverhttp.UpdateRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.UpdateRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeUpdated{
-		RoleCode:      request.RoleCode,
-		PrivilegeCode: request.PrivilegeCode,
-		Allowed:       request.Body.Allowed,
-	}); err != nil {
-		return serverhttp.UpdateRolePrivilege500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	roleCode, privilegeCode string,
+) error {
+	var request serverhttp.UpdateRolePrivilegeJSONRequestBody
+
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRolePrivilegeResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.UpdateRolePrivilege200JSONResponse{
+	if err := t.services.RolePrivilegeSvc.UpdateRolePrivilege(ctx.Request().Context(),
+		roleprivilegesvc.RolePrivilegeUpdated{
+			RoleCode:      roleCode,
+			PrivilegeCode: privilegeCode,
+			Allowed:       request.Allowed,
+		},
+	); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateRolePrivilegeResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, serverhttp.UpdateRolePrivilegeResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
 
 func (t *Transport) DeleteRolePrivilege(
-	ctx context.Context,
-	request serverhttp.DeleteRolePrivilegeRequestObject,
-) (serverhttp.DeleteRolePrivilegeResponseObject, error) {
-	if err := t.services.RolePrivilegeSvc.DeleteRolePrivilege(ctx, roleprivilegesvc.RolePrivilegeDeleted{
-		RoleCode:      request.RoleCode,
-		PrivilegeCode: request.PrivilegeCode,
-	}); err != nil {
-		return serverhttp.DeleteRolePrivilege500JSONResponse{ //nolint:nilerr
+	ctx echo.Context,
+	roleCode, privilegeCode string,
+) error {
+	if err := t.services.RolePrivilegeSvc.DeleteRolePrivilege(ctx.Request().Context(),
+		roleprivilegesvc.RolePrivilegeDeleted{
+			RoleCode:      roleCode,
+			PrivilegeCode: privilegeCode,
+		},
+	); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteRolePrivilegeResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
 				Description: err.Error(),
 			},
-		}, nil
+		})
 	}
 
-	return serverhttp.DeleteRolePrivilege200JSONResponse{
+	return ctx.JSON(http.StatusOK, serverhttp.DeleteRolePrivilegeResponse200{ //nolint:wrapcheck
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,
 			Description: "",
 		},
-	}, nil
+	})
 }
