@@ -66,6 +66,7 @@ type RolePrivilegeService interface {
 }
 
 type SessionService interface {
+	Get(ctx context.Context, sessionID string) (*sessionsvc.SessionCart, error)
 	Login(ctx context.Context, login, password string) (*sessionsvc.Tokens, error)
 	GetUserSessions(ctx context.Context, login string, pageSize, offset uint32) ([]*sessionsvc.Session, error)
 	Delete(ctx context.Context, login, sessionID string) error

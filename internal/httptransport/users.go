@@ -1,11 +1,14 @@
 package httptransport
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
+	"go.uber.org/zap"
 )
 
 func (t *Transport) GetUser(
@@ -155,6 +158,29 @@ func (t *Transport) DeleteUser(
 	ctx echo.Context,
 	login string,
 ) error {
+	sessionID, _ := ctx.Get("session_id").(string)
+
+	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get session | %w", err)
+	}
+
+	if strings.EqualFold(login, cart.Login) {
+		err := fmt.Errorf("failed to delete user | %w", ErrDeleteHimself)
+
+		t.logger.Error("failed to delete user",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
 	if err := t.services.UserSvc.DeleteUser(ctx.Request().Context(), login); err != nil {
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{

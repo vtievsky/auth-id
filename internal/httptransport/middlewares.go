@@ -92,7 +92,7 @@ func AuthorizationMiddleware(
 			endpointPrivilegeCode, ok := endpointWithPrivileges[endpointPrivilegeKey]
 
 			if !ok {
-				return fmt.Errorf("privilege not found")
+				return fmt.Errorf("privilege path could not be mapped")
 			}
 
 			value, err := extractTokenValue(c.Request().Header)
@@ -109,8 +109,9 @@ func AuthorizationMiddleware(
 				return fmt.Errorf("token not valid")
 			}
 
-			if err := sessionSvc.Search(c.Request().Context(), token.SessionID, endpointPrivilegeCode); err != nil {
-				return fmt.Errorf("searchPrivilegeFunc | %w", err)
+			err = sessionSvc.Search(c.Request().Context(), token.SessionID, endpointPrivilegeCode)
+			if err != nil {
+				return fmt.Errorf("failed to search session privilege | %w", err)
 			}
 
 			c.Set("session_id", token.SessionID)
