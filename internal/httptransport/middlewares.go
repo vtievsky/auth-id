@@ -113,6 +113,8 @@ func AuthorizationMiddleware(
 				return fmt.Errorf("searchPrivilegeFunc | %w", err)
 			}
 
+			c.Set("session_id", token.SessionID)
+
 			return next(c)
 		}
 	}
