@@ -3,7 +3,6 @@ package httptransport
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
@@ -128,22 +127,10 @@ func (t *Transport) UpdateUser(
 
 	// Запрет блокирования самого себя
 	if request.Blocked {
-		sessionID, _ := ctx.Get("session_id").(string)
-
-		cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
-		if err != nil {
-			return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
-				Status: serverhttp.ResponseStatusError{
-					Code:        serverhttp.Error,
-					Description: err.Error(),
-				},
-			})
-		}
-
-		if strings.EqualFold(login, cart.Login) {
+		if err := t.yourSelf(ctx, login); err != nil {
 			err = fmt.Errorf("failed to update user | %w", ErrBlockHimself)
 
-			return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
+			return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
 				Status: serverhttp.ResponseStatusError{
 					Code:        serverhttp.Error,
 					Description: err.Error(),
@@ -184,19 +171,7 @@ func (t *Transport) DeleteUser(
 	login string,
 ) error {
 	// Запрет удаления самого себя
-	sessionID, _ := ctx.Get("session_id").(string)
-
-	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
-			Status: serverhttp.ResponseStatusError{
-				Code:        serverhttp.Error,
-				Description: err.Error(),
-			},
-		})
-	}
-
-	if strings.EqualFold(login, cart.Login) {
+	if err := t.yourSelf(ctx, login); err != nil {
 		err = fmt.Errorf("failed to delete user | %w", ErrDeleteHimself)
 
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck

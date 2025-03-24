@@ -3,7 +3,6 @@ package httptransport
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime/types"
@@ -56,19 +55,7 @@ func (t *Transport) AddRoleUser(
 	roleCode, login string,
 ) error {
 	// Запрет добавления собственной роли
-	sessionID, _ := ctx.Get("session_id").(string)
-
-	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRoleUserResponse500{ //nolint:wrapcheck
-			Status: serverhttp.ResponseStatusError{
-				Code:        serverhttp.Error,
-				Description: err.Error(),
-			},
-		})
-	}
-
-	if strings.EqualFold(login, cart.Login) {
+	if err := t.yourSelf(ctx, login); err != nil {
 		err = fmt.Errorf("failed to add role user | %w", ErrAddHimselfRoles)
 
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRoleUserResponse500{ //nolint:wrapcheck
@@ -158,19 +145,7 @@ func (t *Transport) DeleteRoleUser(
 	roleCode, login string,
 ) error {
 	// Запрет удаления собственной роли
-	sessionID, _ := ctx.Get("session_id").(string)
-
-	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteRoleUserResponse500{ //nolint:wrapcheck
-			Status: serverhttp.ResponseStatusError{
-				Code:        serverhttp.Error,
-				Description: err.Error(),
-			},
-		})
-	}
-
-	if strings.EqualFold(login, cart.Login) {
+	if err := t.yourSelf(ctx, login); err != nil {
 		err = fmt.Errorf("failed to delete role user | %w", ErrDeleteHimselfRoles)
 
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteRoleUserResponse500{ //nolint:wrapcheck
