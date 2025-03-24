@@ -153,7 +153,6 @@ func main() {
 		httpSrv,
 		httptransport.New(
 			conf,
-			logger,
 			services,
 		),
 		conf.Port,

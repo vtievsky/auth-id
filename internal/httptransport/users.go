@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
-	"go.uber.org/zap"
 )
 
 func (t *Transport) GetUser(
@@ -133,11 +132,6 @@ func (t *Transport) UpdateUser(
 
 		cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
 		if err != nil {
-			t.logger.Error("failed to get session",
-				zap.String("login", login),
-				zap.Error(err),
-			)
-
 			return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
 				Status: serverhttp.ResponseStatusError{
 					Code:        serverhttp.Error,
@@ -147,14 +141,9 @@ func (t *Transport) UpdateUser(
 		}
 
 		if strings.EqualFold(login, cart.Login) {
-			err := fmt.Errorf("failed to update user | %w", ErrBlockHimself)
+			err = fmt.Errorf("failed to update user | %w", ErrBlockHimself)
 
-			t.logger.Error("failed to update user",
-				zap.String("login", login),
-				zap.Error(err),
-			)
-
-			return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
+			return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
 				Status: serverhttp.ResponseStatusError{
 					Code:        serverhttp.Error,
 					Description: err.Error(),
@@ -199,11 +188,6 @@ func (t *Transport) DeleteUser(
 
 	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
 	if err != nil {
-		t.logger.Error("failed to get session",
-			zap.String("login", login),
-			zap.Error(err),
-		)
-
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{
 				Code:        serverhttp.Error,
@@ -213,12 +197,7 @@ func (t *Transport) DeleteUser(
 	}
 
 	if strings.EqualFold(login, cart.Login) {
-		err := fmt.Errorf("failed to delete user | %w", ErrDeleteHimself)
-
-		t.logger.Error("failed to delete user",
-			zap.String("login", login),
-			zap.Error(err),
-		)
+		err = fmt.Errorf("failed to delete user | %w", ErrDeleteHimself)
 
 		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
 			Status: serverhttp.ResponseStatusError{

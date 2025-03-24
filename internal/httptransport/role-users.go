@@ -1,7 +1,9 @@
 package httptransport
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime/types"
@@ -53,6 +55,30 @@ func (t *Transport) AddRoleUser(
 	ctx echo.Context,
 	roleCode, login string,
 ) error {
+	// Запрет добавления собственной роли
+	sessionID, _ := ctx.Get("session_id").(string)
+
+	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRoleUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	if strings.EqualFold(login, cart.Login) {
+		err = fmt.Errorf("failed to add role user | %w", ErrAddHimselfRoles)
+
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.AddRoleUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
 	var request serverhttp.AddRoleUserJSONRequestBody
 
 	if err := ctx.Bind(&request); err != nil {
@@ -131,6 +157,30 @@ func (t *Transport) DeleteRoleUser(
 	ctx echo.Context,
 	roleCode, login string,
 ) error {
+	// Запрет удаления собственной роли
+	sessionID, _ := ctx.Get("session_id").(string)
+
+	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteRoleUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
+	if strings.EqualFold(login, cart.Login) {
+		err = fmt.Errorf("failed to delete role user | %w", ErrDeleteHimselfRoles)
+
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteRoleUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
+	}
+
 	if err := t.services.RoleUserSvc.DeleteRoleUser(ctx.Request().Context(),
 		roleusersvc.RoleUserDeleted{
 			Login:    login,
