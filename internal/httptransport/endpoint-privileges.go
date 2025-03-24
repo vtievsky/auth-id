@@ -1,6 +1,5 @@
 package httptransport
 
-// Соответствие endpoint и привилегии
 var (
 	//nolint:gochecknoglobals
 	endpointWithout = map[string]struct{}{
@@ -8,6 +7,7 @@ var (
 	}
 
 	//nolint:gochecknoglobals
+	// Соответствие endpoint и привилегии
 	endpointWithPrivileges = map[string]string{
 		"put/v1/passresets/:login":  "pass_reset",
 		"put/v1/passchanges/:login": "pass_change",
