@@ -127,6 +127,42 @@ func (t *Transport) UpdateUser(
 		})
 	}
 
+	// Запрет блокировки самого себя
+	if request.Blocked {
+		sessionID, _ := ctx.Get("session_id").(string)
+
+		cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
+		if err != nil {
+			t.logger.Error("failed to get session",
+				zap.String("login", login),
+				zap.Error(err),
+			)
+
+			return ctx.JSON(http.StatusInternalServerError, serverhttp.UpdateUserResponse500{ //nolint:wrapcheck
+				Status: serverhttp.ResponseStatusError{
+					Code:        serverhttp.Error,
+					Description: err.Error(),
+				},
+			})
+		}
+
+		if strings.EqualFold(login, cart.Login) {
+			err := fmt.Errorf("failed to update user | %w", ErrBlockHimself)
+
+			t.logger.Error("failed to update user",
+				zap.String("login", login),
+				zap.Error(err),
+			)
+
+			return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
+				Status: serverhttp.ResponseStatusError{
+					Code:        serverhttp.Error,
+					Description: err.Error(),
+				},
+			})
+		}
+	}
+
 	user, err := t.services.UserSvc.UpdateUser(ctx.Request().Context(), usersvc.UserUpdated{
 		Name:    request.Name,
 		Login:   login,
@@ -158,11 +194,22 @@ func (t *Transport) DeleteUser(
 	ctx echo.Context,
 	login string,
 ) error {
+	// Запрет удаления самого себя
 	sessionID, _ := ctx.Get("session_id").(string)
 
 	cart, err := t.services.SessionSvc.Get(ctx.Request().Context(), sessionID)
 	if err != nil {
-		return fmt.Errorf("failed to get session | %w", err)
+		t.logger.Error("failed to get session",
+			zap.String("login", login),
+			zap.Error(err),
+		)
+
+		return ctx.JSON(http.StatusInternalServerError, serverhttp.DeleteUserResponse500{ //nolint:wrapcheck
+			Status: serverhttp.ResponseStatusError{
+				Code:        serverhttp.Error,
+				Description: err.Error(),
+			},
+		})
 	}
 
 	if strings.EqualFold(login, cart.Login) {
