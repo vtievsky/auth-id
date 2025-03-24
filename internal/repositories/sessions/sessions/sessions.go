@@ -108,6 +108,10 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 				return err //nolint:wrapcheck
 			}
 
+			if ttl < 0 {
+				return nil
+			}
+
 			acombine <- sessionStats{
 				ID:        asessionID,
 				TTL:       ttl,
@@ -121,19 +125,6 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 	ul, err := s.client.SMembers(ctx, s.keySessions(login)).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sessions list | %s:%w", op, err)
-	}
-
-	// Реализация пагинации
-	_len := len(ul)
-	_offset := int(offset)
-	_pageSize := int(pageSize)
-	_bucketSize := _offset + _pageSize
-
-	switch {
-	case _len < _offset:
-		return []*Session{}, nil
-	case _len < _bucketSize:
-		_bucketSize = _len
 	}
 
 	combine := make(chan sessionStats)
@@ -167,6 +158,19 @@ func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint
 
 	if err != nil {
 		return nil, err //nolint:wrapcheck
+	}
+
+	// Реализация пагинации
+	_len := len(sessions)
+	_offset := int(offset)
+	_pageSize := int(pageSize)
+	_bucketSize := _offset + _pageSize
+
+	switch {
+	case _len < _offset:
+		return []*Session{}, nil
+	case _len < _bucketSize:
+		_bucketSize = _len
 	}
 
 	// "Постраничный" вывод
