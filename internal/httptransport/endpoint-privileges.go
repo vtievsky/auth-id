@@ -2,6 +2,7 @@ package httptransport
 
 var (
 	//nolint:gochecknoglobals
+	// Эндпоинты не требующие наличие токена
 	endpointWithout = map[string]struct{}{
 		"post/v1/users/:login/sessions": {}, // Аутентификация пользователя
 	}
