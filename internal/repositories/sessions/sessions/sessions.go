@@ -47,6 +47,43 @@ func New(opts *SessionsOpts) *Sessions {
 	}
 }
 
+func (s *Sessions) Get(ctx context.Context, sessionID string) (*SessionCart, error) {
+	const op = "Sessions.Get"
+
+	cmd := s.client.HGetAll(ctx, s.keyCart(sessionID))
+
+	switch {
+	case cmd.Err() != nil:
+		s.logger.Error("failed to get session cart",
+			zap.String("session_id", sessionID),
+			zap.Error(cmd.Err()),
+		)
+
+		return nil, fmt.Errorf("failed to get session cart | %s:%w", op, cmd.Err())
+	case len(cmd.Val()) == 0:
+		s.logger.Error("failed to get session cart",
+			zap.String("session_id", sessionID),
+			zap.Error(ErrSessionCartNotFound),
+		)
+
+		return nil, fmt.Errorf("failed to get session cart | %s:%w", op, ErrSessionCartNotFound)
+	}
+
+	var cart SessionCart
+
+	if err := cmd.Scan(&cart); err != nil {
+		s.logger.Error("failed to scan session cart",
+			zap.String("session_id", sessionID),
+			zap.Any("value", cmd.Val()),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to get session cart | %s:%w", op, err)
+	}
+
+	return &cart, nil
+}
+
 func (s *Sessions) List(ctx context.Context, login string, pageSize, offset uint32) ([]*Session, error) {
 	const op = "Sessions.List"
 

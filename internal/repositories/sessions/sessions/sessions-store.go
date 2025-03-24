@@ -10,6 +10,7 @@ import (
 
 type SessionCart struct {
 	ID        string    `redis:"id"`
+	Login     string    `redis:"login"`
 	CreatedAt time.Time `redis:"created_at"`
 }
 
@@ -34,6 +35,7 @@ func (s *Sessions) Store(
 	g.Go(func() error {
 		if _, err := s.client.HMSet(ctx, keyCart, SessionCart{
 			ID:        sessionID,
+			Login:     login,
 			CreatedAt: time.Now(),
 		}).Result(); err != nil {
 			return fmt.Errorf("failed to add session cart | %s:%w", op, err)

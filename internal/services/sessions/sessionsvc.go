@@ -27,7 +27,14 @@ type Session struct {
 	ExpiredAt time.Time
 }
 
+type SessionCart struct {
+	ID        string
+	Login     string
+	CreatedAt time.Time
+}
+
 type Storage interface {
+	Get(ctx context.Context, sessionID string) (*reposessions.SessionCart, error)
 	List(ctx context.Context, login string, pageSize, offset uint32) ([]*reposessions.Session, error)
 	ListSessionPrivileges(ctx context.Context, sessionID string, pageSize, offset uint32) ([]string, error)
 	Store(ctx context.Context, login, sessionID string, privileges []string, ttl time.Duration) error
@@ -78,6 +85,26 @@ func New(opts *SessionSvcOpts) *SessionSvc {
 		signingKey:       opts.SigningKey,
 		cacheByID:        cache.New[string, []string](),
 	}
+}
+
+func (s *SessionSvc) Get(ctx context.Context, sessionID string) (*SessionCart, error) {
+	const op = "SessionSvc.Get"
+
+	val, err := s.storage.Get(ctx, sessionID)
+	if err != nil {
+		s.logger.Error("failed to get session cart",
+			zap.String("session_id", sessionID),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("failed to get session cart | %s:%w", op, err)
+	}
+
+	return &SessionCart{
+		ID:        val.ID,
+		Login:     val.Login,
+		CreatedAt: val.CreatedAt,
+	}, nil
 }
 
 func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
