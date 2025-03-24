@@ -127,7 +127,7 @@ func (t *Transport) UpdateUser(
 		})
 	}
 
-	// Запрет блокировки самого себя
+	// Запрет блокирования самого себя
 	if request.Blocked {
 		sessionID, _ := ctx.Get("session_id").(string)
 
