@@ -65,7 +65,7 @@ func (s *Sessions) Store(
 			return fmt.Errorf("failed to add session to sessions list | %s:%w", op, err)
 		}
 
-		if _, err := s.client.Expire(gCtx, sessionID, ttl).Result(); err != nil {
+		if _, err := s.client.Expire(gCtx, keySessions, ttl).Result(); err != nil {
 			return fmt.Errorf("failed to set ttl sessions list | %s:%w", op, err)
 		}
 
