@@ -687,14 +687,14 @@ paths:
           description: Internal Server Error
       security:
         - bearerAuth: []
-  /v1/roles/{role_code}/privileges/{privilege_code}:
+  /v1/roles/{code}/privileges/{privilege_code}:
     post:
       tags:
         - web
       description: Добавление привилегии роли
       operationId: AddRolePrivilege
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:
@@ -734,7 +734,7 @@ paths:
       description: Изменение привилегии роли
       operationId: UpdateRolePrivilege
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:
@@ -774,7 +774,7 @@ paths:
       description: Удаление привилегии роли
       operationId: DeleteRolePrivilege
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:
@@ -801,14 +801,14 @@ paths:
           description: Internal Server Error
       security:
         - bearerAuth: []
-  /v1/roles/{role_code}/users/{login}:
+  /v1/roles/{code}/users/{login}:
     post:
       tags:
         - web
       description: Добавление роли пользователю
       operationId: AddRoleUser
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:
@@ -848,7 +848,7 @@ paths:
       description: Изменение роли пользователя
       operationId: UpdateRoleUser
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:
@@ -888,7 +888,7 @@ paths:
       description: Удаление роли пользователя
       operationId: DeleteRoleUser
       parameters:
-        - name: role_code
+        - name: code
           description: Код роли
           in: path
           schema:

@@ -1,72 +1,47 @@
 package httptransport
 
-import (
-	"context"
-	"fmt"
-	"net/http"
-	"strings"
+// func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
+// 		extractTokenValue := func(header http.Header) (string, error) {
+// 			values, ok := header["Authorization"]
+// 			if !ok {
+// 				return "", fmt.Errorf("token not found")
+// 			}
 
-	"github.com/labstack/echo/v4"
-	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
-	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
-)
+// 			if len(values) < 1 {
+// 				return "", fmt.Errorf("token not found")
+// 			}
 
-var (
-	//nolint:gochecknoglobals
-	without = func() func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
-		return func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
-			return func(ctx echo.Context, request any) (any, error) {
-				return f(ctx, request)
-			}
-		}
-	}
-	//nolint:gochecknoglobals
-	withPrivilege = func(
-		signingKey string,
-		searchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode string) error,
-		code string,
-	) func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
-		extractTokenValue := func(header http.Header) (string, error) {
-			values, ok := header["Authorization"]
-			if !ok {
-				return "", fmt.Errorf("token not found")
-			}
+// 			ul := strings.Split(values[0], " ")
 
-			if len(values) < 1 {
-				return "", fmt.Errorf("token not found")
-			}
+// 			if len(ul) < 2 { //nolint:mnd
+// 				return "", fmt.Errorf("invalid token")
+// 			}
 
-			ul := strings.Split(values[0], " ")
+// 			return ul[1], nil
+// 		}
 
-			if len(ul) < 2 { //nolint:mnd
-				return "", fmt.Errorf("invalid token")
-			}
+// 		return func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
+// 			return func(ctx echo.Context, request any) (any, error) {
+// 				value, err := extractTokenValue(ctx.Request().Header)
+// 				if err != nil {
+// 					return nil, err
+// 				}
 
-			return ul[1], nil
-		}
+// 				token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
+// 				if err != nil {
+// 					return nil, err //nolint:wrapcheck
+// 				}
 
-		return func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc {
-			return func(ctx echo.Context, request any) (any, error) {
-				value, err := extractTokenValue(ctx.Request().Header)
-				if err != nil {
-					return nil, err
-				}
+// 				if !token.Valid {
+// 					return nil, fmt.Errorf("token not valid")
+// 				}
 
-				token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
-				if err != nil {
-					return nil, err //nolint:wrapcheck
-				}
+// 				if err := searchPrivilegeFunc(ctx.Request().Context(), token.SessionID, code); err != nil {
+// 					return nil, fmt.Errorf("searchPrivilegeFunc | %w", err)
+// 				}
 
-				if !token.Valid {
-					return nil, fmt.Errorf("token not valid")
-				}
-
-				if err := searchPrivilegeFunc(ctx.Request().Context(), token.SessionID, code); err != nil {
-					return nil, fmt.Errorf("searchPrivilegeFunc | %w", err)
-				}
-
-				return f(ctx, request)
-			}
-		}
-	}
-)
+// 				return f(ctx, request)
+// 			}
+// 		}
+// 	}
+// )

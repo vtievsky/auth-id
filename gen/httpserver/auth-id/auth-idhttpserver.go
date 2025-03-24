@@ -623,26 +623,26 @@ type ServerInterface interface {
 	// (GET /v1/roles/{code}/privileges)
 	GetRolePrivileges(ctx echo.Context, code string, params GetRolePrivilegesParams) error
 
+	// (DELETE /v1/roles/{code}/privileges/{privilege_code})
+	DeleteRolePrivilege(ctx echo.Context, code string, privilegeCode string) error
+
+	// (POST /v1/roles/{code}/privileges/{privilege_code})
+	AddRolePrivilege(ctx echo.Context, code string, privilegeCode string) error
+
+	// (PUT /v1/roles/{code}/privileges/{privilege_code})
+	UpdateRolePrivilege(ctx echo.Context, code string, privilegeCode string) error
+
 	// (GET /v1/roles/{code}/users)
 	GetRoleUsers(ctx echo.Context, code string, params GetRoleUsersParams) error
 
-	// (DELETE /v1/roles/{role_code}/privileges/{privilege_code})
-	DeleteRolePrivilege(ctx echo.Context, roleCode string, privilegeCode string) error
+	// (DELETE /v1/roles/{code}/users/{login})
+	DeleteRoleUser(ctx echo.Context, code string, login string) error
 
-	// (POST /v1/roles/{role_code}/privileges/{privilege_code})
-	AddRolePrivilege(ctx echo.Context, roleCode string, privilegeCode string) error
+	// (POST /v1/roles/{code}/users/{login})
+	AddRoleUser(ctx echo.Context, code string, login string) error
 
-	// (PUT /v1/roles/{role_code}/privileges/{privilege_code})
-	UpdateRolePrivilege(ctx echo.Context, roleCode string, privilegeCode string) error
-
-	// (DELETE /v1/roles/{role_code}/users/{login})
-	DeleteRoleUser(ctx echo.Context, roleCode string, login string) error
-
-	// (POST /v1/roles/{role_code}/users/{login})
-	AddRoleUser(ctx echo.Context, roleCode string, login string) error
-
-	// (PUT /v1/roles/{role_code}/users/{login})
-	UpdateRoleUser(ctx echo.Context, roleCode string, login string) error
+	// (PUT /v1/roles/{code}/users/{login})
+	UpdateRoleUser(ctx echo.Context, code string, login string) error
 
 	// (GET /v1/users)
 	GetUsers(ctx echo.Context, params GetUsersParams) error
@@ -869,6 +869,84 @@ func (w *ServerInterfaceWrapper) GetRolePrivileges(ctx echo.Context) error {
 	return err
 }
 
+// DeleteRolePrivilege converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteRolePrivilege(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
+	}
+
+	// ------------- Path parameter "privilege_code" -------------
+	var privilegeCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteRolePrivilege(ctx, code, privilegeCode)
+	return err
+}
+
+// AddRolePrivilege converts echo context to params.
+func (w *ServerInterfaceWrapper) AddRolePrivilege(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
+	}
+
+	// ------------- Path parameter "privilege_code" -------------
+	var privilegeCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.AddRolePrivilege(ctx, code, privilegeCode)
+	return err
+}
+
+// UpdateRolePrivilege converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateRolePrivilege(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
+	}
+
+	// ------------- Path parameter "privilege_code" -------------
+	var privilegeCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateRolePrivilege(ctx, code, privilegeCode)
+	return err
+}
+
 // GetRoleUsers converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRoleUsers(ctx echo.Context) error {
 	var err error
@@ -903,93 +981,15 @@ func (w *ServerInterfaceWrapper) GetRoleUsers(ctx echo.Context) error {
 	return err
 }
 
-// DeleteRolePrivilege converts echo context to params.
-func (w *ServerInterfaceWrapper) DeleteRolePrivilege(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
-	}
-
-	// ------------- Path parameter "privilege_code" -------------
-	var privilegeCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
-	}
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeleteRolePrivilege(ctx, roleCode, privilegeCode)
-	return err
-}
-
-// AddRolePrivilege converts echo context to params.
-func (w *ServerInterfaceWrapper) AddRolePrivilege(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
-	}
-
-	// ------------- Path parameter "privilege_code" -------------
-	var privilegeCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
-	}
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.AddRolePrivilege(ctx, roleCode, privilegeCode)
-	return err
-}
-
-// UpdateRolePrivilege converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdateRolePrivilege(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
-	}
-
-	// ------------- Path parameter "privilege_code" -------------
-	var privilegeCode string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "privilege_code", ctx.Param("privilege_code"), &privilegeCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter privilege_code: %s", err))
-	}
-
-	ctx.Set(BearerAuthScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateRolePrivilege(ctx, roleCode, privilegeCode)
-	return err
-}
-
 // DeleteRoleUser converts echo context to params.
 func (w *ServerInterfaceWrapper) DeleteRoleUser(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	// ------------- Path parameter "login" -------------
@@ -1003,19 +1003,19 @@ func (w *ServerInterfaceWrapper) DeleteRoleUser(ctx echo.Context) error {
 	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeleteRoleUser(ctx, roleCode, login)
+	err = w.Handler.DeleteRoleUser(ctx, code, login)
 	return err
 }
 
 // AddRoleUser converts echo context to params.
 func (w *ServerInterfaceWrapper) AddRoleUser(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	// ------------- Path parameter "login" -------------
@@ -1029,19 +1029,19 @@ func (w *ServerInterfaceWrapper) AddRoleUser(ctx echo.Context) error {
 	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.AddRoleUser(ctx, roleCode, login)
+	err = w.Handler.AddRoleUser(ctx, code, login)
 	return err
 }
 
 // UpdateRoleUser converts echo context to params.
 func (w *ServerInterfaceWrapper) UpdateRoleUser(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "role_code" -------------
-	var roleCode string
+	// ------------- Path parameter "code" -------------
+	var code string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "role_code", ctx.Param("role_code"), &roleCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "code", ctx.Param("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter role_code: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
 	}
 
 	// ------------- Path parameter "login" -------------
@@ -1055,7 +1055,7 @@ func (w *ServerInterfaceWrapper) UpdateRoleUser(ctx echo.Context) error {
 	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateRoleUser(ctx, roleCode, login)
+	err = w.Handler.UpdateRoleUser(ctx, code, login)
 	return err
 }
 
@@ -1332,13 +1332,13 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/v1/roles/:code", wrapper.GetRole)
 	router.PUT(baseURL+"/v1/roles/:code", wrapper.UpdateRole)
 	router.GET(baseURL+"/v1/roles/:code/privileges", wrapper.GetRolePrivileges)
+	router.DELETE(baseURL+"/v1/roles/:code/privileges/:privilege_code", wrapper.DeleteRolePrivilege)
+	router.POST(baseURL+"/v1/roles/:code/privileges/:privilege_code", wrapper.AddRolePrivilege)
+	router.PUT(baseURL+"/v1/roles/:code/privileges/:privilege_code", wrapper.UpdateRolePrivilege)
 	router.GET(baseURL+"/v1/roles/:code/users", wrapper.GetRoleUsers)
-	router.DELETE(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.DeleteRolePrivilege)
-	router.POST(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.AddRolePrivilege)
-	router.PUT(baseURL+"/v1/roles/:role_code/privileges/:privilege_code", wrapper.UpdateRolePrivilege)
-	router.DELETE(baseURL+"/v1/roles/:role_code/users/:login", wrapper.DeleteRoleUser)
-	router.POST(baseURL+"/v1/roles/:role_code/users/:login", wrapper.AddRoleUser)
-	router.PUT(baseURL+"/v1/roles/:role_code/users/:login", wrapper.UpdateRoleUser)
+	router.DELETE(baseURL+"/v1/roles/:code/users/:login", wrapper.DeleteRoleUser)
+	router.POST(baseURL+"/v1/roles/:code/users/:login", wrapper.AddRoleUser)
+	router.PUT(baseURL+"/v1/roles/:code/users/:login", wrapper.UpdateRoleUser)
 	router.GET(baseURL+"/v1/users", wrapper.GetUsers)
 	router.POST(baseURL+"/v1/users", wrapper.CreateUser)
 	router.DELETE(baseURL+"/v1/users/:login", wrapper.DeleteUser)
@@ -1355,49 +1355,49 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xd624bxxV+FWLanyuRUiAE5T+3bgu3CWJYDgrXEIw1OaI2JnfXs0M7qkBAlzRF4CIu",
+	"iv4wWvT+AowiwnQc0a8w80bBzN53Z280d2eo8B9FLc+cOfOd25wzsyegZ41sy4QmdkD3BDi9IzjS+cdb",
+	"/f49awjvIuOZMYQDeA8+HUMHs3/ZyLIhwgbkD+rDofUc9tnHPjzUx0MMuhiNoQbwsQ1BFzy2rCHUTTCZ",
+	"aADBp2MDsacfBj88CJ60Hn8GexhMNMHojm2ZDtztdNIcOFjHY/7ppwgegi74STucVtubU9snsc+f/uRJ",
+	"ih+PTBV29lbFzi8RstASHH3qQJS5Mn0dw0eGyT7Cz/WRPWQkdjs7H251drY6O0ADhxYa6Rh0+aNAA7aO",
+	"MUQm6IIHDx482Pr4463bt0EwuoORYQ7Y6JyyNcYrJ50QgD+DyIiFwlABKFFO5GHkF0e6OYB3dcfJhEiP",
+	"P+Ipr9NDho0Niy0S+SdZkEv6grxpkXdkSk/Jgrylf44urK07znML9UUA6Y0RgiYW0P0fmZHv6AX9isyX",
+	"op2Yvj+QFkylSBJS8ZFmRCI8ENQxZHDNhMfjodV7Usq2a/F1Ti37v8g7MqdnZEquyZzMWu6ik7kIPKY+",
+	"gkJETslrclmCREIGnF6cQS2YWpFkcuDS17FeuEbWEDKSq4WW5o5djnfZCMv1UVUQNrQGhgBb/GtmSbgV",
+	"Ia+Z4SJTek5m5C19WQFg/+Z4uiYLMmuROfmevqxENbBZIsqBlcsjWd38edB2JaNFf1eM70J3WQbfjIgE",
+	"fKvhYG/DIXR1TZVANYcjFcSkjHRUEooCYauYGdnCUUYwqgllHzqOYZnKyCbBjzwR/RriwO45pXybgeGo",
+	"kKuAJhvDG1RHSD9u1PMJJydV1jE/s0J5x+jKlrl4ktLlvn6ZSYJx6RJklmvFoPWjYdl4jU1NuqBXLGQV",
+	"BKyGcNky12F/Y3Rli1s8SelyX7/MOcG4fAmu1jT4JFXAq1omwgvPVyhrj6IKok5OTrq0VwxpFWSsgHA/",
+	"sgaGmbmLXG7rdakd1uDBHK7eNxL3CNzq9aDjNLrAsQnIW90w2EhXKK0+/zZdg47XmzI3+Qvqh4y8JioR",
+	"ifi8Bx2IJRRUk0znlDojLErdHUrxIQ9dCf1Kd7Dw7+9bT6AYSQgeIugcZT2QbGuJUEv8No+56NwylQCa",
+	"4xEbA/LHDrSqWiEGfwnUx2FQyJ/1pDnmWMiXV1ZM1xGlmZT8qlx81yuvz0qpKeW1cQV7IjehNylSgF5S",
+	"jIlqbcnuJj/YTmsdL4X2H+miPpu/0lMy4zVsekYW5DW5chsn3C9m9IyekTlvnogJ6WdbO52tnd37nQ+7",
+	"u53uXmd7b/f3SYltYYPPIyUF+LnNplrEEJnTM3pOZvRPZBawxB3id2TaIldkRt7wJy7rZdcQuelXfPxr",
+	"ek7m9AsyZyzRc7Kgp0k+8pfaYF48skAx4YhW+VO7r6cqt8Utl+/RYykcUWrMkMORvOghZKpME8uN7ouK",
+	"imLdqg9p3lWA1KZ/VyQPRYyQGrulLj9lm+jS9qeOZjexISk2Heu5cZ7mXSIahNF0LgBWHLXmrnKscFRh",
+	"L2cds4H6U6uy5tOvfGwE3oTAmemBvTEy8PE+U2pPBaGOILo1xkfhX7/yJ/qb390Hmnu6iisn/284xSOM",
+	"bTBhhA3z0HIXzsR6jwlxogFsYC5EfYyPtox+69bdO0ADzyBy00Kws91h07dsaOq2Abrgg+3O9o4r2CPO",
+	"XPvZTtvWHcfdOHTaJ1yZJxwwY1Gy9l/yPc/NptHNyiwPwdI6wMdHOiNwpw+6kZMOnBGkjyCGyAHdh6nB",
+	"/kEW5FsyJ9d5HoiBlU/IX7tuYJHC1XU7x11TK0LCgfswdPDPrf6xL2jvoIpu20Ojx2fQ/sxxMRaSyrPp",
+	"6YM2fDGFlYgpkyw9p6f0RYu8JlPyjkmXZQCpmXDgut6Cr6LnMVfOcuiPBWx/8luGrb1ah94TD33HZGZB",
+	"H7b2IXoGUSt0lr7+cTRFNe/hAVtjrA8Y0MBz+BgcsOd9/CPoQFwK/t+4q1IG/hyecfAHm983H/upkojy",
+	"0BdWSBpBvrAmUj/wg+YZxt8A4qxsgF74O3Jk1qJn3s4E35NjKzUnl2TOrT0D7JsU6GP9qYXA/w/ftWCA",
+	"OG3RM4YKb3/yS/rCh/zTMUTHIeZtfQD3jT/AXNgHp4h29yKRxtgw8Qe7QAMjwzRG4xHo7gTe1zAxHEAu",
+	"X7EfpF9FpFKKU+vw0IG4HJ+dXDY7AjYPalSOzA7qRhQks8W5diVB1vA99MPbcpuJtYJ3A20UYm0VItWo",
+	"1pQupNrI6lMDDdiWIw6FIsWj+O5yIuAPDp6CmqLs1Hll9aNs4UHiZqJs4TngZuxo+4Ql2RMXTUOIRfuP",
+	"/+eYehsakixchWfTCk3o38mCXLXohUuavmSJKVmQN1Higlja2xGoGErXBBnxYclGICM+HlmnzSnrbD37",
+	"c01f0D9mI8WzmGVhsj6YEBz5adIFNeaBhLn4KzcqItfFpiIs3ZTEAJn7xGs2Fqv3humytPLeUFw+bgTJ",
+	"4upvo95wyTxclHoXmsAKeXgtxlDbZDdrld3ITfmzT9jKUtD2SfD5UfVQVqCy8zLxbVg5VURpPScpmI54",
+	"yLjQFAyphY1uDcfWwtY2CYn938iCfEOm5HJp5CZvRfyxwnb1wV3W5ZvKh3h593Y2omd5N3WqkLtU0zBB",
+	"Q+xGyVafE6yfnhX0bjecUzWsbaLYbexwdaiSV2W0shRnV/xI7Cax2iRWxWlN6kB4kzlV6ui2BJWM9tpU",
+	"rgWUb7iJX2Cnim423NxTe/qUbN9uOHNKdmArkjQVofXrrMTpRwzV2lKm6DmJdcmWpKhVxk31KtV3ypv/",
+	"+JmdjU6tPMJfK7XKPk7WcF7UnHJ58VflLCjR5ZmVEokyoXJZ0CY9UTU9kZaaNJiWlO5qK+1pwuvna+1y",
+	"Wyt7K36dQINdbnLs7FKpbcWMtlQ4E8YZqda3b8niBuSeEvPOJuPjpbrhSgPKs7yqnUiq18HJ8m/qlZ0q",
+	"ZVJVgZJuo2vM8NSV9axhxiMx25HrgVfZWlfVnlZotWvOsm7KROuVh8ntv8u+Yb1hNa5+CC84d1dZb8sd",
+	"ytuo7EZlMyI8WYcChffLN6yojnfpesWtRv/6xOra6t/yvlHYjcIuqTOityA0qbOiFxVUUtuSW5t/oRcc",
+	"6vErTL8kc4F2fRS8N/RG31ESe3mA8slc6qUCjaA09SYASS6lfeJ9emT06z92EVFMpV3LK3K1nbyAWDBU",
+	"KDoFd3AFb61seCNX8J7KGlHOf8AouGgaoyHogjaIPJleZl6P9bBFL+jX9Jye0ZctcsXvn6JfcDhfu/ad",
+	"wT9cejbo5GDyQwAAAP//Rp24n9KDAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

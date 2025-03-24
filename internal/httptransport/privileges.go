@@ -32,7 +32,7 @@ func (t *Transport) GetPrivileges(ctx echo.Context, params serverhttp.GetPrivile
 		})
 	}
 
-	return ctx.JSON(http.StatusInternalServerError, serverhttp.GetPrivilegesResponse200{ //nolint:wrapcheck
+	return ctx.JSON(http.StatusOK, serverhttp.GetPrivilegesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,

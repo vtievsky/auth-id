@@ -40,7 +40,7 @@ func (t *Transport) GetUserPrivileges(
 		})
 	}
 
-	return ctx.JSON(http.StatusInternalServerError, serverhttp.GetUserPrivilegesResponse200{ //nolint:wrapcheck
+	return ctx.JSON(http.StatusOK, serverhttp.GetUserPrivilegesResponse200{ //nolint:wrapcheck
 		Data: resp,
 		Status: serverhttp.ResponseStatusOk{
 			Code:        serverhttp.Ok,

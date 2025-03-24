@@ -135,6 +135,10 @@ func main() {
 	httpSrv.HideBanner = true
 	httpSrv.Use(
 		httptransport.LoggerMiddleware(logger),
+		httptransport.AuthorizationMiddleware(
+			sessionService,
+			conf.Session.SigningKey,
+		),
 	)
 
 	signalChannel := make(chan os.Signal, 1)

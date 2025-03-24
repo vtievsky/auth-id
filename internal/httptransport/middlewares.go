@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -16,6 +17,10 @@ type SearchPrivilegeFunc func(ctx context.Context, sessionID, privilegeCode stri
 type EndpointPrivilegesMiddlewareFunc func(f strictecho.StrictEchoHandlerFunc) strictecho.StrictEchoHandlerFunc
 type SessionService interface {
 	Search(ctx context.Context, sessionID, privilegeCode string) error
+}
+
+func endpointPrivilegeKey(c echo.Context) string {
+	return fmt.Sprintf("%s%s", strings.ToLower(c.Request().Method), c.Path())
 }
 
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
@@ -60,21 +65,40 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 }
 
 func AuthorizationMiddleware(
-	signingKey string,
 	sessionService SessionService,
-) strictecho.StrictEchoMiddlewareFunc {
-	var endpointPrivileges = EndpointPrivilegesMiddlewareFuncs(signingKey, sessionService)
+	signingKey string,
+) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			endpointPrivilegeKey := endpointPrivilegeKey(c)
 
-	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
-		if op, ok := endpointPrivileges[operationID]; ok {
-			return op(f)
-		}
+			if _, ok := endpointWithPrivileges[endpointPrivilegeKey]; !ok {
+				if _, ok = endpointWithout[endpointPrivilegeKey]; !ok {
+					return fmt.Errorf("privilege not found")
+				}
+			}
 
-		return func(ctx echo.Context, request any) (any, error) {
-			return nil, fmt.Errorf("not found")
+			return next(c)
 		}
 	}
 }
+
+// func AuthorizationMiddleware(
+// 	signingKey string,
+// 	sessionService SessionService,
+// ) strictecho.StrictEchoMiddlewareFunc {
+// 	var endpointPrivileges = EndpointPrivilegesMiddlewareFuncs(signingKey, sessionService)
+
+// 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
+// 		if op, ok := endpointPrivileges[operationID]; ok {
+// 			return op(f)
+// 		}
+
+// 		return func(ctx echo.Context, request any) (any, error) {
+// 			return nil, fmt.Errorf("not found")
+// 		}
+// 	}
+// }
 
 // func abc(l *zap.Logger) strictecho.StrictEchoMiddlewareFunc {
 // 	return func(f strictecho.StrictEchoHandlerFunc, operationID string) strictecho.StrictEchoHandlerFunc {
