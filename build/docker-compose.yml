@@ -27,19 +27,22 @@ services:
     networks:
       - auth-id
 
-  # auth-id-service:
-  #   image: slaventius/auth-id:latest
-  #   container_name: auth-id-service
-  #   restart: on-failure
-  #   environment:
-  #     AUTH_PORT: 8080
-  #     AUTH_DB_URL: http://auth-id-storage:33011
-  #   ports:
-  #     - "9815:8080"
-  #   networks:
-  #     - auth-id
-  #   depends_on:
-  #     - auth-id-storage
+  auth-id-service:
+    image: slaventius/auth-id:latest
+    container_name: auth-id-service
+    restart: on-failure
+    environment:
+      AUTH_PORT: 8080
+      AUTH_DB_URL: http://auth-id-storage:33011
+      AUTH_SESSION_URL: auth-id-redis:6379
+      AUTH_SESSION_SIGNING_KEY: ${AUTH_SESSION_SIGNING_KEY}
+    ports:
+      - ${AUTH_PORT}:8080
+    networks:
+      - auth-id
+    depends_on:
+      - auth-id-redis
+      - auth-id-storage
 
 volumes:
   auth-id-redis:
