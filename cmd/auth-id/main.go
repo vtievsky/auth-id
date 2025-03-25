@@ -43,9 +43,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sessionClient := clientredis.New(&clientredis.ClientOpts{
+	sessionClient, err := clientredis.New(&clientredis.ClientOpts{
 		URL: conf.Session.URL,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// repos
 	usersRepo := tarantoolusers.New(&tarantoolusers.UsersOpts{
