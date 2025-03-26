@@ -21,7 +21,7 @@ import (
 
 const (
 	MetricKindFailedGetUser         = "get_user"
-	MetricKindFailedComparePassword = "compare_password"
+	MetricKindFailedInvalidPassword = "invalid_password"
 	MetricKindFailedFetchPrivileges = "fetch_privileges"
 	MetricKindFailedGenerateToken   = "generate_token"
 	MetricKindFailedStoreSession    = "store_session"
@@ -148,7 +148,7 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 	// Проверка пароля
 	if err = s.userSvc.ComparePassword([]byte(u.Password), []byte(password)); err != nil {
-		s.incrLoginFail(ctx, MetricKindFailedComparePassword)
+		s.incrLoginFail(ctx, MetricKindFailedInvalidPassword)
 
 		s.logger.Error("failed to compare password",
 			zap.String("login", login),
