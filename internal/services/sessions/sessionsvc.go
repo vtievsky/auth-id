@@ -3,6 +3,7 @@ package sessionsvc
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -12,8 +13,18 @@ import (
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/auth-id/pkg/cache"
 	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	MetricKindFailedGetUser         = "get_user"
+	MetricKindFailedComparePassword = "compare_password"
+	MetricKindFailedFetchPrivileges = "fetch_privileges"
+	MetricKindFailedGenerateToken   = "generate_token"
+	MetricKindFailedStoreSession    = "store_session"
 )
 
 type Tokens struct {
@@ -62,28 +73,41 @@ type SessionSvcOpts struct {
 }
 
 type SessionSvc struct {
-	logger           *zap.Logger
-	storage          Storage
-	userSvc          UserSvc
-	userPrivilegeSvc UserPrivilegeSvc
-	sessionTTL       time.Duration
-	accessTokenTTL   time.Duration
-	refreshTokenTTL  time.Duration
-	signingKey       string
-	cacheByID        cache.Cache[string, []string]
+	logger              *zap.Logger
+	storage             Storage
+	userSvc             UserSvc
+	userPrivilegeSvc    UserPrivilegeSvc
+	sessionTTL          time.Duration
+	accessTokenTTL      time.Duration
+	refreshTokenTTL     time.Duration
+	signingKey          string
+	cacheByID           cache.Cache[string, []string]
+	metricsLoginCounter metric.Int64Counter
 }
 
 func New(opts *SessionSvcOpts) *SessionSvc {
+	meter := otel.Meter("auth-id/session_meter")
+
+	counter, err := meter.Int64Counter(
+		"authid_login_attempts_total",
+		metric.WithDescription("Number of login attempts"),
+		metric.WithUnit(""),
+	)
+	if err != nil {
+		log.Fatal(fmt.Errorf("error while create authid_login_attempts_total metric | %w", err))
+	}
+
 	return &SessionSvc{
-		logger:           opts.Logger,
-		storage:          opts.Storage,
-		userSvc:          opts.UserSvc,
-		userPrivilegeSvc: opts.UserPrivilegeSvc,
-		accessTokenTTL:   opts.AccessTokenTTL,
-		refreshTokenTTL:  opts.RefreshTokenTTL,
-		sessionTTL:       opts.SessionTTL,
-		signingKey:       opts.SigningKey,
-		cacheByID:        cache.New[string, []string](),
+		logger:              opts.Logger,
+		storage:             opts.Storage,
+		userSvc:             opts.UserSvc,
+		userPrivilegeSvc:    opts.UserPrivilegeSvc,
+		accessTokenTTL:      opts.AccessTokenTTL,
+		refreshTokenTTL:     opts.RefreshTokenTTL,
+		sessionTTL:          opts.SessionTTL,
+		signingKey:          opts.SigningKey,
+		cacheByID:           cache.New[string, []string](),
+		metricsLoginCounter: counter,
 	}
 }
 
@@ -112,6 +136,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
+		s.incrLoginFail(ctx, MetricKindFailedGetUser)
+
 		s.logger.Error("failed to get user",
 			zap.String("login", login),
 			zap.Error(err),
@@ -122,6 +148,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 	// Проверка пароля
 	if err = s.userSvc.ComparePassword([]byte(u.Password), []byte(password)); err != nil {
+		s.incrLoginFail(ctx, MetricKindFailedComparePassword)
+
 		s.logger.Error("failed to compare password",
 			zap.String("login", login),
 			zap.Error(err),
@@ -133,6 +161,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	// Получение привилегий пользователя и создание сессии
 	privileges, err := s.userPrivilegeSvc.GetUserPrivileges(ctx, u.Login, math.MaxUint32, 0)
 	if err != nil {
+		s.incrLoginFail(ctx, MetricKindFailedFetchPrivileges)
+
 		s.logger.Error("failed to fetch user privileges",
 			zap.String("login", login),
 			zap.Error(err),
@@ -156,6 +186,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 	tokens, err := s.generateTokens(ctx, sessionID)
 	if err != nil {
+		s.incrLoginFail(ctx, MetricKindFailedGenerateToken)
+
 		s.logger.Error("failed to generate tokens",
 			zap.String("login", login),
 			zap.Error(err),
@@ -173,6 +205,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	sessionDuration = s.compareSessionWithRefreshTokenTTL(sessionDuration, s.refreshTokenTTL)
 
 	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
+		s.incrLoginFail(ctx, MetricKindFailedStoreSession)
+
 		s.logger.Error("failed to store session",
 			zap.String("login", login),
 			zap.Error(err),
@@ -185,6 +219,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 		zap.String("login", login),
 		zap.String("session_id", sessionID),
 	)
+
+	s.incrLoginSuccess(ctx)
 
 	return tokens, nil
 }
