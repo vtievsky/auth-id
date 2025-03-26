@@ -8,14 +8,14 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-func (s *SessionSvc) incrLoginFail(ctx context.Context, kind string) {
+func (s *SessionSvc) incrLoginFail(ctx context.Context, failure_kind string) {
 	s.metricsLoginCounter.Add(
 		ctx,
 		1,
 		metric.WithAttributeSet(
 			attribute.NewSet(
 				attribute.Bool("success", false),
-				attribute.String("kind", strings.ToLower(kind)),
+				attribute.String("failure_kind", strings.ToLower(failure_kind)),
 			),
 		),
 	)
