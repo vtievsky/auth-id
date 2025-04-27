@@ -24,14 +24,27 @@ type LogConfig struct {
 	EnableStacktrace bool `envconfig:"AUTH_LOG_ENABLE_STACKTRACE" default:"false"`
 }
 
+// type TracingConfig struct {
+// 	Enabled bool    `envconfig:"AUTH_TRACING_ENABLED" default:"true"`
+// 	Address string  `envconfig:"AUTH_TRACING_URL" required:"true"`
+// 	Ratio   float64 `envconfig:"AUTH_TRACING_RATIO" default:"1.0"`
+// }
+
+type MetricsConfig struct {
+	URL     string    `envconfig:"AUTH_METRICS_URL" required:"true"`
+	Buckets []float64 `envconfig:"AUTH_METRICS_BUCKETS"`
+}
+
 type Config struct {
-	Debug bool `envconfig:"AUTH_DEBUG" default:"false"`
-
-	Port int `envconfig:"AUTH_PORT" default:"8080"`
-
-	DB      DBConfig
-	Session SessionConfig
-	Log     LogConfig
+	Port        int    `envconfig:"AUTH_PORT" default:"8080"`
+	Debug       bool   `envconfig:"AUTH_DEBUG" default:"false"`
+	ServiceName string `envconfig:"AUTH_SERVER_SERVICE_NAME" required:"true"`
+	Environment string `envconfig:"AUTH_ENVIRONMENT" required:"true"`
+	DB          DBConfig
+	Log         LogConfig
+	Session     SessionConfig
+	// Tracing     TracingConfig
+	Metrics MetricsConfig
 }
 
 func New() *Config {

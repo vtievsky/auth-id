@@ -9,9 +9,15 @@
             "program": "${workspaceRoot}/cmd/auth-id/main.go",
             "env": {
                 "AUTH_DEBUG": "true",
+                "AUTH_ENVIRONMENT": "dev",
+                "AUTH_SERVER_SERVICE_NAME": "auth-id",
                 "AUTH_DB_URL": "http://127.0.0.1:3301",
                 "AUTH_SESSION_URL": "127.0.0.1:6379",
-                "AUTH_SESSION_SIGNING_KEY": "js?dh32ksf2j23(5sh%6khy#ywq"
+                "AUTH_SESSION_SIGNING_KEY": "js?dh32ksf2j23(5sh%6khy#ywq",
+                "AUTH_TRACING_ADDRESS": "",
+                "AUTH_TRACING_ENABLED": "false",
+                "AUTH_METRICS_URL": "localhost:4317",
+                "AUTH_METRICS_BUCKETS": ".005,.01,.025,.05,.1,.25,.5,1,2.5,5,7.5,10",
             },
             "args": []
         }

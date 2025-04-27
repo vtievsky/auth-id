@@ -10,6 +10,16 @@ services:
       - auth-id-redis:/data
     networks:
       - auth-id
+  # auth-id-valkey:
+  #   image: valkey/valkey:alpine
+  #   container_name: auth-id-valkey
+  #   restart: on-failure
+  #   ports:
+  #     - ${VALKEY_PORT}:6380
+  #   volumes:
+  #     - auth-id-valkey:/data
+  #   networks:
+  #     - auth-id
 
   auth-id-storage:
     image: tarantool/tarantool
@@ -46,6 +56,7 @@ services:
 
 volumes:
   auth-id-redis:
+  auth-id-valkey:
   auth-id-tarantool:
 
 networks:

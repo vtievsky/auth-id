@@ -12,6 +12,8 @@ import (
 	serverhttp "github.com/vtievsky/auth-id/gen/httpserver/auth-id"
 	"github.com/vtievsky/auth-id/internal/conf"
 	"github.com/vtievsky/auth-id/internal/httptransport"
+	otelclient "github.com/vtievsky/auth-id/internal/otel/client"
+	otelmetrics "github.com/vtievsky/auth-id/internal/otel/metrics"
 	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/db/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/db/roles"
@@ -28,12 +30,37 @@ import (
 	userrolesvc "github.com/vtievsky/auth-id/internal/services/user-roles"
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/golibs/runtime/logger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
 	conf := conf.New()
 	logger := logger.CreateZapLogger(conf.Debug, conf.Log.EnableStacktrace)
+	ctx := context.Background()
+
+	otelClient, err := otelclient.New(&otelclient.OtelOpts{
+		URL: conf.Metrics.URL,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	otelResource, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(conf.ServiceName),
+		),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shutdownMeterProvider, err := otelmetrics.InitMeterProvider(ctx, otelResource, otelClient)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	dbClient, err := clienttarantool.New(&clienttarantool.ClientOpts{
 		URL:       conf.DB.URL,
@@ -121,7 +148,6 @@ func main() {
 		SigningKey:       conf.Session.SigningKey,
 	})
 
-	ctx := context.Background()
 	serverCtx, cancel := context.WithCancel(ctx)
 	services := &services.SvcLayer{
 		UserSvc:          userService,
@@ -148,7 +174,13 @@ func main() {
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	defer signal.Stop(signalChannel) // Отмена подписки на системные события
-	defer stopApp(logger, httpSrv)
+	defer stopApp(
+		ctx,
+		logger,
+		httpSrv,
+		// tracer,
+		shutdownMeterProvider,
+	)
 
 	go startApp(
 		cancel,
@@ -173,15 +205,49 @@ func main() {
 	}
 }
 
-func stopApp(logger *zap.Logger, httpSrv *echo.Echo) {
+func stopApp(
+	ctx context.Context,
+	logger *zap.Logger,
+	httpSrv *echo.Echo,
+	// tracerShutdown tracing.TracerShutdown,
+	metricsShutdown otelmetrics.MeterShutdown,
+) {
 	defer func(alogger *zap.Logger) {
 		alogger.Debug("sync zap logs")
 
 		_ = alogger.Sync()
 	}(logger)
 
-	if err := httpSrv.Close(); err != nil {
+	err := httpSrv.Close()
+	if err != nil {
 		logger.Error("failed to close http server",
+			zap.Error(err),
+		)
+	}
+
+	g := errgroup.Group{}
+
+	// g.Go(func() error {
+	// 	err := tracerShutdown(ctx)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	return nil
+	// })
+
+	g.Go(func() error {
+		err := metricsShutdown(ctx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	err = g.Wait()
+	if err != nil {
+		logger.Error("failed to shutdown Opentelemetry",
 			zap.Error(err),
 		)
 	}
