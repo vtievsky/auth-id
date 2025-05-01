@@ -46,6 +46,7 @@ services:
       AUTH_DB_URL: http://auth-id-storage:33011
       AUTH_SESSION_URL: auth-id-redis:6379
       AUTH_SESSION_SIGNING_KEY: ${AUTH_SESSION_SIGNING_KEY}
+      AUTH_METRICS_URL: ${AUTH_METRICS_URL}
     ports:
       - ${AUTH_PORT}:8080
     networks:
