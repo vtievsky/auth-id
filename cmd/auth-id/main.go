@@ -14,6 +14,7 @@ import (
 	"github.com/vtievsky/auth-id/internal/httptransport"
 	otelclient "github.com/vtievsky/auth-id/internal/otel/client"
 	otelmetrics "github.com/vtievsky/auth-id/internal/otel/metrics"
+	oteltracing "github.com/vtievsky/auth-id/internal/otel/tracing"
 	clienttarantool "github.com/vtievsky/auth-id/internal/repositories/db/client/tarantool"
 	tarantoolprivileges "github.com/vtievsky/auth-id/internal/repositories/db/privileges"
 	tarantoolroles "github.com/vtievsky/auth-id/internal/repositories/db/roles"
@@ -58,6 +59,11 @@ func main() {
 	}
 
 	shutdownMeterProvider, err := otelmetrics.InitMeterProvider(ctx, otelResource, otelClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shutdownTracerProvider, err := oteltracing.InitTracerProvider(ctx, otelResource, otelClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,8 +184,8 @@ func main() {
 		ctx,
 		logger,
 		httpSrv,
-		// tracer,
 		shutdownMeterProvider,
+		shutdownTracerProvider,
 	)
 
 	go startApp(
@@ -209,8 +215,8 @@ func stopApp(
 	ctx context.Context,
 	logger *zap.Logger,
 	httpSrv *echo.Echo,
-	// tracerShutdown tracing.TracerShutdown,
-	metricsShutdown otelmetrics.MeterShutdown,
+	meterShutdown otelmetrics.MeterShutdown,
+	tracerShutdown oteltracing.TracerShutdown,
 ) {
 	defer func(alogger *zap.Logger) {
 		alogger.Debug("sync zap logs")
@@ -227,17 +233,17 @@ func stopApp(
 
 	g := errgroup.Group{}
 
-	// g.Go(func() error {
-	// 	err := tracerShutdown(ctx)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	g.Go(func() error {
+		err := tracerShutdown(ctx)
+		if err != nil {
+			return err
+		}
 
-	// 	return nil
-	// })
+		return nil
+	})
 
 	g.Go(func() error {
-		err := metricsShutdown(ctx)
+		err := meterShutdown(ctx)
 		if err != nil {
 			return err
 		}
