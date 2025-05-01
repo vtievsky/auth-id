@@ -2,7 +2,6 @@ package httptransport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,34 +18,36 @@ type SessionService interface {
 	Search(ctx context.Context, sessionID, privilegeCode string) error
 }
 
-func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
+func TracerMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			ctx, span := otel.Tracer("").Start(c.Request().Context(), "login")
+			ctx, span := otel.Tracer("").Start(c.Request().Context(), "x")
 			defer span.End()
 
 			c.SetRequest(c.Request().WithContext(ctx))
 
+			return next(c)
+		}
+	}
+}
+
+func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
 			startTime := time.Now()
 
 			err := next(c)
 
-			statusCode := c.Response().Status
-
-			if errors.Is(c.Request().Context().Err(), context.Canceled) {
-				statusCode = 499 // Client CLosed Request
-			}
-
-			if err != nil || statusCode >= http.StatusInternalServerError {
+			if err != nil || c.Response().Status >= http.StatusInternalServerError {
 				l.Error("request",
 					zap.Error(err),
 					zap.String("ip", c.RealIP()),
-					zap.String("trace_id", oteltracing.GetTraceID(ctx)),
+					zap.String("trace_id", oteltracing.GetTraceID(c.Request().Context())),
 					zap.String("method", c.Request().Method),
 					zap.String("path", c.Request().RequestURI),
 					zap.String("host", c.Request().Host),
 					zap.String("duration", time.Since(startTime).String()),
-					zap.Int("status_code", statusCode),
+					zap.Int("status_code", c.Response().Status),
 				)
 
 				return err
@@ -54,12 +55,12 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 
 			l.Info("request",
 				zap.String("ip", c.RealIP()),
-				zap.String("trace_id", oteltracing.GetTraceID(ctx)),
+				zap.String("trace_id", oteltracing.GetTraceID(c.Request().Context())),
 				zap.String("method", c.Request().Method),
 				zap.String("path", c.Request().RequestURI),
 				zap.String("host", c.Request().Host),
 				zap.String("duration", time.Since(startTime).String()),
-				zap.Int("status_code", statusCode),
+				zap.Int("status_code", c.Response().Status),
 			)
 
 			return nil

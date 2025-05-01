@@ -169,6 +169,7 @@ func main() {
 	httpSrv := echo.New()
 	httpSrv.HideBanner = true
 	httpSrv.Use(
+		httptransport.TracerMiddleware(),
 		httptransport.LoggerMiddleware(logger),
 		httptransport.AuthorizationMiddleware(
 			sessionService,
