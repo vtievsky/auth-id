@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	oteltracing "github.com/vtievsky/auth-id/internal/otel/tracing"
 	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -20,8 +22,15 @@ type SessionService interface {
 func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			err := next(c)
+			ctx, span := otel.Tracer("").Start(c.Request().Context(), "login")
+			defer span.End()
+
+			c.SetRequest(c.Request().WithContext(ctx))
+
 			startTime := time.Now()
+
+			err := next(c)
+
 			statusCode := c.Response().Status
 
 			if errors.Is(c.Request().Context().Err(), context.Canceled) {
@@ -32,7 +41,7 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 				l.Error("request",
 					zap.Error(err),
 					zap.String("ip", c.RealIP()),
-					// zap.String("trace_id", motel.GetTraceID(c.Request().Context())),
+					zap.String("trace_id", oteltracing.GetTraceID(ctx)),
 					zap.String("method", c.Request().Method),
 					zap.String("path", c.Request().RequestURI),
 					zap.String("host", c.Request().Host),
@@ -45,7 +54,7 @@ func LoggerMiddleware(l *zap.Logger) echo.MiddlewareFunc {
 
 			l.Info("request",
 				zap.String("ip", c.RealIP()),
-				// zap.String("trace_id", motel.GetTraceID(c.Request().Context())),
+				zap.String("trace_id", oteltracing.GetTraceID(ctx)),
 				zap.String("method", c.Request().Method),
 				zap.String("path", c.Request().RequestURI),
 				zap.String("host", c.Request().Host),
@@ -83,8 +92,6 @@ func AuthorizationMiddleware(
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			return next(c)
-
 			endpointPrivilegeKey := endpointPrivilegeKey(c)
 
 			if _, ok := endpointWithout[endpointPrivilegeKey]; ok {

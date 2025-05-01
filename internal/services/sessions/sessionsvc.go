@@ -12,9 +12,13 @@ import (
 	usersvc "github.com/vtievsky/auth-id/internal/services/users"
 	"github.com/vtievsky/auth-id/pkg/cache"
 	authidjwt "github.com/vtievsky/auth-id/pkg/jwt"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
+
+var tracer = otel.Tracer("auth-id/sessions") //nolint:gochecknoglobals
 
 const (
 	MetricKindFailedGetUser         = "unknown_user"
@@ -119,8 +123,16 @@ func (s *SessionSvc) Get(ctx context.Context, sessionID string) (*SessionCart, e
 func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens, error) {
 	const op = "SessionSvc.Login"
 
+	ctx, span := tracer.Start(ctx, "login")
+	defer span.End()
+
+	span.AddEvent("start")
+
 	u, err := s.userSvc.GetUser(ctx, login)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindFailedGetUser)
 
 		s.logger.Error("failed to get user",
@@ -131,8 +143,13 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 		return nil, fmt.Errorf("failed to get user | %s:%w", op, err)
 	}
 
+	span.AddEvent("user has been received")
+
 	// Проверка пароля
 	if err = s.userSvc.ComparePassword([]byte(u.Password), []byte(password)); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindInvalidPassword)
 
 		s.logger.Error("failed to compare password",
@@ -143,9 +160,14 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 		return nil, fmt.Errorf("failed to compare password | %s:%w", op, err)
 	}
 
+	span.AddEvent("password has been compared")
+
 	// Получение привилегий пользователя и создание сессии
 	privileges, err := s.userPrivilegeSvc.GetUserPrivileges(ctx, u.Login, math.MaxUint32, 0)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindFailedFetchPrivileges)
 
 		s.logger.Error("failed to fetch user privileges",
@@ -157,6 +179,11 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	}
 
 	if len(privileges) < 1 {
+		err = ErrSessionPrivilegeNotFound
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindEmptyPrivileges)
 
 		s.logger.Error("empty user privileges",
@@ -166,6 +193,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 		return nil, fmt.Errorf("empty user privileges | %s:%w", op, err)
 	}
+
+	span.AddEvent("privileges has been received")
 
 	sessionID := uuid.NewString()
 	sessionPrivileges := make([]string, 0, len(privileges))
@@ -182,6 +211,9 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 	tokens, err := s.generateTokens(ctx, sessionID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindFailedGenerateToken)
 
 		s.logger.Error("failed to generate tokens",
@@ -192,6 +224,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 		return nil, fmt.Errorf("failed to generate tokens | %s:%w", op, err)
 	}
 
+	span.AddEvent("token has been generated")
+
 	// Сохранение сессии и ее привилегий
 	sessionDuration := time.Until(sessionPrivilegesExpiredAt)
 	sessionDuration = s.compareSessionWithPrivilegesTTL(s.sessionTTL, sessionDuration)
@@ -201,6 +235,9 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 	sessionDuration = s.compareSessionWithRefreshTokenTTL(sessionDuration, s.refreshTokenTTL)
 
 	if err = s.storage.Store(ctx, login, sessionID, sessionPrivileges, sessionDuration); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		incrLoginFail(ctx, MetricKindFailedStoreSession)
 
 		s.logger.Error("failed to store session",
@@ -210,6 +247,8 @@ func (s *SessionSvc) Login(ctx context.Context, login, password string) (*Tokens
 
 		return nil, fmt.Errorf("failed to store session | %s:%w", op, err)
 	}
+
+	span.AddEvent("registration was successful")
 
 	s.logger.Debug("Registration was successful",
 		zap.String("login", login),
