@@ -2,6 +2,7 @@ package authidjwt
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -35,4 +36,18 @@ func ParseToken(signingKey []byte, signedString []byte) (*Token, error) {
 		AccessOnly: claims.AccessOnly,
 		Valid:      token.Valid,
 	}, nil
+}
+
+func ExtractToken(values []string) (string, error) {
+	if len(values) < 1 {
+		return "", fmt.Errorf("token not found")
+	}
+
+	ul := strings.Split(values[0], " ")
+
+	if len(ul) < 2 { //nolint:mnd
+		return "", fmt.Errorf("invalid token")
+	}
+
+	return ul[1], nil
 }

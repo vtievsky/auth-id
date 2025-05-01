@@ -72,25 +72,6 @@ func AuthorizationMiddleware(
 	sessionSvc SessionService,
 	signingKey string,
 ) echo.MiddlewareFunc {
-	extractTokenValue := func(header http.Header) (string, error) {
-		values, ok := header["Authorization"]
-		if !ok {
-			return "", fmt.Errorf("token not found")
-		}
-
-		if len(values) < 1 {
-			return "", fmt.Errorf("token not found")
-		}
-
-		ul := strings.Split(values[0], " ")
-
-		if len(ul) < 2 { //nolint:mnd
-			return "", fmt.Errorf("invalid token")
-		}
-
-		return ul[1], nil
-	}
-
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			endpointPrivilegeKey := endpointPrivilegeKey(c)
@@ -105,9 +86,9 @@ func AuthorizationMiddleware(
 				return fmt.Errorf("privilege path could not be mapped")
 			}
 
-			value, err := extractTokenValue(c.Request().Header)
+			value, err := authidjwt.ExtractToken(c.Request().Header["Authorization"])
 			if err != nil {
-				return err
+				return err //nolint:wrapcheck
 			}
 
 			token, err := authidjwt.ParseToken([]byte(signingKey), []byte(value))
