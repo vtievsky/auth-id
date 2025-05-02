@@ -8,6 +8,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}/cmd/auth-id/main.go",
             "env": {
+                "AUTH_PORT": "9815",
                 "AUTH_DEBUG": "true",
                 "AUTH_ENVIRONMENT": "dev",
                 "AUTH_SERVER_SERVICE_NAME": "auth-id",

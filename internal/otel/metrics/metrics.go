@@ -15,7 +15,11 @@ import (
 type MeterShutdown func(context.Context) error
 
 func InitMeterProvider(ctx context.Context, res *resource.Resource, conn *grpc.ClientConn) (MeterShutdown, error) {
-	metricExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn))
+	metricExporter, err := otlpmetricgrpc.New(
+		ctx,
+		otlpmetricgrpc.WithInsecure(),
+		otlpmetricgrpc.WithGRPCConn(conn),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create metrics exporter: %w", err)
 	}

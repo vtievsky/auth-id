@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/labstack/echo/v4"
@@ -49,8 +50,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	hostname, _ := os.Hostname()
+
 	otelResource, err := resource.New(ctx,
 		resource.WithAttributes(
+			// semconv.SchemaURL,
+			semconv.HostArchKey.String(runtime.GOARCH),
+			semconv.HostNameKey.String(hostname),
 			semconv.ServiceNameKey.String(conf.ServiceName),
 		),
 	)
