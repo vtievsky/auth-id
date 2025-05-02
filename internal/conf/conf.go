@@ -24,12 +24,6 @@ type LogConfig struct {
 	EnableStacktrace bool `envconfig:"AUTH_LOG_ENABLE_STACKTRACE" default:"false"`
 }
 
-// type TracingConfig struct {
-// 	Enabled bool    `envconfig:"AUTH_TRACING_ENABLED" default:"true"`
-// 	Address string  `envconfig:"AUTH_TRACING_URL" required:"true"`
-// 	Ratio   float64 `envconfig:"AUTH_TRACING_RATIO" default:"1.0"`
-// }
-
 type MetricsConfig struct {
 	URL     string    `envconfig:"AUTH_METRICS_URL" required:"true"`
 	Buckets []float64 `envconfig:"AUTH_METRICS_BUCKETS"`
@@ -43,8 +37,7 @@ type Config struct {
 	DB          DBConfig
 	Log         LogConfig
 	Session     SessionConfig
-	// Tracing     TracingConfig
-	Metrics MetricsConfig
+	Metrics     MetricsConfig
 }
 
 func New() *Config {
