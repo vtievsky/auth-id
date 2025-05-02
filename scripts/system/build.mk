@@ -7,7 +7,7 @@ docker-build:
 	@docker build --no-cache --tag ${APP_TAG} --file build/app/Dockerfile .
 
 up:  ## Поднять и запустить зависимости в контейнерах
-	docker compose -f build/docker-compose.yml up -d --build
+	docker compose -f build/docker-compose.yml --env-file build/.env up -d --build
 
 down:  ## Остановить и удалить зависимости
 	docker compose -f build/docker-compose.yml down --remove-orphans
